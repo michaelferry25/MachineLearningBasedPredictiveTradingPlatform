@@ -1,12 +1,15 @@
 import finnhub
 import os
 from dotenv import load_dotenv
+import pandas as pd
+import yfinance as yf
+import time
 
-# Works out the project root so the script can find the .env file
+# Work out the project root so the file can find the .env no matter where it is
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
 ENV_PATH = os.path.join(PROJECT_ROOT, ".env")
 
-# Loads the environment variables
+# Load the environment values
 if os.path.exists(ENV_PATH):
     load_dotenv(ENV_PATH)
 else:
@@ -15,18 +18,19 @@ else:
 
 API_KEY = os.getenv("FINNHUB_API_KEY")
 
-# Stops everything if the API key is missing
+# Stop everything if the key is missing
 if not API_KEY:
     print("FINNHUB_API_KEY not found in .env")
     exit()
 
-# Create the Finnhub client
+# Create the Finnhub client for live prices
 client = finnhub.Client(api_key=API_KEY)
+
 
 def get_current_price(symbol: str):
     """
-    Gets the latest price info for a given symbol.
-    Keeping it simple at the moment.
+    Gets the latest price info for a stock.
+    Keeping it simple for now.
     """
     try:
         data = client.quote(symbol)
@@ -44,6 +48,33 @@ def get_current_price(symbol: str):
         print(f"Error retrieving price for {symbol}: {e}")
         return None
 
-# Basic test so I can run the file on its own
+
+def get_stock_history(symbol: str, period: str = "1y", interval: str = "1d"):
+    """
+    Historical stock data using Yahoo Finance.
+    Works for stocks and ETFs.
+    """
+    try:
+        df = yf.download(symbol, period=period, interval=interval)
+
+        if df.empty:
+            print("No historical data found for", symbol)
+            return None
+
+        df.reset_index(inplace=True)
+        return df
+
+    except Exception as e:
+        print(f"Error getting historical stock data for {symbol}: {e}")
+        return None
+
+
 if __name__ == "__main__":
+    # Test live price
+    print("Live price test:")
     print(get_current_price("AAPL"))
+    print()
+
+    # Test historical price data
+    print("Historical stock test:")
+    print(get_stock_history("AAPL", period="1mo", interval="1d"))
