@@ -13,12 +13,21 @@ public class StockService {
     }
 
     public StockResponse getStockPrice(String symbol) {
+
         double price = finnhub.fetchLivePrice(symbol);
+
+        if (price == -1) {
+            return new StockResponse(
+                    symbol.toUpperCase(),
+                    -1,
+                    "Error fetching live data"
+            );
+        }
 
         return new StockResponse(
                 symbol.toUpperCase(),
                 price,
-                "data_source: finnhub_placeholder"
+                "source: finnhub_live"
         );
     }
 }
