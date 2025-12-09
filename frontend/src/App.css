@@ -13,6 +13,7 @@ body,
   font-family: Arial, sans-serif;
 }
 
+/* NAVBAR */
 .navbar {
   width: 100%;
   padding: 15px 25px;
@@ -43,6 +44,7 @@ body,
   opacity: 1;
 }
 
+/* LANDING CONTAINER */
 .landing-container {
   height: 100vh;
   display: flex;
@@ -50,14 +52,15 @@ body,
   justify-content: center;
   align-items: center;
   text-align: center;
-  padding-top: 80px; 
+  padding-top: 80px;
+}
 
-h1 {
+.landing-container h1 {
   font-size: 3rem;
   margin-bottom: 10px;
 }
 
-p {
+.landing-container p {
   font-size: 1.2rem;
   opacity: 0.8;
   margin-bottom: 20px;
@@ -79,6 +82,49 @@ p {
 
 .btn.secondary {
   background: #30363d;
-  color: white;
 }
+
+/* STOCK SEARCH BOX */
+.stock-box {
+  background: #161b22;
+  padding: 20px;
+  margin-top: 40px;
+  border-radius: 12px;
+  width: 350px;
+  text-align: center;
+  border: 1px solid #30363d;
+}
+
+.stock-input {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 15px;
+}
+
+.stock-input input {
+  padding: 8px 10px;
+  width: 180px;
+  border-radius: 6px;
+  border: 1px solid #30363d;
+  background: #0d1117;
+  color: #e6edf3;
+}
+
+.btn.small {
+  padding: 8px 12px;
+  font-size: 0.9rem;
+}
+
+.stock-result {
+  margin-top: 10px;
+}
+
+.stock-result .error {
+  color: #ff6b6b;
+}
+
+.stock-result .source {
+  font-size: 0.8rem;
+  opacity: 0.7;
 }
