@@ -46,7 +46,8 @@ public class StockController {
 
     // Historical stock prices
     @GetMapping("/api/historical/{symbol}")
-    public HistoricalPriceResponse getHistoricalPrices(@PathVariable String symbol) {
+    public Map<String, Object> getHistorical(@PathVariable String symbol) {
         return historicalPriceService.getHistoricalPrices(symbol);
     }
+
 }

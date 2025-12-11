@@ -1,40 +1,94 @@
 package ie.michaelferry.tradingapi.services;
 
-import ie.michaelferry.tradingapi.models.HistoricalPriceResponse;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
-import java.util.List;
-import java.util.Map;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.*;
 
 @Service
 public class HistoricalPriceService {
 
-    @Value("${FINNHUB_API_KEY}")
-    private String apiKey;
+    private final HttpClient client = HttpClient.newHttpClient();
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    public Map<String, Object> getHistoricalPrices(String symbol) {
+        try {
+            String url = "https://query1.finance.yahoo.com/v8/finance/chart/"
+                    + symbol.toUpperCase()
+                    + "?interval=1d&range=1mo";
 
-    public HistoricalPriceResponse getHistoricalPrices(String symbol) {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header("User-Agent", "Mozilla/5.0")
+                    .GET()
+                    .build();
 
-        long now = System.currentTimeMillis() / 1000;
-        long from = now - (7 * 24 * 60 * 60); // 7-day history
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            return parseYahooJson(response.body(), symbol);
 
-        String url = "https://finnhub.io/api/v1/stock/candle?symbol=" + symbol +
-                "&resolution=60&from=" + from +
-                "&to=" + now +
-                "&token=" + apiKey;
-
-        Map<String, Object> response = restTemplate.getForObject(url, Map.class);
-
-        if (response == null || !"ok".equals(response.get("s"))) {
-            return new HistoricalPriceResponse(symbol, List.of(), List.of());
+        } catch (Exception e) {
+            return Map.of("error", "Failed to fetch Yahoo data: " + e.getMessage());
         }
+    }
 
-        List<Long> timestamps = (List<Long>) response.get("t");
-        List<Double> prices = (List<Double>) response.get("c");
+    private Map<String, Object> parseYahooJson(String json, String symbol) {
+        try {
+            // Extract timestamps
+            List<Long> timestamps = extractLongList(json, "\"timestamp\":[");
+            // Extract closing prices
+            List<Double> closes = extractDoubleList(json, "\"close\":[");
+            
+            if (timestamps.isEmpty() || closes.isEmpty()) {
+                return empty(symbol);
+            }
 
-        return new HistoricalPriceResponse(symbol, timestamps, prices);
+            return Map.of(
+                    "symbol", symbol.toUpperCase(),
+                    "timestamps", timestamps,
+                    "prices", closes
+            );
+
+        } catch (Exception e) {
+            return empty(symbol);
+        }
+    }
+
+    private List<Long> extractLongList(String json, String key) {
+        int start = json.indexOf(key);
+        if (start == -1) return List.of();
+        start += key.length();
+        int end = json.indexOf("]", start);
+
+        String[] parts = json.substring(start, end).split(",");
+        List<Long> list = new ArrayList<>();
+        for (String p : parts) {
+            if (!p.isBlank()) list.add(Long.parseLong(p.trim()));
+        }
+        return list;
+    }
+
+    private List<Double> extractDoubleList(String json, String key) {
+        int start = json.indexOf(key);
+        if (start == -1) return List.of();
+        start += key.length();
+        int end = json.indexOf("]", start);
+
+        String[] parts = json.substring(start, end).split(",");
+        List<Double> list = new ArrayList<>();
+        for (String p : parts) {
+            if (!p.isBlank() && !p.trim().equals("null"))
+                list.add(Double.parseDouble(p.trim()));
+        }
+        return list;
+    }
+
+    private Map<String, Object> empty(String symbol) {
+        return Map.of(
+                "symbol", symbol.toUpperCase(),
+                "timestamps", List.of(),
+                "prices", List.of()
+        );
     }
 }
