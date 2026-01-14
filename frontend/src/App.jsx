@@ -1,10 +1,18 @@
 import { useState, useEffect } from "react";
 import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 import "./App.css";
 import HistoricalChart from "./components/HistoricalChart";
 import PredictionCard from "./components/PredictionCard";
 import TradingPanel from "./components/TradingPanel";
 import Portfolio from "./components/Portfolio";
+import PopularStocks from "./components/PopularStocks";
+import StockInfo from "./components/StockInfo";
+import NewsSentiment from "./components/NewsSentiment";
+import PerformanceChart from "./components/PerformanceChart";
+import MarketStats from "./components/MarketStats";
+import Watchlist from "./components/Watchlist";
+import TradeHistory from "./components/TradeHistory";
 
 export default function App() {
   const [symbol, setSymbol] = useState("");
@@ -14,14 +22,15 @@ export default function App() {
   const [portfolio, setPortfolio] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const fetchPrice = async () => {
-    if (!symbol.trim()) return;
+  const fetchPrice = async (stockSymbol) => {
+    const sym = stockSymbol || symbol;
+    if (!sym.trim()) return;
 
     setLoading(true);
     setResult(null);
 
     try {
-      const res = await fetch(`http://localhost:8080/api/price/${symbol}`);
+      const res = await fetch(`http://localhost:8080/api/price/${sym}`);
       const data = await res.json();
       setResult(data);
     } catch (error) {
@@ -31,11 +40,12 @@ export default function App() {
     setLoading(false);
   };
 
-  const fetchHistorical = async () => {
-    if (!symbol.trim()) return;
+  const fetchHistorical = async (stockSymbol) => {
+    const sym = stockSymbol || symbol;
+    if (!sym.trim()) return;
 
     try {
-      const res = await fetch(`http://localhost:8080/api/historical/${symbol}`);
+      const res = await fetch(`http://localhost:8080/api/historical/${sym}`);
       const data = await res.json();
       setHistorical(data);
     } catch (error) {
@@ -43,11 +53,12 @@ export default function App() {
     }
   };
 
-  const fetchPrediction = async () => {
-    if (!symbol.trim()) return;
+  const fetchPrediction = async (stockSymbol) => {
+    const sym = stockSymbol || symbol;
+    if (!sym.trim()) return;
 
     try {
-      const res = await fetch(`http://localhost:8080/api/ml/predict/${symbol}`);
+      const res = await fetch(`http://localhost:8080/api/ml/predict/${sym}`);
       const data = await res.json();
       setPrediction(data);
     } catch (error) {
@@ -65,10 +76,17 @@ export default function App() {
     }
   };
 
-  const handleFetchAll = () => {
-    fetchPrice();
-    fetchHistorical();
-    fetchPrediction();
+  const handleFetchAll = (stockSymbol) => {
+    const sym = stockSymbol || symbol;
+    if (stockSymbol) setSymbol(stockSymbol);
+    fetchPrice(sym);
+    fetchHistorical(sym);
+    fetchPrediction(sym);
+  };
+
+  const handleStockSelect = (stockSymbol) => {
+    setSymbol(stockSymbol);
+    handleFetchAll(stockSymbol);
   };
 
   useEffect(() => {
@@ -80,80 +98,112 @@ export default function App() {
       <Navbar />
 
       <div className="landing-container">
-        <h1>Trading Insight</h1>
-        <p>Your machine learning powered trading platform.</p>
+        <div className="hero-content">
+          <div className="hero-badge">🤖 AI-Powered Trading</div>
+          <h1>Trading Insight</h1>
+          <p>Your machine learning powered trading platform with real-time predictions.</p>
+          
+          <div className="buttons">
+            <button className="btn primary-btn" onClick={() => document.getElementById('dashboard').scrollIntoView({ behavior: 'smooth' })}>
+              Launch Dashboard →
+            </button>
+            <button className="btn secondary">View Analytics</button>
+          </div>
 
-        <div className="buttons">
-          <button className="btn" onClick={() => document.getElementById('dashboard').scrollIntoView({ behavior: 'smooth' })}>
-            View Dashboard
-          </button>
-          <button className="btn secondary">API Docs</button>
+          <div className="stats-row">
+            <div className="stat">
+              <span className="stat-number">$100K</span>
+              <span className="stat-label">Demo Balance</span>
+            </div>
+            <div className="stat">
+              <span className="stat-number">Live</span>
+              <span className="stat-label">Market Data</span>
+            </div>
+            <div className="stat">
+              <span className="stat-number">AI</span>
+              <span className="stat-label">Predictions</span>
+            </div>
+          </div>
         </div>
       </div>
 
       <div className="dashboard-container" id="dashboard">
-        <div className="left-panel">
-          <div className="price-card">
-            <h2>Check Live Stock Price</h2>
+        
+        <MarketStats />
 
-            <div className="symbol-input">
-              <input
-                type="text"
-                placeholder="AAPL"
-                value={symbol}
-                onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-                onKeyPress={(e) => e.key === 'Enter' && handleFetchAll()}
-              />
+        <div className="dashboard-row">
+          <div className="left-panel">
+            <PopularStocks onSelectStock={handleStockSelect} />
 
-              <button className="btn small" onClick={handleFetchAll}>
-                Fetch All
-              </button>
+            <div className="search-card">
+              <h3>Search Stock</h3>
+              <div className="symbol-input">
+                <input
+                  type="text"
+                  placeholder="Enter symbol (e.g., AAPL)"
+                  value={symbol}
+                  onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+                  onKeyPress={(e) => e.key === 'Enter' && handleFetchAll()}
+                />
+                <button className="btn small primary-btn" onClick={() => handleFetchAll()}>
+                  {loading ? "..." : "Go"}
+                </button>
+              </div>
             </div>
 
-            {loading && <p>Loading...</p>}
-
-            {result && (
-              <div className="stock-result">
-                {result.error ? (
-                  <p className="error">{result.error}</p>
-                ) : (
-                  <>
-                    <h3>{result.symbol}</h3>
-                    <p className="price">${result.price}</p>
-                    <p className="source">{result.source}</p>
-                  </>
-                )}
-              </div>
-            )}
+            <Watchlist onSelectStock={handleStockSelect} />
           </div>
 
-          {prediction && <PredictionCard prediction={prediction} />}
-
-          <TradingPanel 
-            symbol={symbol} 
-            currentPrice={result?.price} 
-            onTradeComplete={fetchPortfolio}
-          />
+          <div className="right-panel">
+            <div className="chart-wrapper">
+              {historical && historical.prices?.length > 0 ? (
+                <HistoricalChart
+                  timestamps={historical.timestamps}
+                  prices={historical.prices}
+                  symbol={symbol}
+                  prediction={prediction}
+                />
+              ) : (
+                <div className="empty-state">
+                  <div className="empty-icon">📈</div>
+                  <h3>No Data Yet</h3>
+                  <p>Select a popular stock or search for a symbol to view charts and predictions</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
-        <div className="right-panel">
-          <div className="chart-wrapper">
-            {historical && historical.prices?.length > 0 ? (
-              <HistoricalChart
-                timestamps={historical.timestamps}
-                prices={historical.prices}
-                symbol={symbol}
-              />
-            ) : (
-              <p className="placeholder-text">
-                Enter a stock symbol and click "Fetch All" to view data
-              </p>
-            )}
+        <div className="dashboard-row">
+          <div className="left-panel">
+            {result && <StockInfo symbol={symbol} result={result} />}
+            {prediction && <PredictionCard prediction={prediction} />}
+            <TradingPanel 
+              symbol={symbol} 
+              currentPrice={result?.price} 
+              onTradeComplete={fetchPortfolio}
+            />
           </div>
 
-          {portfolio && <Portfolio portfolio={portfolio} />}
+          <div className="right-panel">
+            <PerformanceChart portfolio={portfolio} />
+            {portfolio && <Portfolio portfolio={portfolio} />}
+          </div>
         </div>
+
+        <div className="dashboard-row">
+          <div className="left-panel">
+            <TradeHistory />
+          </div>
+
+          <div className="right-panel">
+            <NewsSentiment symbol={symbol} />
+          </div>
+        </div>
+
       </div>
+
+      <Footer />
     </>
   );
 }

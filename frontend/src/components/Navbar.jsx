@@ -1,12 +1,14 @@
 export default function Navbar() {
   return (
     <nav className="navbar">
-      <h2 className="logo">Trading Insight</h2>
-
-      <div className="nav-links">
-        <a href="#">Home</a>
-        <a href="#">Dashboard</a>
-        <a href="#">API Docs</a>
+      <div className="nav-content">
+        <div className="logo">⚡ Trading Insight</div>
+        <div className="nav-links">
+          <a href="#dashboard">Dashboard</a>
+          <a href="#portfolio">Portfolio</a>
+          <a href="#about">About</a>
+          <button className="nav-btn">Sign In</button>
+        </div>
       </div>
     </nav>
   );

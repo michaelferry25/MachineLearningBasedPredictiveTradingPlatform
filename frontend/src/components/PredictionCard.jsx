@@ -8,8 +8,10 @@ export default function PredictionCard({ prediction }) {
     );
   }
 
-  const isPositive = prediction.direction === "UP";
+  const changePercent = prediction.change_percent || 0;
+  const isPositive = changePercent > 0;
   const directionClass = isPositive ? "positive" : "negative";
+  const direction = isPositive ? "UP" : changePercent < 0 ? "DOWN" : "NEUTRAL";
 
   return (
     <div className="prediction-card">
@@ -24,7 +26,7 @@ export default function PredictionCard({ prediction }) {
           </div>
           <div className="direction-badge">
             <span className={`badge ${directionClass}`}>
-              {prediction.direction} {prediction.change_percent > 0 ? '↑' : '↓'} {Math.abs(prediction.change_percent)}%
+              {direction} {isPositive ? '↑' : '↓'} {Math.abs(changePercent).toFixed(2)}%
             </span>
           </div>
         </div>
@@ -40,7 +42,7 @@ export default function PredictionCard({ prediction }) {
           </div>
           <div className="detail-item">
             <span className="detail-label">Model</span>
-            <span className="detail-value">{prediction.model}</span>
+            <span className="detail-value">SMA+Trend</span>
           </div>
         </div>
       </div>
