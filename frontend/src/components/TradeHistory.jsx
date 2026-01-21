@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+
 export default function TradeHistory() {
   const [trades, setTrades] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -12,7 +14,7 @@ export default function TradeHistory() {
 
   const fetchTradeHistory = async () => {
     try {
-      const res = await fetch("http://localhost:8080/api/trading/history");
+      const res = await fetch(`${API_URL}/api/trading/history`);
       const data = await res.json();
       setTrades(data.trades || []);
       setLoading(false);
@@ -36,7 +38,7 @@ export default function TradeHistory() {
       <div className="trade-history-card">
         <h3>📜 Trade History</h3>
         <div className="empty-trades">
-          <div className="empty-icon">📝</div>
+          <div className="empty-icon">📋</div>
           <p>No trades yet</p>
           <p className="empty-hint">Buy or sell stocks to see your history</p>
         </div>

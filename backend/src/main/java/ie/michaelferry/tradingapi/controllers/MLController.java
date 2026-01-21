@@ -6,7 +6,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.Map;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "*")
 public class MLController {
 
     private final RestTemplate restTemplate = new RestTemplate();

@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+
 export default function TradingPanel({ symbol, currentPrice, onTradeComplete }) {
   const [quantity, setQuantity] = useState(1);
   const [tradeResult, setTradeResult] = useState(null);
@@ -15,7 +17,7 @@ export default function TradingPanel({ symbol, currentPrice, onTradeComplete }) 
     setTradeResult(null);
 
     try {
-      const res = await fetch(`http://localhost:8080/api/trading/${type}`, {
+      const res = await fetch(`${API_URL}/api/trading/${type}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ symbol, quantity })

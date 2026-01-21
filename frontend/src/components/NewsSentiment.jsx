@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+
 export default function NewsSentiment({ symbol }) {
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -15,7 +17,7 @@ export default function NewsSentiment({ symbol }) {
     
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:8080/api/news/${symbol}`);
+      const res = await fetch(`${API_URL}/api/news/${symbol}`);
       const data = await res.json();
       setNews(data.slice(0, 5));
       setLoading(false);

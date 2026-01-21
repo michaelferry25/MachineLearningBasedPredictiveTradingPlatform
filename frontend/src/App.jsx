@@ -14,6 +14,8 @@ import MarketStats from "./components/MarketStats";
 import Watchlist from "./components/Watchlist";
 import TradeHistory from "./components/TradeHistory";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+
 export default function App() {
   const [symbol, setSymbol] = useState("");
   const [result, setResult] = useState(null);
@@ -30,7 +32,7 @@ export default function App() {
     setResult(null);
 
     try {
-      const res = await fetch(`http://localhost:8080/api/price/${sym}`);
+      const res = await fetch(`${API_URL}/api/price/${sym}`);
       const data = await res.json();
       setResult(data);
     } catch (error) {
@@ -45,7 +47,7 @@ export default function App() {
     if (!sym.trim()) return;
 
     try {
-      const res = await fetch(`http://localhost:8080/api/historical/${sym}`);
+      const res = await fetch(`${API_URL}/api/historical/${sym}`);
       const data = await res.json();
       setHistorical(data);
     } catch (error) {
@@ -58,7 +60,7 @@ export default function App() {
     if (!sym.trim()) return;
 
     try {
-      const res = await fetch(`http://localhost:8080/api/ml/predict/${sym}`);
+      const res = await fetch(`${API_URL}/api/ml/predict/${sym}`);
       const data = await res.json();
       setPrediction(data);
     } catch (error) {
@@ -68,7 +70,7 @@ export default function App() {
 
   const fetchPortfolio = async () => {
     try {
-      const res = await fetch("http://localhost:8080/api/trading/portfolio");
+      const res = await fetch(`${API_URL}/api/trading/portfolio`);
       const data = await res.json();
       setPortfolio(data);
     } catch (error) {
