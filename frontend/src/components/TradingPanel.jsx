@@ -2,12 +2,17 @@ import { useState } from "react";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
-export default function TradingPanel({ symbol, currentPrice, onTradeComplete }) {
+export default function TradingPanel({ symbol, currentPrice, onTradeComplete, authToken }) {
   const [quantity, setQuantity] = useState(1);
   const [tradeResult, setTradeResult] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const executeTrade = async (type) => {
+    if (!authToken) {
+      setTradeResult({ error: "Please sign in to place trades." });
+      return;
+    }
+
     if (!symbol || !currentPrice || currentPrice <= 0) {
       setTradeResult({ error: "Please fetch a valid stock price first" });
       return;
@@ -19,13 +24,16 @@ export default function TradingPanel({ symbol, currentPrice, onTradeComplete }) 
     try {
       const res = await fetch(`${API_URL}/api/trading/${type}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`
+        },
         body: JSON.stringify({ symbol, quantity })
       });
 
       const data = await res.json();
       setTradeResult(data);
-      
+
       if (data.success && onTradeComplete) {
         onTradeComplete();
       }
@@ -41,16 +49,11 @@ export default function TradingPanel({ symbol, currentPrice, onTradeComplete }) 
   return (
     <div className="trading-panel">
       <h3>Demo Trading</h3>
-      
+
       <div className="trade-input-group">
         <div className="input-row">
           <label>Symbol</label>
-          <input 
-            type="text" 
-            value={symbol} 
-            disabled 
-            className="disabled-input"
-          />
+          <input type="text" value={symbol} disabled className="disabled-input" />
         </div>
 
         <div className="input-row">
@@ -65,12 +68,7 @@ export default function TradingPanel({ symbol, currentPrice, onTradeComplete }) 
 
         <div className="input-row">
           <label>Price</label>
-          <input 
-            type="text" 
-            value={currentPrice ? `$${currentPrice}` : "$0.00"} 
-            disabled 
-            className="disabled-input"
-          />
+          <input type="text" value={currentPrice ? `$${currentPrice}` : "$0.00"} disabled className="disabled-input" />
         </div>
 
         <div className="total-value">
@@ -80,29 +78,17 @@ export default function TradingPanel({ symbol, currentPrice, onTradeComplete }) 
       </div>
 
       <div className="trade-buttons">
-        <button 
-          className="btn buy-btn" 
-          onClick={() => executeTrade("buy")}
-          disabled={loading || !currentPrice}
-        >
+        <button className="btn buy-btn" onClick={() => executeTrade("buy")} disabled={loading || !currentPrice}>
           {loading ? "Processing..." : "Buy"}
         </button>
-        <button 
-          className="btn sell-btn" 
-          onClick={() => executeTrade("sell")}
-          disabled={loading || !currentPrice}
-        >
+        <button className="btn sell-btn" onClick={() => executeTrade("sell")} disabled={loading || !currentPrice}>
           {loading ? "Processing..." : "Sell"}
         </button>
       </div>
 
       {tradeResult && (
-        <div className={`trade-result ${tradeResult.error ? 'error' : 'success'}`}>
-          {tradeResult.error ? (
-            <p>{tradeResult.error}</p>
-          ) : (
-            <p>✓ {tradeResult.message}</p>
-          )}
+        <div className={`trade-result ${tradeResult.error ? "error" : "success"}`}>
+          {tradeResult.error ? <p>{tradeResult.error}</p> : <p>✓ {tradeResult.message}</p>}
         </div>
       )}
     </div>

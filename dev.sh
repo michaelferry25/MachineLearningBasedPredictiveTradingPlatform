@@ -39,6 +39,10 @@ if (( ${#missing[@]} )); then
   exit 1
 fi
 
+if [[ -z "${JWT_SECRET:-}" ]]; then
+  echo "Warning: JWT_SECRET is not set. Backend will use an insecure default."
+fi
+
 # Defaults for frontend if not set
 : "${VITE_API_URL:=http://localhost:8080}"
 : "${VITE_ML_API_URL:=http://localhost:5001}"
@@ -54,12 +58,25 @@ fi
 
 pids=()
 
+kill_tree() {
+  local pid="$1"
+  if ! kill -0 "$pid" 2>/dev/null; then
+    return
+  fi
+
+  local children
+  children=$(pgrep -P "$pid" 2>/dev/null || true)
+  for child in $children; do
+    kill_tree "$child"
+  done
+
+  kill "$pid" 2>/dev/null || true
+}
+
 cleanup() {
   echo "Shutting down services..."
   for pid in "${pids[@]:-}"; do
-    if kill -0 "$pid" 2>/dev/null; then
-      kill "$pid" 2>/dev/null || true
-    fi
+    kill_tree "$pid"
   done
 }
 
@@ -67,13 +84,14 @@ trap cleanup INT TERM EXIT
 
 (
   cd "$ROOT_DIR/backend"
-  ./gradlew bootRun
+  ./gradlew bootRun --no-daemon
 ) &
 pids+=("$!")
 
 (
   cd "$ROOT_DIR/ml-service"
-  "$ML_PYTHON" app.py
+  export FLASK_DEBUG=1
+  "$ML_PYTHON" -m flask --app app run --host 0.0.0.0 --port 5001 --no-reload
 ) &
 pids+=("$!")
 

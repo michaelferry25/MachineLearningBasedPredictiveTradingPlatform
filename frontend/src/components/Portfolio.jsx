@@ -2,7 +2,7 @@ export default function Portfolio({ portfolio }) {
   if (!portfolio) return null;
 
   return (
-    <div className="portfolio-card">
+    <div className="portfolio-card" id="portfolio">
       <h3>Portfolio Summary</h3>
       
       <div className="portfolio-overview">

@@ -2,4 +2,5 @@
 venv/
 .env
 .DS_Store
-
+data/*.mv.db
+data/*.trace.db

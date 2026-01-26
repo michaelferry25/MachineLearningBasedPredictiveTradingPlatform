@@ -13,16 +13,69 @@ import PerformanceChart from "./components/PerformanceChart";
 import MarketStats from "./components/MarketStats";
 import Watchlist from "./components/Watchlist";
 import TradeHistory from "./components/TradeHistory";
+import AuthPanel from "./components/AuthPanel";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+const TOKEN_KEY = "marketmind_token";
+const USER_KEY = "marketmind_user";
 
 export default function App() {
+  const [auth, setAuth] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [symbol, setSymbol] = useState("");
   const [result, setResult] = useState(null);
   const [historical, setHistorical] = useState(null);
   const [prediction, setPrediction] = useState(null);
   const [portfolio, setPortfolio] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  const authToken = auth?.token;
+
+  useEffect(() => {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) {
+      setAuthLoading(false);
+      return;
+    }
+
+    fetch(`${API_URL}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          throw new Error("Unauthorized");
+        }
+        const user = await res.json();
+        localStorage.setItem(USER_KEY, JSON.stringify(user));
+        setAuth({ token, user });
+      })
+      .catch(() => {
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(USER_KEY);
+      })
+      .finally(() => setAuthLoading(false));
+  }, []);
+
+  const handleAuthSuccess = (payload) => {
+    const token = payload.accessToken;
+    const user = payload.user;
+    if (token) {
+      localStorage.setItem(TOKEN_KEY, token);
+    }
+    if (user) {
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
+    }
+    setAuth({ token, user });
+    setTimeout(() => {
+      document.getElementById("dashboard")?.scrollIntoView({ behavior: "smooth" });
+    }, 0);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    setAuth(null);
+  };
 
   const fetchPrice = async (stockSymbol) => {
     const sym = stockSymbol || symbol;
@@ -69,8 +122,15 @@ export default function App() {
   };
 
   const fetchPortfolio = async () => {
+    if (!authToken) return;
     try {
-      const res = await fetch(`${API_URL}/api/trading/portfolio`);
+      const res = await fetch(`${API_URL}/api/trading/portfolio`, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
+      if (res.status === 401) {
+        handleLogout();
+        return;
+      }
       const data = await res.json();
       setPortfolio(data);
     } catch (error) {
@@ -92,21 +152,44 @@ export default function App() {
   };
 
   useEffect(() => {
-    fetchPortfolio();
-  }, []);
+    if (authToken) {
+      fetchPortfolio();
+    }
+  }, [authToken]);
+
+  if (authLoading) {
+    return (
+      <div className="auth-loading">
+        <div className="auth-loading-card">Loading your workspace...</div>
+      </div>
+    );
+  }
+
+  if (!auth) {
+    return (
+      <>
+        <Navbar variant="auth" />
+        <AuthPanel onAuthSuccess={handleAuthSuccess} />
+        <Footer />
+      </>
+    );
+  }
 
   return (
     <>
-      <Navbar />
+      <Navbar user={auth.user} onLogout={handleLogout} variant="app" />
 
       <div className="landing-container">
         <div className="hero-content">
           <div className="hero-badge">🤖 AI-Powered Trading</div>
           <h1>Trading Insight</h1>
           <p>Your machine learning powered trading platform with real-time predictions.</p>
-          
+
           <div className="buttons">
-            <button className="btn primary-btn" onClick={() => document.getElementById('dashboard').scrollIntoView({ behavior: 'smooth' })}>
+            <button
+              className="btn primary-btn"
+              onClick={() => document.getElementById("dashboard").scrollIntoView({ behavior: "smooth" })}
+            >
               Launch Dashboard →
             </button>
             <button className="btn secondary">View Analytics</button>
@@ -130,7 +213,6 @@ export default function App() {
       </div>
 
       <div className="dashboard-container" id="dashboard">
-        
         <MarketStats />
 
         <div className="dashboard-row">
@@ -145,7 +227,7 @@ export default function App() {
                   placeholder="Enter symbol (e.g., AAPL)"
                   value={symbol}
                   onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-                  onKeyPress={(e) => e.key === 'Enter' && handleFetchAll()}
+                  onKeyPress={(e) => e.key === "Enter" && handleFetchAll()}
                 />
                 <button className="btn small primary-btn" onClick={() => handleFetchAll()}>
                   {loading ? "..." : "Go"}
@@ -180,10 +262,11 @@ export default function App() {
           <div className="left-panel">
             {result && <StockInfo symbol={symbol} result={result} />}
             {prediction && <PredictionCard prediction={prediction} />}
-            <TradingPanel 
-              symbol={symbol} 
-              currentPrice={result?.price} 
+            <TradingPanel
+              symbol={symbol}
+              currentPrice={result?.price}
               onTradeComplete={fetchPortfolio}
+              authToken={authToken}
             />
           </div>
 
@@ -195,14 +278,13 @@ export default function App() {
 
         <div className="dashboard-row">
           <div className="left-panel">
-            <TradeHistory />
+            <TradeHistory authToken={authToken} />
           </div>
 
           <div className="right-panel">
             <NewsSentiment symbol={symbol} />
           </div>
         </div>
-
       </div>
 
       <Footer />
