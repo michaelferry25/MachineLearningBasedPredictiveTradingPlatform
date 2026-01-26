@@ -14,14 +14,27 @@ import MarketStats from "./components/MarketStats";
 import Watchlist from "./components/Watchlist";
 import TradeHistory from "./components/TradeHistory";
 import AuthPanel from "./components/AuthPanel";
+import MarketSessions from "./components/MarketSessions";
+import AnalyticsHub from "./components/AnalyticsHub";
+import ResearchHub from "./components/ResearchHub";
+import SecuritySection from "./components/SecuritySection";
+import AboutSection from "./components/AboutSection";
+import LiveMarket from "./components/LiveMarket";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 const TOKEN_KEY = "marketmind_token";
 const USER_KEY = "marketmind_user";
 
+const getRoute = () => {
+  const raw = window.location.hash || "#/overview";
+  const cleaned = raw.replace("#", "");
+  return cleaned.startsWith("/") ? cleaned : `/${cleaned}`;
+};
+
 export default function App() {
   const [auth, setAuth] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [route, setRoute] = useState(getRoute());
   const [symbol, setSymbol] = useState("");
   const [result, setResult] = useState(null);
   const [historical, setHistorical] = useState(null);
@@ -30,6 +43,15 @@ export default function App() {
   const [loading, setLoading] = useState(false);
 
   const authToken = auth?.token;
+
+  useEffect(() => {
+    const onHashChange = () => {
+      setRoute(getRoute());
+      window.scrollTo(0, 0);
+    };
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem(TOKEN_KEY);
@@ -66,15 +88,14 @@ export default function App() {
       localStorage.setItem(USER_KEY, JSON.stringify(user));
     }
     setAuth({ token, user });
-    setTimeout(() => {
-      document.getElementById("dashboard")?.scrollIntoView({ behavior: "smooth" });
-    }, 0);
+    window.location.hash = "#/overview";
   };
 
   const handleLogout = () => {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     setAuth(null);
+    window.location.hash = "#/auth";
   };
 
   const fetchPrice = async (stockSymbol) => {
@@ -157,6 +178,142 @@ export default function App() {
     }
   }, [authToken]);
 
+  const renderPage = () => {
+    switch (route) {
+      case "/analytics":
+        return <AnalyticsHub />;
+      case "/sessions":
+        return <MarketSessions />;
+      case "/dashboard":
+        return (
+          <div className="dashboard-container" id="dashboard">
+            <MarketStats />
+
+            <div className="dashboard-row">
+              <div className="left-panel">
+                <PopularStocks onSelectStock={handleStockSelect} />
+
+                <div className="search-card">
+                  <h3>Search Stock</h3>
+                  <div className="symbol-input">
+                    <input
+                      type="text"
+                      placeholder="Enter symbol (e.g., AAPL)"
+                      value={symbol}
+                      onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+                      onKeyPress={(e) => e.key === "Enter" && handleFetchAll()}
+                    />
+                    <button className="btn small primary-btn" onClick={() => handleFetchAll()}>
+                      {loading ? "..." : "Go"}
+                    </button>
+                  </div>
+                </div>
+
+                <Watchlist onSelectStock={handleStockSelect} />
+              </div>
+
+              <div className="right-panel">
+                <div className="chart-wrapper">
+                  {historical && historical.prices?.length > 0 ? (
+                    <HistoricalChart
+                      timestamps={historical.timestamps}
+                      prices={historical.prices}
+                      symbol={symbol}
+                      prediction={prediction}
+                    />
+                  ) : (
+                    <div className="empty-state">
+                      <div className="empty-icon">📈</div>
+                      <h3>No Data Yet</h3>
+                      <p>Select a popular stock or search for a symbol to view charts and predictions</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="dashboard-row">
+              <div className="left-panel">
+                {result && <StockInfo symbol={symbol} result={result} />}
+                {prediction && <PredictionCard prediction={prediction} />}
+                <TradingPanel
+                  symbol={symbol}
+                  currentPrice={result?.price}
+                  onTradeComplete={fetchPortfolio}
+                  authToken={authToken}
+                />
+              </div>
+
+              <div className="right-panel">
+                <PerformanceChart portfolio={portfolio} />
+                {portfolio && <Portfolio portfolio={portfolio} />}
+              </div>
+            </div>
+
+            <div className="dashboard-row">
+              <div className="left-panel">
+                <TradeHistory authToken={authToken} />
+              </div>
+
+              <div className="right-panel">
+                <NewsSentiment symbol={symbol} />
+              </div>
+            </div>
+          </div>
+        );
+      case "/research":
+        return <ResearchHub />;
+      case "/security":
+        return <SecuritySection />;
+      case "/about":
+        return <AboutSection />;
+      case "/live":
+        return <LiveMarket />;
+      case "/overview":
+      default:
+        return (
+          <div className="overview-page">
+            <div className="landing-container" id="overview">
+              <div className="hero-content">
+                <div className="hero-badge">🤖 AI-Powered Trading</div>
+                <h1>Trading Insight</h1>
+                <p>Your machine learning powered trading platform with real-time predictions.</p>
+
+                <div className="buttons">
+                  <button
+                    className="btn primary-btn"
+                    onClick={() => (window.location.hash = "#/dashboard")}
+                  >
+                    Launch Dashboard →
+                  </button>
+                  <button className="btn secondary" onClick={() => (window.location.hash = "#/analytics")}>
+                    View Analytics
+                  </button>
+                </div>
+
+                <div className="stats-row">
+                  <div className="stat">
+                    <span className="stat-number">$100K</span>
+                    <span className="stat-label">Demo Balance</span>
+                  </div>
+                  <div className="stat">
+                    <span className="stat-number">Live</span>
+                    <span className="stat-label">Market Data</span>
+                  </div>
+                  <div className="stat">
+                    <span className="stat-number">AI</span>
+                    <span className="stat-label">Predictions</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <AnalyticsHub />
+          </div>
+        );
+    }
+  };
+
   if (authLoading) {
     return (
       <div className="auth-loading">
@@ -168,7 +325,7 @@ export default function App() {
   if (!auth) {
     return (
       <>
-        <Navbar variant="auth" />
+        <Navbar variant="auth" currentRoute={route} />
         <AuthPanel onAuthSuccess={handleAuthSuccess} />
         <Footer />
       </>
@@ -177,116 +334,8 @@ export default function App() {
 
   return (
     <>
-      <Navbar user={auth.user} onLogout={handleLogout} variant="app" />
-
-      <div className="landing-container">
-        <div className="hero-content">
-          <div className="hero-badge">🤖 AI-Powered Trading</div>
-          <h1>Trading Insight</h1>
-          <p>Your machine learning powered trading platform with real-time predictions.</p>
-
-          <div className="buttons">
-            <button
-              className="btn primary-btn"
-              onClick={() => document.getElementById("dashboard").scrollIntoView({ behavior: "smooth" })}
-            >
-              Launch Dashboard →
-            </button>
-            <button className="btn secondary">View Analytics</button>
-          </div>
-
-          <div className="stats-row">
-            <div className="stat">
-              <span className="stat-number">$100K</span>
-              <span className="stat-label">Demo Balance</span>
-            </div>
-            <div className="stat">
-              <span className="stat-number">Live</span>
-              <span className="stat-label">Market Data</span>
-            </div>
-            <div className="stat">
-              <span className="stat-number">AI</span>
-              <span className="stat-label">Predictions</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="dashboard-container" id="dashboard">
-        <MarketStats />
-
-        <div className="dashboard-row">
-          <div className="left-panel">
-            <PopularStocks onSelectStock={handleStockSelect} />
-
-            <div className="search-card">
-              <h3>Search Stock</h3>
-              <div className="symbol-input">
-                <input
-                  type="text"
-                  placeholder="Enter symbol (e.g., AAPL)"
-                  value={symbol}
-                  onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-                  onKeyPress={(e) => e.key === "Enter" && handleFetchAll()}
-                />
-                <button className="btn small primary-btn" onClick={() => handleFetchAll()}>
-                  {loading ? "..." : "Go"}
-                </button>
-              </div>
-            </div>
-
-            <Watchlist onSelectStock={handleStockSelect} />
-          </div>
-
-          <div className="right-panel">
-            <div className="chart-wrapper">
-              {historical && historical.prices?.length > 0 ? (
-                <HistoricalChart
-                  timestamps={historical.timestamps}
-                  prices={historical.prices}
-                  symbol={symbol}
-                  prediction={prediction}
-                />
-              ) : (
-                <div className="empty-state">
-                  <div className="empty-icon">📈</div>
-                  <h3>No Data Yet</h3>
-                  <p>Select a popular stock or search for a symbol to view charts and predictions</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="dashboard-row">
-          <div className="left-panel">
-            {result && <StockInfo symbol={symbol} result={result} />}
-            {prediction && <PredictionCard prediction={prediction} />}
-            <TradingPanel
-              symbol={symbol}
-              currentPrice={result?.price}
-              onTradeComplete={fetchPortfolio}
-              authToken={authToken}
-            />
-          </div>
-
-          <div className="right-panel">
-            <PerformanceChart portfolio={portfolio} />
-            {portfolio && <Portfolio portfolio={portfolio} />}
-          </div>
-        </div>
-
-        <div className="dashboard-row">
-          <div className="left-panel">
-            <TradeHistory authToken={authToken} />
-          </div>
-
-          <div className="right-panel">
-            <NewsSentiment symbol={symbol} />
-          </div>
-        </div>
-      </div>
-
+      <Navbar user={auth.user} onLogout={handleLogout} variant="app" currentRoute={route} />
+      <main className="page-content">{renderPage()}</main>
       <Footer />
     </>
   );

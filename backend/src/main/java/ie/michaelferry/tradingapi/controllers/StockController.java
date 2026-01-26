@@ -5,6 +5,7 @@ import ie.michaelferry.tradingapi.models.HistoricalPriceResponse;
 import ie.michaelferry.tradingapi.services.StockService;
 import ie.michaelferry.tradingapi.services.NewsService;
 import ie.michaelferry.tradingapi.services.HistoricalPriceService;
+import ie.michaelferry.tradingapi.services.CandleService;
 
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,15 +22,18 @@ public class StockController {
     private final StockService stockService;
     private final NewsService newsService;
     private final HistoricalPriceService historicalPriceService;
+    private final CandleService candleService;
 
     public StockController(
             StockService stockService,
             NewsService newsService,
-            HistoricalPriceService historicalPriceService
+            HistoricalPriceService historicalPriceService,
+            CandleService candleService
     ) {
         this.stockService = stockService;
         this.newsService = newsService;
         this.historicalPriceService = historicalPriceService;
+        this.candleService = candleService;
     }
 
     // Live stock price from Finnhub
@@ -48,6 +52,12 @@ public class StockController {
     @GetMapping("/api/historical/{symbol}")
     public Map<String, Object> getHistorical(@PathVariable String symbol) {
         return historicalPriceService.getHistoricalPrices(symbol);
+    }
+
+    // Candlestick data for advanced charts
+    @GetMapping("/api/candles/{symbol}")
+    public Map<String, Object> getCandles(@PathVariable String symbol) {
+        return candleService.getCandles(symbol);
     }
 
 }
