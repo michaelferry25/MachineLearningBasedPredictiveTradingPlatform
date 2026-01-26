@@ -305,6 +305,18 @@ export default function App() {
                     <span className="stat-label">Predictions</span>
                   </div>
                 </div>
+
+                <div className="scroll-down-wrap">
+                  <button
+                    className="scroll-down"
+                    type="button"
+                    aria-label="Go to analytics"
+                    onClick={() => (window.location.hash = "#/analytics")}
+                  >
+                    <span>Explore Analytics</span>
+                    <span className="scroll-arrow" aria-hidden="true">↓</span>
+                  </button>
+                </div>
               </div>
             </div>
 
