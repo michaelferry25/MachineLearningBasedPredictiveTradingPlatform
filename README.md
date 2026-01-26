@@ -81,13 +81,33 @@ cd MachineLearningBasedPredictiveTradingPlatform
 
 ### 2. Configure API Keys
 
-Create environment variables for API access:
+Create a `.env` file at the repo root (you can copy `.env.example`) and add your keys:
 
 ```bash
-export FINNHUB_API_KEY=your_finnhub_key_here
+cp .env.example .env
+# then edit .env with your keys
 ```
 
-### 3. Backend Setup
+Required:
+- `FINNHUB_API_KEY`
+- `NEWS_API_KEY`
+
+Optional (frontend overrides):
+- `VITE_API_URL` (default `http://localhost:8080`)
+- `VITE_ML_API_URL` (default `http://localhost:5001`)
+
+### 3. One-Command Dev Run (frontend + backend + ML)
+
+```bash
+./dev.sh
+```
+
+This starts:
+- Backend on `http://localhost:8080`
+- ML service on `http://localhost:5001`
+- Frontend on `http://localhost:5173`
+
+### 4. Backend Setup
 
 ```bash
 cd backend
@@ -97,7 +117,7 @@ cd backend
 
 The backend will start on `http://localhost:8080`
 
-### 4. ML Service Setup
+### 5. ML Service Setup
 
 ```bash
 cd ml-service
@@ -109,7 +129,7 @@ python app.py
 
 The ML service will start on `http://localhost:5001`
 
-### 5. Frontend Setup
+### 6. Frontend Setup
 
 ```bash
 cd frontend
