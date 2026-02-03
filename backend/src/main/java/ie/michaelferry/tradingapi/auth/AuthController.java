@@ -3,6 +3,7 @@ package ie.michaelferry.tradingapi.auth;
 import ie.michaelferry.tradingapi.auth.dto.AuthResponse;
 import ie.michaelferry.tradingapi.auth.dto.LoginRequest;
 import ie.michaelferry.tradingapi.auth.dto.RegisterRequest;
+import ie.michaelferry.tradingapi.auth.dto.UpdateProfileRequest;
 import ie.michaelferry.tradingapi.auth.dto.UserResponse;
 import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -38,5 +39,19 @@ public class AuthController {
             );
         }
         return authService.getCurrentUser(userDetails.getUsername());
+    }
+
+    @PutMapping("/profile")
+    public UserResponse updateProfile(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody UpdateProfileRequest request
+    ) {
+        if (userDetails == null) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.UNAUTHORIZED,
+                    "Not authenticated"
+            );
+        }
+        return authService.updateProfile(userDetails.getUsername(), request);
     }
 }

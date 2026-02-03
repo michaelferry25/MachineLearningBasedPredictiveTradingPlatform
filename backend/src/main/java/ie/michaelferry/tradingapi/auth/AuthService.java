@@ -3,6 +3,7 @@ package ie.michaelferry.tradingapi.auth;
 import ie.michaelferry.tradingapi.auth.dto.AuthResponse;
 import ie.michaelferry.tradingapi.auth.dto.LoginRequest;
 import ie.michaelferry.tradingapi.auth.dto.RegisterRequest;
+import ie.michaelferry.tradingapi.auth.dto.UpdateProfileRequest;
 import ie.michaelferry.tradingapi.auth.dto.UserResponse;
 import ie.michaelferry.tradingapi.auth.security.JwtService;
 import org.springframework.http.HttpStatus;
@@ -66,6 +67,16 @@ public class AuthService {
         UserAccount user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
         return UserResponse.from(user);
+    }
+
+    public UserResponse updateProfile(String email, UpdateProfileRequest request) {
+        UserAccount user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+
+        String displayName = request.displayName().trim();
+        user.setDisplayName(displayName);
+        UserAccount saved = userRepository.save(user);
+        return UserResponse.from(saved);
     }
 
     private AuthResponse buildAuthResponse(UserAccount user) {

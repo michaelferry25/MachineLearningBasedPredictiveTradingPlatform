@@ -20,10 +20,25 @@ import ResearchHub from "./components/ResearchHub";
 import SecuritySection from "./components/SecuritySection";
 import AboutSection from "./components/AboutSection";
 import LiveMarket from "./components/LiveMarket";
+import SettingsPage from "./components/SettingsPage";
+import ProfilePage from "./components/ProfilePage";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 const TOKEN_KEY = "marketmind_token";
 const USER_KEY = "marketmind_user";
+const SETTINGS_KEY = "marketmind_settings";
+const DEFAULT_SETTINGS = {
+  theme: "dark",
+  reduceMotion: false,
+  compactMode: false,
+  defaultTimeframe: "5 minutes",
+  autoRefresh: true,
+  showOverlays: true,
+  tradeNotifications: true,
+  volatilityAlerts: false,
+  personalization: true,
+  usageAnalytics: true
+};
 
 const getRoute = () => {
   const raw = window.location.hash || "#/overview";
@@ -41,6 +56,7 @@ export default function App() {
   const [prediction, setPrediction] = useState(null);
   const [portfolio, setPortfolio] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
 
   const authToken = auth?.token;
 
@@ -52,6 +68,26 @@ export default function App() {
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(SETTINGS_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setSettings({ ...DEFAULT_SETTINGS, ...parsed });
+      } catch (error) {
+        // ignore invalid settings
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    document.body.classList.toggle("theme-light", settings.theme === "light");
+    document.body.classList.toggle("reduce-motion", settings.reduceMotion);
+    document.body.classList.toggle("compact-mode", settings.compactMode);
+    document.documentElement.style.colorScheme = settings.theme;
+  }, [settings]);
 
   useEffect(() => {
     const token = localStorage.getItem(TOKEN_KEY);
@@ -96,6 +132,19 @@ export default function App() {
     localStorage.removeItem(USER_KEY);
     setAuth(null);
     window.location.hash = "#/auth";
+  };
+
+  const handleProfileUpdate = (user) => {
+    setAuth((prev) => (prev ? { ...prev, user } : prev));
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+  };
+
+  const updateSettings = (patch) => {
+    setSettings((prev) => ({ ...prev, ...patch }));
+  };
+
+  const resetSettings = () => {
+    setSettings(DEFAULT_SETTINGS);
   };
 
   const fetchPrice = async (stockSymbol) => {
@@ -268,7 +317,24 @@ export default function App() {
       case "/about":
         return <AboutSection />;
       case "/live":
-        return <LiveMarket />;
+        return <LiveMarket settings={settings} />;
+      case "/settings":
+        return (
+          <SettingsPage
+            settings={settings}
+            onUpdate={updateSettings}
+            onReset={resetSettings}
+          />
+        );
+      case "/profile":
+        return (
+          <ProfilePage
+            user={auth?.user}
+            authToken={authToken}
+            onProfileUpdate={handleProfileUpdate}
+            portfolio={portfolio}
+          />
+        );
       case "/overview":
       default:
         return (

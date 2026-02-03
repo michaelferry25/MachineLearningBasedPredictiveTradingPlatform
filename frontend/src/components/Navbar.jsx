@@ -10,7 +10,9 @@ export default function Navbar({ user, onLogout, variant = "app", currentRoute =
     { label: "Dashboard", href: "#/dashboard" },
     { label: "Research", href: "#/research" },
     { label: "Security", href: "#/security" },
-    { label: "About", href: "#/about" }
+    { label: "About", href: "#/about" },
+    { label: "Profile", href: "#/profile" },
+    { label: "Settings", href: "#/settings" }
   ];
 
   return (
