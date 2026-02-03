@@ -10,7 +10,7 @@ export default function ResearchHub() {
     },
     {
       title: "News Intelligence",
-      points: ["AI chips headlines lift semis", "Consumer demand resilient", "FX headwinds easing"]
+      points: ["Chip sector headlines lift semis", "Consumer demand resilient", "FX headwinds easing"]
     }
   ];
 

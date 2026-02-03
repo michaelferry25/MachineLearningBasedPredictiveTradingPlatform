@@ -341,9 +341,9 @@ export default function App() {
           <div className="overview-page">
             <div className="landing-container" id="overview">
               <div className="hero-content">
-                <div className="hero-badge">🤖 AI-Powered Trading</div>
+                <div className="hero-badge">📊 Market Intelligence</div>
                 <h1>Trading Insight</h1>
-                <p>Your machine learning powered trading platform with real-time predictions.</p>
+                <p>Your trading platform with real-time market data and forecasting tools.</p>
 
                 <div className="buttons">
                   <button
@@ -367,8 +367,8 @@ export default function App() {
                     <span className="stat-label">Market Data</span>
                   </div>
                   <div className="stat">
-                    <span className="stat-number">AI</span>
-                    <span className="stat-label">Predictions</span>
+                    <span className="stat-number">Forecasts</span>
+                    <span className="stat-label">Signals</span>
                   </div>
                 </div>
 

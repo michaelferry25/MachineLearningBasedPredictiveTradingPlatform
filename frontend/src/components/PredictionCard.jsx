@@ -2,7 +2,7 @@ export default function PredictionCard({ prediction }) {
   if (prediction.error) {
     return (
       <div className="prediction-card error">
-        <h3>ML Prediction</h3>
+        <h3>Forecast</h3>
         <p className="error-text">{prediction.error}</p>
       </div>
     );
@@ -15,11 +15,11 @@ export default function PredictionCard({ prediction }) {
 
   return (
     <div className="prediction-card">
-      <h3>ML Prediction</h3>
+      <h3>Forecast</h3>
       <div className="prediction-content">
         <div className="prediction-main">
           <div className="predicted-price">
-            <span className="label">Predicted Price</span>
+            <span className="label">Forecast Price</span>
             <span className={`value ${directionClass}`}>
               ${prediction.prediction}
             </span>
@@ -37,7 +37,7 @@ export default function PredictionCard({ prediction }) {
             <span className="detail-value">${prediction.current_price}</span>
           </div>
           <div className="detail-item">
-            <span className="detail-label">Confidence</span>
+            <span className="detail-label">Signal strength</span>
             <span className="detail-value">{prediction.confidence}%</span>
           </div>
           <div className="detail-item">

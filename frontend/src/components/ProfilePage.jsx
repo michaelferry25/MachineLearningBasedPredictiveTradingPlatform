@@ -136,7 +136,7 @@ export default function ProfilePage({ user, authToken, onProfileUpdate, portfoli
               <strong>Finnhub + Twelve Data</strong>
             </div>
             <div>
-              <span>ML engine</span>
+              <span>Forecast engine</span>
               <strong>Python Flask</strong>
             </div>
             <div>

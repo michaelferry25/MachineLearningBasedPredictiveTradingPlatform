@@ -4,7 +4,7 @@ export default function PricingSection() {
       name: "Starter",
       price: "Free",
       description: "Essential tools for paper trading and watchlists.",
-      features: ["Real-time quotes", "ML prediction snapshot", "5 watchlists", "Community insights"]
+      features: ["Real-time quotes", "Forecast snapshot", "5 watchlists", "Community insights"]
     },
     {
       name: "Pro",

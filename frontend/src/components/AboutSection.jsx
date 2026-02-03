@@ -5,7 +5,7 @@ export default function AboutSection() {
         <span className="section-kicker">About</span>
         <h2>MarketMind is your professional trading command center</h2>
         <p>
-          We blend ML forecasting, live market data, and portfolio simulation into a single
+          We blend forecasting models, live market data, and portfolio simulation into a single
           workspace built for modern traders.
         </p>
       </div>
@@ -17,7 +17,7 @@ export default function AboutSection() {
         </div>
         <div className="about-card">
           <h3>Capabilities</h3>
-          <p>End-to-end workflow from discovery to execution, supported by AI insights.</p>
+          <p>End-to-end workflow from discovery to execution, supported by data insights.</p>
         </div>
         <div className="about-card">
           <h3>Next on the roadmap</h3>

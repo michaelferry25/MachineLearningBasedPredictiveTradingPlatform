@@ -4,7 +4,7 @@ export default function Footer() {
       <div className="footer-content">
         <div className="footer-section">
           <h4>MarketMind</h4>
-          <p>ML-powered trading platform delivering professional-grade analytics.</p>
+          <p>Data-driven trading platform delivering professional-grade analytics.</p>
         </div>
 
         <div className="footer-section">
@@ -30,7 +30,7 @@ export default function Footer() {
       </div>
 
       <div className="footer-bottom">
-        <p>© 2026 MarketMind. Built with AI-powered predictions.</p>
+        <p>© 2026 MarketMind. Built with data-driven forecasts.</p>
         <p className="disclaimer-text">⚠️ Demo Mode - Not real trading</p>
       </div>
     </footer>

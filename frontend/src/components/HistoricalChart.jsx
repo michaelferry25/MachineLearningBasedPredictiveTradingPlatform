@@ -37,7 +37,7 @@ export default function HistoricalChart({ timestamps, prices, symbol, prediction
     const predictionPrice = prediction.prediction;
     
     datasets.push({
-      label: 'ML Prediction',
+      label: 'Forecast',
       data: [...Array(prices.length - 1).fill(null), lastPrice, predictionPrice],
       borderColor: prediction.direction === 'UP' ? '#3fb950' : '#ff7b72',
       backgroundColor: 'transparent',
@@ -51,7 +51,7 @@ export default function HistoricalChart({ timestamps, prices, symbol, prediction
   }
 
   const data = {
-    labels: [...labels, 'Prediction'],
+    labels: [...labels, 'Forecast'],
     datasets: datasets,
   };
 

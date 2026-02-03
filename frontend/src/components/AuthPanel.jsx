@@ -82,8 +82,8 @@ export default function AuthPanel({ onAuthSuccess }) {
           <span className="auth-badge">MarketMind Access</span>
           <h1>{mode === "login" ? "Welcome back" : "Create your trading HQ"}</h1>
           <p>
-            Your AI-powered trading workspace with live market intel, portfolio
-            analytics, and predictive signals.
+            Your trading workspace with live market intel, portfolio analytics,
+            and forecast signals.
           </p>
 
           <div className="auth-ticker">

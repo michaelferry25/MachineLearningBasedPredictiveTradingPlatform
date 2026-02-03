@@ -110,7 +110,7 @@ export default function MarketSessions() {
               </div>
               <div className="session-time">{timeLabel}</div>
               <div className="session-meta">
-                {session.open} — {session.close} ({session.tz.split("/")[1]})
+                {session.open} - {session.close} ({session.tz.split("/")[1]})
               </div>
               <div className={`session-accent ${session.accent}`}>
                 Liquidity focus: {session.accent === "positive" ? "High" : session.accent === "neutral" ? "Balanced" : "Opportunity"}

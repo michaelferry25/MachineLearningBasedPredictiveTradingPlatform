@@ -14,9 +14,9 @@ export default function MarketStats() {
       icon: '📊'
     },
     { 
-      label: 'ML Predictions', 
+      label: 'Forecast Signals', 
       value: '76%', 
-      change: 'Accuracy',
+      change: 'Hit rate',
       icon: '🎯'
     },
     { 
