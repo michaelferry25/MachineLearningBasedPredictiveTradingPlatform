@@ -1,8 +1,11 @@
 package ie.michaelferry.tradingapi.controllers;
 
+import ie.michaelferry.tradingapi.ml.PredictionLog;
+import ie.michaelferry.tradingapi.ml.PredictionLogService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -11,18 +14,49 @@ public class MLController {
 
     private final RestTemplate restTemplate = new RestTemplate();
     private final String ML_SERVICE_URL = "http://localhost:5001";
+    private final PredictionLogService predictionLogService;
+
+    public MLController(PredictionLogService predictionLogService) {
+        this.predictionLogService = predictionLogService;
+    }
 
     @GetMapping("/api/ml/predict/{symbol}")
-    public Map<String, Object> getPrediction(@PathVariable String symbol) {
+    public Map<String, Object> getPrediction(
+            @PathVariable String symbol,
+            @RequestParam(defaultValue = "24") int horizonHours
+    ) {
         try {
             String url = ML_SERVICE_URL + "/predict/" + symbol;
-            return restTemplate.getForObject(url, Map.class);
+            Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+            predictionLogService.logPrediction(symbol, response, horizonHours);
+            return response;
         } catch (Exception e) {
             return Map.of(
                 "error", "ML service unavailable",
                 "message", e.getMessage()
             );
         }
+    }
+
+    @GetMapping("/api/ml/predictions")
+    public List<PredictionLog> getPredictions(
+            @RequestParam(defaultValue = "25") int limit,
+            @RequestParam(required = false) Boolean evaluated
+    ) {
+        return predictionLogService.getRecentLogs(limit, evaluated);
+    }
+
+    @PostMapping("/api/ml/evaluate")
+    public Map<String, Object> evaluatePredictions(
+            @RequestParam(defaultValue = "24") int horizonHours
+    ) {
+        int evaluated = predictionLogService.evaluatePending(horizonHours);
+        return Map.of("evaluated", evaluated);
+    }
+
+    @GetMapping("/api/ml/metrics")
+    public Map<String, Object> getMetrics() {
+        return predictionLogService.getMetrics();
     }
 
     @GetMapping("/api/ml/health")

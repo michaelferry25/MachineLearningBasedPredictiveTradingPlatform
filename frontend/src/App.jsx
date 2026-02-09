@@ -3,7 +3,6 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import "./App.css";
 import HistoricalChart from "./components/HistoricalChart";
-import PredictionCard from "./components/PredictionCard";
 import TradingPanel from "./components/TradingPanel";
 import Portfolio from "./components/Portfolio";
 import PopularStocks from "./components/PopularStocks";
@@ -22,6 +21,8 @@ import AboutSection from "./components/AboutSection";
 import LiveMarket from "./components/LiveMarket";
 import SettingsPage from "./components/SettingsPage";
 import ProfilePage from "./components/ProfilePage";
+import EnhancedPredictionCard from "./components/EnhancedPredictionCard";
+import PredictionHistory from "./components/PredictionHistory";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 const TOKEN_KEY = "marketmind_token";
@@ -284,7 +285,7 @@ export default function App() {
             <div className="dashboard-row">
               <div className="left-panel">
                 {result && <StockInfo symbol={symbol} result={result} />}
-                {prediction && <PredictionCard prediction={prediction} />}
+                <EnhancedPredictionCard symbol={symbol} />
                 <TradingPanel
                   symbol={symbol}
                   currentPrice={result?.price}
@@ -306,6 +307,12 @@ export default function App() {
 
               <div className="right-panel">
                 <NewsSentiment symbol={symbol} />
+              </div>
+            </div>
+
+            <div className="dashboard-row">
+              <div className="full-width">
+                <PredictionHistory symbol={symbol} />
               </div>
             </div>
           </div>

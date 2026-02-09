@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from datetime import datetime, timedelta
+from datetime import datetime
+from statistics import pstdev
 import requests
 import os
 import json
@@ -8,9 +9,12 @@ import json
 app = Flask(__name__)
 CORS(app)
 
-def get_historical_data_yahoo(symbol, days=30):
+def get_historical_data_yahoo(symbol, range_value="6mo", interval="1d"):
     try:
-        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol.upper()}?interval=1d&range=1mo"
+        url = (
+            f"https://query1.finance.yahoo.com/v8/finance/chart/"
+            f"{symbol.upper()}?interval={interval}&range={range_value}"
+        )
         
         headers = {
             'User-Agent': 'Mozilla/5.0'
@@ -31,28 +35,43 @@ def get_historical_data_yahoo(symbol, days=30):
         print(f"Error fetching Yahoo data: {e}")
         return None
 
-def simple_moving_average_prediction(prices, window=5):
-    if len(prices) < window:
+def simple_moving_average_prediction(prices):
+    if len(prices) < 30:
         return None
-    
-    recent_prices = prices[-window:]
-    sma = sum(recent_prices) / len(recent_prices)
-    
-    x_vals = list(range(len(recent_prices)))
+
+    def sma(window):
+        window_prices = prices[-window:]
+        return sum(window_prices) / len(window_prices)
+
+    short = sma(5)
+    mid = sma(10)
+    long = sma(20)
+
+    base = (short * 0.5) + (mid * 0.3) + (long * 0.2)
+
+    trend_window = prices[-10:]
+    x_vals = list(range(len(trend_window)))
     x_mean = sum(x_vals) / len(x_vals)
-    y_mean = sum(recent_prices) / len(recent_prices)
-    
-    numerator = sum((x_vals[i] - x_mean) * (recent_prices[i] - y_mean) for i in range(len(x_vals)))
+    y_mean = sum(trend_window) / len(trend_window)
+
+    numerator = sum((x_vals[i] - x_mean) * (trend_window[i] - y_mean) for i in range(len(x_vals)))
     denominator = sum((x_vals[i] - x_mean) ** 2 for i in range(len(x_vals)))
-    
     trend = numerator / denominator if denominator != 0 else 0
-    
-    prediction = sma + trend
-    
-    confidence = min(95, max(60, 80 - abs(trend) * 10))
-    
-    direction = "UP" if trend > 0 else "DOWN" if trend < 0 else "NEUTRAL"
-    
+
+    momentum = prices[-1] - prices[-6] if len(prices) >= 6 else 0
+
+    returns = [(prices[i] - prices[i - 1]) / prices[i - 1] for i in range(1, len(prices))]
+    volatility = pstdev(returns) if len(returns) > 1 else 0
+
+    prediction = base + (trend * 0.8) + (momentum * 0.2)
+    prediction = max(0.01, prediction)
+
+    volatility_penalty = min(15, volatility * 100)
+    confidence = 75 - volatility_penalty
+    confidence = max(55, min(90, confidence))
+
+    direction = "UP" if prediction > prices[-1] else "DOWN" if prediction < prices[-1] else "NEUTRAL"
+
     return {
         "prediction": round(prediction, 2),
         "confidence": round(confidence, 2),
@@ -87,7 +106,7 @@ def predict(symbol):
         return jsonify({
             "symbol": symbol.upper(),
             "timestamp": datetime.now().isoformat(),
-            "model": "Simple Moving Average + Trend",
+            "model": "Weighted Moving Average + Trend",
             **prediction
         })
     

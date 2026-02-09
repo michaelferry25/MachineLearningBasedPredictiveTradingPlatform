@@ -1,3 +1,10 @@
 Flask==3.0.0
-flask-cors==4.0.0
+Flask-CORS==4.0.0
+yfinance==0.2.36
+pandas==2.2.0
+numpy==1.26.3
+scikit-learn==1.4.0
 requests==2.31.0
+textblob==0.18.0
+snscrape==0.7.0.20230622
+python-dotenv==1.0.1
