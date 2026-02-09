@@ -10,6 +10,7 @@ import ie.michaelferry.tradingapi.services.CandleService;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -56,8 +57,12 @@ public class StockController {
 
     // Candlestick data for advanced charts
     @GetMapping("/api/candles/{symbol}")
-    public Map<String, Object> getCandles(@PathVariable String symbol) {
-        return candleService.getCandles(symbol);
+    public Map<String, Object> getCandles(
+            @PathVariable String symbol,
+            @RequestParam(required = false) String interval,
+            @RequestParam(required = false) Integer outputsize
+    ) {
+        return candleService.getCandles(symbol, interval, outputsize);
     }
 
 }

@@ -1,121 +1,291 @@
-export default function CandleChart({ candles }) {
-  if (!candles || candles.length === 0) {
-    return (
-      <div className="chart-empty">
-        <p>No candle data yet. Search a symbol to load the chart.</p>
-      </div>
-    );
-  }
+import { useEffect, useRef } from "react";
+import { createChart } from "lightweight-charts";
 
-  const width = 1000;
-  const height = 320;
-  const padding = 24;
-  const chartHeight = height - padding * 2;
-  const chartWidth = width - padding * 2;
-
-  const highs = candles.map((c) => c.h);
-  const lows = candles.map((c) => c.l);
-  const maxPrice = Math.max(...highs);
-  const minPrice = Math.min(...lows);
-  const range = maxPrice - minPrice || 1;
-
-  const step = chartWidth / candles.length;
-  const candleWidth = Math.max(4, step * 0.6);
-
-  const yForPrice = (value) => padding + ((maxPrice - value) / range) * chartHeight;
-
-  const movingAverage = (period = 10) => {
-    const result = [];
-    for (let i = 0; i < candles.length; i += 1) {
-      if (i < period - 1) {
-        result.push(null);
-        continue;
-      }
-      const slice = candles.slice(i - period + 1, i + 1);
-      const avg = slice.reduce((sum, c) => sum + c.c, 0) / period;
-      result.push(avg);
+const buildSma = (candles, period) => {
+  const result = [];
+  let sum = 0;
+  for (let i = 0; i < candles.length; i += 1) {
+    const close = candles[i].close;
+    sum += close;
+    if (i >= period) {
+      sum -= candles[i - period].close;
     }
-    return result;
+    if (i >= period - 1) {
+      result.push({ time: candles[i].time, value: sum / period });
+    }
+  }
+  return result;
+};
+
+const normalizeCandles = (raw) =>
+  raw
+    .map((c) => {
+      const timeValue = Number(c.t);
+      const time = timeValue > 1e12 ? Math.floor(timeValue / 1000) : timeValue;
+      return {
+        time,
+        open: Number(c.o),
+        high: Number(c.h),
+        low: Number(c.l),
+        close: Number(c.c),
+        volume: Number(c.v ?? 0)
+      };
+    })
+    .filter((c) => Number.isFinite(c.time))
+    .sort((a, b) => a.time - b.time);
+
+export default function CandleChart({
+  candles,
+  interval = "1h",
+  theme = "dark",
+  showVolume = true,
+  showSMA = true,
+  fitKey,
+  resetToken
+}) {
+  const containerRef = useRef(null);
+  const chartRef = useRef(null);
+  const candleSeriesRef = useRef(null);
+  const volumeSeriesRef = useRef(null);
+  const smaSeriesRef = useRef(null);
+  const hasFitRef = useRef(false);
+
+  const isLight = theme === "light";
+  const colors = {
+    background: isLight ? "#ffffff" : "#0b0f16",
+    text: isLight ? "#0f172a" : "#c9d1d9",
+    grid: isLight ? "rgba(15, 23, 42, 0.08)" : "rgba(48, 54, 61, 0.4)",
+    up: "#3fb950",
+    down: "#ff7b72",
+    line: "#58a6ff"
   };
 
-  const ma = movingAverage(10);
-  const maPath = ma
-    .map((value, index) => {
-      if (value === null) return null;
-      const x = padding + index * step + step / 2;
-      const y = yForPrice(value);
-      return `${x},${y}`;
-    })
-    .filter(Boolean)
-    .join(" ");
+  const formatTick = (time) => {
+    let date;
+    if (typeof time === "object" && time !== null) {
+      const { year, month, day } = time;
+      date = new Date(Date.UTC(year, month - 1, day));
+    } else {
+      date = new Date(Number(time) * 1000);
+    }
+    if (interval === "1day") {
+      return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    }
+    if (interval === "30min" || interval === "1h") {
+      return date.toLocaleString("en-US", {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+    return date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+  };
 
-  const gridLines = 5;
-  const grid = Array.from({ length: gridLines }, (_, i) => {
-    const y = padding + (chartHeight / (gridLines - 1)) * i;
-    const price = maxPrice - (range / (gridLines - 1)) * i;
-    return { y, price };
-  });
+  useEffect(() => {
+    if (!containerRef.current || chartRef.current) return;
 
-  return (
-    <div className="candle-chart">
-      <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
-        {grid.map((line) => (
-          <g key={line.y}>
-            <line
-              x1={padding}
-              y1={line.y}
-              x2={width - padding}
-              y2={line.y}
-              stroke="rgba(48, 54, 61, 0.4)"
-              strokeDasharray="4 6"
-            />
-            <text x={padding} y={line.y - 6} fill="#8b949e" fontSize="10">
-              {line.price.toFixed(2)}
-            </text>
-          </g>
-        ))}
+    const chart = createChart(containerRef.current, {
+      height: 420,
+      layout: {
+        background: { color: colors.background },
+        textColor: colors.text,
+        fontFamily: "Roboto, system-ui, -apple-system, Segoe UI, sans-serif"
+      },
+      grid: {
+        vertLines: { color: colors.grid },
+        horzLines: { color: colors.grid }
+      },
+      rightPriceScale: {
+        visible: true,
+        borderVisible: true,
+        borderColor: colors.grid,
+        ticksVisible: true,
+        scaleMargins: { top: 0.08, bottom: showVolume ? 0.2 : 0.08 }
+      },
+      timeScale: {
+        visible: true,
+        borderVisible: true,
+        borderColor: colors.grid,
+        timeVisible: true,
+        secondsVisible: interval === "1min" || interval === "5min",
+        rightOffset: 2,
+        fixLeftEdge: true,
+        fixRightEdge: true,
+        lockVisibleTimeRangeOnResize: true,
+        tickMarkFormatter: (time) => formatTick(time)
+      },
+      localization: {
+        timeFormatter: (time) => formatTick(time)
+      },
+      crosshair: {
+        mode: 1
+      },
+      handleScroll: {
+        mouseWheel: true,
+        pressedMouseMove: true,
+        horzTouchDrag: true
+      },
+      handleScale: {
+        axisPressedMouseMove: true,
+        mouseWheel: true,
+        pinch: true
+      }
+    });
 
-        {candles.map((candle, index) => {
-          const x = padding + index * step + step / 2;
-          const openY = yForPrice(candle.o);
-          const closeY = yForPrice(candle.c);
-          const highY = yForPrice(candle.h);
-          const lowY = yForPrice(candle.l);
-          const isUp = candle.c >= candle.o;
-          const bodyTop = isUp ? closeY : openY;
-          const bodyHeight = Math.max(2, Math.abs(openY - closeY));
+    chartRef.current = chart;
+    candleSeriesRef.current = chart.addCandlestickSeries({
+      upColor: colors.up,
+      downColor: colors.down,
+      wickUpColor: colors.up,
+      wickDownColor: colors.down,
+      borderVisible: false
+    });
 
-          return (
-            <g key={candle.t}>
-              <line
-                x1={x}
-                y1={highY}
-                x2={x}
-                y2={lowY}
-                stroke={isUp ? "#3fb950" : "#ff7b72"}
-                strokeWidth="2"
-              />
-              <rect
-                x={x - candleWidth / 2}
-                y={bodyTop}
-                width={candleWidth}
-                height={bodyHeight}
-                fill={isUp ? "rgba(63, 185, 80, 0.8)" : "rgba(255, 123, 114, 0.8)"}
-                rx="2"
-              />
-            </g>
-          );
-        })}
+    if (showVolume) {
+      volumeSeriesRef.current = chart.addHistogramSeries({
+        priceScaleId: "",
+        priceFormat: { type: "volume" },
+        color: colors.line,
+        scaleMargins: { top: 0.8, bottom: 0 }
+      });
+    }
 
-        {maPath && (
-          <polyline
-            points={maPath}
-            fill="none"
-            stroke="#58a6ff"
-            strokeWidth="2"
-          />
-        )}
-      </svg>
-    </div>
-  );
+    if (showSMA) {
+      smaSeriesRef.current = chart.addLineSeries({
+        color: colors.line,
+        lineWidth: 2,
+        priceLineVisible: false
+      });
+    }
+
+    const resize = () => {
+      if (!containerRef.current || !chartRef.current) return;
+      chartRef.current.applyOptions({
+        width: containerRef.current.clientWidth,
+        height: containerRef.current.clientHeight
+      });
+    };
+
+    resize();
+    const observer = new ResizeObserver(resize);
+    observer.observe(containerRef.current);
+
+    return () => {
+      observer.disconnect();
+      chart.remove();
+      chartRef.current = null;
+      candleSeriesRef.current = null;
+      volumeSeriesRef.current = null;
+      smaSeriesRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!chartRef.current) return;
+    chartRef.current.applyOptions({
+      layout: {
+        background: { color: colors.background },
+        textColor: colors.text
+      },
+      grid: {
+        vertLines: { color: colors.grid },
+        horzLines: { color: colors.grid }
+      },
+      rightPriceScale: {
+        visible: true,
+        borderVisible: true,
+        borderColor: colors.grid,
+        ticksVisible: true,
+        scaleMargins: { top: 0.08, bottom: showVolume ? 0.2 : 0.08 }
+      },
+      timeScale: {
+        visible: true,
+        borderVisible: true,
+        borderColor: colors.grid,
+        timeVisible: true,
+        secondsVisible: interval === "1min" || interval === "5min",
+        rightOffset: 2,
+        fixLeftEdge: true,
+        fixRightEdge: true,
+        lockVisibleTimeRangeOnResize: true,
+        tickMarkFormatter: (time) => formatTick(time)
+      },
+      localization: {
+        timeFormatter: (time) => formatTick(time)
+      }
+    });
+  }, [theme, interval, showVolume]);
+
+  useEffect(() => {
+    if (!chartRef.current) return;
+    if (showVolume && !volumeSeriesRef.current) {
+      volumeSeriesRef.current = chartRef.current.addHistogramSeries({
+        priceScaleId: "",
+        priceFormat: { type: "volume" },
+        color: colors.line,
+        scaleMargins: { top: 0.8, bottom: 0 }
+      });
+    }
+    if (!showVolume && volumeSeriesRef.current) {
+      chartRef.current.removeSeries(volumeSeriesRef.current);
+      volumeSeriesRef.current = null;
+    }
+    if (showSMA && !smaSeriesRef.current) {
+      smaSeriesRef.current = chartRef.current.addLineSeries({
+        color: colors.line,
+        lineWidth: 2,
+        priceLineVisible: false
+      });
+    }
+    if (!showSMA && smaSeriesRef.current) {
+      chartRef.current.removeSeries(smaSeriesRef.current);
+      smaSeriesRef.current = null;
+    }
+  }, [showVolume, showSMA, theme]);
+
+  useEffect(() => {
+    if (!candles || candles.length === 0 || !candleSeriesRef.current) {
+      if (candleSeriesRef.current) candleSeriesRef.current.setData([]);
+      if (volumeSeriesRef.current) volumeSeriesRef.current.setData([]);
+      if (smaSeriesRef.current) smaSeriesRef.current.setData([]);
+      return;
+    }
+
+    const normalized = normalizeCandles(candles);
+    candleSeriesRef.current.setData(normalized);
+
+    if (volumeSeriesRef.current) {
+      const volumeData = normalized.map((point) => ({
+        time: point.time,
+        value: point.volume,
+        color: point.close >= point.open ? "rgba(63, 185, 80, 0.6)" : "rgba(255, 123, 114, 0.6)"
+      }));
+      volumeSeriesRef.current.setData(volumeData);
+    }
+
+    if (smaSeriesRef.current) {
+      smaSeriesRef.current.setData(buildSma(normalized, 20));
+    }
+
+    if (!hasFitRef.current) {
+      chartRef.current.timeScale().fitContent();
+      hasFitRef.current = true;
+    }
+
+    if (interval === "1min" || interval === "5min") {
+      chartRef.current.timeScale().scrollToRealTime();
+    }
+  }, [candles, showVolume, showSMA]);
+
+  useEffect(() => {
+    hasFitRef.current = false;
+  }, [fitKey]);
+
+  useEffect(() => {
+    if (!chartRef.current) return;
+    chartRef.current.timeScale().fitContent();
+  }, [resetToken]);
+
+  return <div className="candle-chart" ref={containerRef} />;
 }

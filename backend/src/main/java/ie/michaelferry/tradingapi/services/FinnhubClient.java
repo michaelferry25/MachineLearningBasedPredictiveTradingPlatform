@@ -45,4 +45,18 @@ public class FinnhubClient {
             return null;
         }
     }
+
+    public Map<String, Object> fetchHistoricalPrices(String symbol, String resolution, long from, long to) {
+        try {
+            String url = "https://finnhub.io/api/v1/stock/candle?symbol=" + symbol +
+                    "&resolution=" + resolution +
+                    "&from=" + from +
+                    "&to=" + to +
+                    "&token=" + apiKey;
+
+            return rest.getForObject(url, Map.class);
+        } catch (Exception e) {
+            return null;
+        }
+    }
 }

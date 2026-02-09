@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import CandleChart from "./CandleChart";
+import TradingViewWidget from "./TradingViewWidget";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
@@ -18,6 +19,11 @@ export default function LiveMarket({ settings }) {
   const [quote, setQuote] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [lastCandleRefresh, setLastCandleRefresh] = useState(null);
+  const [lastQuoteRefresh, setLastQuoteRefresh] = useState(null);
+  const [showVolume, setShowVolume] = useState(true);
+  const [showSMA, setShowSMA] = useState(true);
+  const [resetToken, setResetToken] = useState(0);
   const defaultFrame = useMemo(() => {
     const label = settings?.defaultTimeframe;
     return timeframes.find((frame) => frame.label === label) || timeframes[1];
@@ -25,10 +31,32 @@ export default function LiveMarket({ settings }) {
   const [timeframe, setTimeframe] = useState(defaultFrame);
 
   const autoRefresh = settings?.autoRefresh !== false;
+  const theme = settings?.theme || "dark";
 
   useEffect(() => {
     setTimeframe(defaultFrame);
   }, [defaultFrame]);
+
+  const formatTime = (value) => {
+    if (!value) return "--";
+    return new Date(value).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+  };
+
+  const updateLastCandleWithQuote = (price) => {
+    const numeric = typeof price === "number" ? price : Number(price);
+    if (!Number.isFinite(numeric)) return;
+    setCandles((prev) => {
+      if (!prev.length) return prev;
+      const last = prev[prev.length - 1];
+      const updated = {
+        ...last,
+        c: numeric,
+        h: Math.max(last.h, numeric),
+        l: Math.min(last.l, numeric)
+      };
+      return [...prev.slice(0, -1), updated];
+    });
+  };
 
   const fetchCandles = async (target, frame = timeframe, silent = false) => {
     if (!silent) {
@@ -47,6 +75,7 @@ export default function LiveMarket({ settings }) {
         return;
       }
       setCandles(data.candles || []);
+      setLastCandleRefresh(Date.now());
     } catch (err) {
       if (!silent) {
         setError("Unable to reach backend for candle data.");
@@ -64,6 +93,10 @@ export default function LiveMarket({ settings }) {
       const data = await res.json();
       if (res.ok) {
         setQuote(data);
+        setLastQuoteRefresh(Date.now());
+        if (data?.price) {
+          updateLastCandleWithQuote(data.price);
+        }
       }
     } catch (err) {
       // ignore
@@ -105,6 +138,7 @@ export default function LiveMarket({ settings }) {
   const previous = candles[candles.length - 2];
   const change = latest && previous ? latest.c - previous.c : null;
   const changePercent = latest && previous ? (change / previous.c) * 100 : null;
+  const rangeLabel = `${timeframe.outputsize} candles`;
 
   return (
     <section className="section-wrapper" id="live">
@@ -119,7 +153,12 @@ export default function LiveMarket({ settings }) {
           <div className="live-chart-header">
             <div>
               <h3>{symbol} Candles</h3>
-              <p>{timeframe.label} candles • {timeframe.labelRange}</p>
+              <p>{timeframe.label} • {rangeLabel}</p>
+              <div className="live-update">
+                <span>Price updated {formatTime(lastQuoteRefresh)}</span>
+                <span>• Candles updated {formatTime(lastCandleRefresh)}</span>
+                <span>• Auto refresh {autoRefresh ? "on" : "off"}</span>
+              </div>
             </div>
             <div className="live-quote">
               <div className="quote-price">{quote?.price ? `$${quote.price.toFixed(2)}` : "--"}</div>
@@ -160,12 +199,44 @@ export default function LiveMarket({ settings }) {
             ))}
           </div>
 
+          <div className="live-tools">
+            <button
+              type="button"
+              className={`tool-btn ${showSMA ? "active" : ""}`}
+              onClick={() => setShowSMA((prev) => !prev)}
+            >
+              SMA 20
+            </button>
+            <button
+              type="button"
+              className={`tool-btn ${showVolume ? "active" : ""}`}
+              onClick={() => setShowVolume((prev) => !prev)}
+            >
+              Volume
+            </button>
+            <button
+              type="button"
+              className="tool-btn"
+              onClick={() => setResetToken((prev) => prev + 1)}
+            >
+              Reset view
+            </button>
+          </div>
+
           <div className="live-zoom-hint">
             Use your mouse wheel or touchpad to zoom. Drag to pan across time.
           </div>
 
           {error && <div className="auth-error">{error}</div>}
-          <CandleChart candles={candles} />
+          <CandleChart
+            candles={candles}
+            interval={timeframe.interval}
+            theme={theme}
+            showVolume={showVolume}
+            showSMA={showSMA}
+            fitKey={`${symbol}-${timeframe.interval}`}
+            resetToken={resetToken}
+          />
         </div>
 
         <div className="live-side">
@@ -178,6 +249,19 @@ export default function LiveMarket({ settings }) {
               <li>Time scale updates with every zoom level</li>
             </ul>
           </div>
+        </div>
+      </div>
+
+      <div className="live-advanced-card">
+        <div className="live-chart-header">
+          <div>
+            <h3>Advanced charting tools</h3>
+            <p>TradingView-powered chart with drawing tools and indicators.</p>
+          </div>
+          <div className="live-chip">TradingView</div>
+        </div>
+        <div className="tv-embed">
+          <TradingViewWidget symbol={symbol} interval={timeframe.interval} theme={theme} />
         </div>
       </div>
     </section>
