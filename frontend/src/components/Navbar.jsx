@@ -8,8 +8,8 @@ export default function Navbar({ user, onLogout, variant = "app", currentRoute =
     { label: "Analytics", href: "#/analytics" },
     { label: "Sessions", href: "#/sessions" },
     { label: "Dashboard", href: "#/dashboard" },
+    { label: "Portfolio", href: "#/portfolio" },
     { label: "Research", href: "#/research" },
-    { label: "Security", href: "#/security" },
     { label: "About", href: "#/about" },
     { label: "Profile", href: "#/profile" },
     { label: "Settings", href: "#/settings" }

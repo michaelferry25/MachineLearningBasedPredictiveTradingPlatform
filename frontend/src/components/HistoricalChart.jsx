@@ -24,11 +24,13 @@ export default function HistoricalChart({ timestamps, prices, symbol, prediction
       data: prices,
       borderColor: '#58a6ff',
       backgroundColor: 'rgba(88, 166, 255, 0.1)',
-      tension: 0.4,
+      tension: 0,
       fill: true,
       pointRadius: 0,
-      pointHoverRadius: 6,
-      borderWidth: 3,
+      pointHoverRadius: 4,
+      borderWidth: 2,
+      borderJoinStyle: 'miter',
+      borderCapStyle: 'butt',
     }
   ];
 
@@ -58,6 +60,17 @@ export default function HistoricalChart({ timestamps, prices, symbol, prediction
   const options = {
     responsive: true,
     maintainAspectRatio: false,
+    elements: {
+      line: {
+        tension: 0,
+        borderJoinStyle: 'miter',
+        borderCapStyle: 'butt'
+      },
+      point: {
+        radius: 0,
+        hoverRadius: 4
+      }
+    },
     plugins: {
       legend: {
         display: true,
