@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import HeroSection from "./components/HeroSection";
 import "./App.css";
 import HistoricalChart from "./components/HistoricalChart";
 import TradingPanel from "./components/TradingPanel";
@@ -410,21 +411,7 @@ export default function App() {
       default:
         return (
           <div className="overview-page">
-            <div className="landing-container">
-              <div className="hero-content">
-                <div className="hero-badge">📊 AI-Powered Trading</div>
-                <h1>MarketMind</h1>
-                <p>Machine learning predictions with real-time market data</p>
-                <div className="buttons">
-                  <button className="btn primary-btn" onClick={() => (window.location.hash = "#/dashboard")}>
-                    Launch Dashboard →
-                  </button>
-                  <button className="btn secondary" onClick={() => (window.location.hash = "#/analytics")}>
-                    View Analytics
-                  </button>
-                </div>
-              </div>
-            </div>
+            <HeroSection />
             <AnalyticsHub />
           </div>
         );

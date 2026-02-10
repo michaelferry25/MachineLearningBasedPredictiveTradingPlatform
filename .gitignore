@@ -1,6 +1,26 @@
-# Created by venv; see https://docs.python.org/3/library/venv.html
-venv/
+# Logs
+*.log
+
+# SQLite / local databases
+*.db
+
+# Backend / ML output logs
+backend.err.log
+backend.out.log
+frontend.err.log
+frontend.out.log
+ml.err.log
+ml.out.log
+
+# Node stuff
+node_modules/
+
+# Environment files
 .env
+
+# OS junk
 .DS_Store
-data/*.mv.db
-data/*.trace.db
+
+# Python bytecode
+*.pyc
+__pycache__/
