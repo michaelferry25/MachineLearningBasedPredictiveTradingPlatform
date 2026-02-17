@@ -15,6 +15,8 @@ import PortfolioPage from "./components/PortfolioPage";
 import EnhancedPredictionCard from "./components/EnhancedPredictionCard";
 import PredictionHistory from "./components/PredictionHistory";
 import MLInsightsTabs from "./components/MLInsightsTabs";
+import StockScreener from "./components/StockScreener";
+import NewsSentiment from "./components/NewsSentiment";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 const TOKEN_KEY = "marketmind_token";
@@ -72,8 +74,17 @@ export default function App() {
 
   useEffect(() => {
     const onHashChange = () => {
-      setRoute(getRoute());
+      const newRoute = getRoute();
+      setRoute(newRoute);
       window.scrollTo(0, 0);
+
+      if (newRoute === "/dashboard") {
+        const fromScreener = sessionStorage.getItem("screener_selected_stock");
+        if (fromScreener) {
+          sessionStorage.removeItem("screener_selected_stock");
+          handleStockSelect(fromScreener);
+        }
+      }
     };
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
@@ -396,6 +407,8 @@ export default function App() {
               )}
 
               <PredictionHistory symbol={symbol} />
+
+              <NewsSentiment symbol={symbol} />
             </>
           ) : (
             <div className="empty-state-main">
@@ -451,6 +464,8 @@ export default function App() {
     switch (route) {
       case "/analytics":
         return <AnalyticsHub />;
+      case "/screener":
+        return <StockScreener />;
       case "/dashboard":
         return renderDashboard();
       case "/research":
@@ -458,7 +473,7 @@ export default function App() {
       case "/live":
         return <LiveMarket settings={settings} />;
       case "/portfolio":
-        return <PortfolioPage portfolio={portfolio} onRefresh={fetchPortfolio} />;
+        return <PortfolioPage portfolio={portfolio} onRefresh={fetchPortfolio} authToken={authToken} />;
       case "/settings":
         return <SettingsPage settings={settings} onUpdate={updateSettings} onReset={resetSettings} />;
       case "/profile":

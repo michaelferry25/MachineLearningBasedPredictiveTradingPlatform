@@ -20,6 +20,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -65,14 +66,15 @@ public class SecurityConfig {
                 .filter(value -> !value.isEmpty())
                 .collect(Collectors.toList());
 
-        if (origins.contains("*")) {
-            configuration.setAllowedOriginPatterns(List.of("*"));
-        } else {
-            configuration.setAllowedOrigins(origins);
-        }
+        // allowedOriginPatterns works with allowCredentials(true) and is more flexible
+        // Supports exact matches and patterns like http://localhost:*
+        List<String> patterns = new ArrayList<>(origins);
+        patterns.add("http://localhost:*");
+        patterns.add("http://127.0.0.1:*");
+        configuration.setAllowedOriginPatterns(patterns);
 
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

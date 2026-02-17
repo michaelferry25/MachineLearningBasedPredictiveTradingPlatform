@@ -7,6 +7,7 @@ export default function Navbar({ user, onLogout, variant = "app", currentRoute =
   const primaryLinks = [
     { label: "Dashboard", href: "#/dashboard" },
     { label: "Live Market", href: "#/live" },
+    { label: "Scanner", href: "#/screener" },
     { label: "Analytics", href: "#/analytics" },
     { label: "Portfolio", href: "#/portfolio" },
     { label: "Research", href: "#/research" }
