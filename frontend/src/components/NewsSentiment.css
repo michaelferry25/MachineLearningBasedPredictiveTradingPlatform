@@ -581,3 +581,60 @@
     gap: 10px;
   }
 }
+
+@media (max-width: 428px) {
+  .sentiment-dashboard {
+    padding: 14px;
+    border-radius: 12px;
+  }
+
+  .sentiment-dash-header h3 {
+    font-size: 0.95rem;
+  }
+
+  .hero-score-ring {
+    width: 70px;
+    height: 70px;
+  }
+
+  .hero-score {
+    font-size: 1.2rem;
+  }
+
+  .hero-badge {
+    font-size: 0.72rem;
+    padding: 3px 10px;
+  }
+
+  .source-card {
+    padding: 12px;
+  }
+
+  .source-score {
+    font-size: 1.1rem;
+  }
+
+  .sentiment-tab {
+    padding: 6px 8px;
+    font-size: 0.72rem;
+  }
+
+  .signal-item,
+  .post-item {
+    padding: 10px;
+  }
+
+  .signal-title,
+  .post-title {
+    font-size: 0.8rem;
+  }
+
+  .subreddit-chips {
+    gap: 6px;
+  }
+
+  .sub-chip {
+    padding: 3px 8px;
+    font-size: 0.68rem;
+  }
+}

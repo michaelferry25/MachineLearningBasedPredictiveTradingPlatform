@@ -311,3 +311,59 @@
     padding: 10px 10px;
   }
 }
+
+@media (max-width: 428px) {
+  .screener-page {
+    padding: 16px 12px;
+  }
+
+  .screener-header h2 {
+    font-size: 1.3rem;
+  }
+
+  .screener-subtitle {
+    font-size: 0.82rem;
+  }
+
+  .screener-stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .screener-stat-card {
+    padding: 14px;
+    border-radius: 12px;
+  }
+
+  .screener-stat-card .stat-value {
+    font-size: 1.1rem;
+  }
+
+  .filter-bar {
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .filter-btn {
+    padding: 5px 10px;
+    font-size: 0.72rem;
+  }
+
+  .screener-table-wrapper {
+    border-radius: 12px;
+    padding: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .screener-table {
+    font-size: 0.72rem;
+    min-width: 600px;
+  }
+
+  .screener-table th,
+  .screener-table td {
+    padding: 10px 8px;
+    white-space: nowrap;
+  }
+}

@@ -71,6 +71,7 @@ public class SecurityConfig {
         List<String> patterns = new ArrayList<>(origins);
         patterns.add("http://localhost:*");
         patterns.add("http://127.0.0.1:*");
+        patterns.add("http://192.168.*.*:*");
         configuration.setAllowedOriginPatterns(patterns);
 
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));

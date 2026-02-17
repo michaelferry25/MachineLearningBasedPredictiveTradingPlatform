@@ -4566,3 +4566,203 @@ body.theme-light .nav-btn:hover {
     font-size: 0.8rem;
   }
 }
+
+/* ==========================================================
+   MOBILE RESPONSIVE OVERRIDES (phones 375px - 768px)
+   ========================================================== */
+
+@media (max-width: 768px) {
+  /* -- Global spacing -- */
+  .section-wrapper {
+    padding: 40px 16px;
+  }
+
+  .popular-stocks,
+  .search-card,
+  .stock-info-card,
+  .prediction-card,
+  .trading-panel,
+  .portfolio-card,
+  .chart-wrapper {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .popular-stocks:hover,
+  .search-card:hover,
+  .stock-info-card:hover,
+  .prediction-card:hover,
+  .trading-panel:hover,
+  .portfolio-card:hover,
+  .chart-wrapper:hover {
+    transform: none;
+  }
+
+  .popular-stocks h3,
+  .search-card h3,
+  .prediction-card h3,
+  .trading-panel h3,
+  .portfolio-card h3 {
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+
+  /* -- Dashboard Grid -- */
+  .dashboard-grid {
+    grid-template-columns: 1fr !important;
+    min-height: auto;
+    gap: 16px;
+  }
+
+  .dashboard-row {
+    grid-template-columns: 1fr !important;
+    gap: 16px;
+  }
+
+  .left-panel,
+  .right-panel {
+    gap: 14px;
+  }
+
+  /* -- Stock grid chips -- */
+  .stock-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .stock-chip {
+    padding: 10px;
+    font-size: 0.82rem;
+  }
+
+  .stock-chip-name {
+    font-size: 0.72rem;
+  }
+
+  /* -- Stock Info -- */
+  .stock-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .stock-title h2 {
+    font-size: 1.3rem;
+  }
+
+  /* -- Chart -- */
+  .chart-canvas {
+    height: 250px !important;
+  }
+
+  .empty-state {
+    min-height: 200px;
+    padding: 20px;
+  }
+
+  /* -- Trading panel -- */
+  .trade-buttons {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .trade-input-group input {
+    font-size: 0.9rem;
+  }
+
+  /* -- Hero / Landing -- */
+  .hero-modern {
+    min-height: calc(100vh - 60px);
+  }
+
+  .landing-container h1 {
+    font-size: 2rem;
+    line-height: 1.2;
+  }
+
+  .landing-container p {
+    font-size: 0.95rem;
+    max-width: 100%;
+  }
+
+  .hero-stats {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+/* -- Extra small phones (375px) -- */
+@media (max-width: 428px) {
+  .section-wrapper {
+    padding: 28px 12px;
+  }
+
+  .nav-container {
+    height: 56px;
+    padding: 0 12px;
+    gap: 12px;
+  }
+
+  .logo-img {
+    height: 30px;
+  }
+
+  .btn-signout,
+  .btn-signin {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+
+  .user-avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 0.7rem;
+  }
+
+  .popular-stocks,
+  .search-card,
+  .stock-info-card,
+  .prediction-card,
+  .trading-panel,
+  .portfolio-card,
+  .chart-wrapper {
+    padding: 14px;
+  }
+
+  .stock-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+
+  .stock-chip {
+    padding: 8px;
+  }
+
+  .stock-chip-ticker {
+    font-size: 0.82rem;
+  }
+
+  .stock-chip-name {
+    font-size: 0.68rem;
+  }
+
+  .landing-container h1 {
+    font-size: 1.7rem;
+  }
+
+  .landing-container p {
+    font-size: 0.88rem;
+  }
+
+  .chart-canvas {
+    height: 220px !important;
+  }
+
+  h2 {
+    font-size: 1.3rem;
+  }
+
+  .section-kicker {
+    font-size: 0.7rem;
+  }
+}

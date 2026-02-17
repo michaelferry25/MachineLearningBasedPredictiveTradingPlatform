@@ -470,6 +470,106 @@
   }
 }
 
+@media (max-width: 428px) {
+  .portfolio-page {
+    gap: 14px;
+  }
+
+  .portfolio-metric-card {
+    padding: 14px 16px;
+    border-radius: 12px;
+  }
+
+  .portfolio-metric-card strong {
+    font-size: 1.15rem;
+  }
+
+  .portfolio-metric-card span {
+    font-size: 0.68rem;
+  }
+
+  .portfolio-metric-card small {
+    font-size: 0.7rem;
+  }
+
+  .portfolio-metric-card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .portfolio-page .portfolio-card,
+  .equity-curve-card,
+  .trade-history-card {
+    padding: 14px;
+    border-radius: 12px;
+  }
+
+  .equity-curve-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .equity-curve-stats {
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  .equity-current {
+    font-size: 1rem;
+  }
+
+  .equity-range-btn {
+    padding: 4px 10px;
+    font-size: 0.68rem;
+  }
+
+  /* Holdings: horizontal scroll on small phones */
+  .holdings-table {
+    margin: 0 -14px;
+    padding: 0 14px;
+  }
+
+  .holdings-row {
+    grid-template-columns: 55px 40px 60px 60px 72px 90px;
+    font-size: 0.68rem;
+    gap: 4px;
+    padding: 8px 10px;
+    min-width: 380px;
+  }
+
+  .holdings-row.header-row {
+    font-size: 0.62rem;
+  }
+
+  .pnl-pct {
+    display: none;
+  }
+
+  /* Trade history */
+  .trade-row {
+    padding: 10px 12px;
+    gap: 10px;
+  }
+
+  .trade-badge span {
+    padding: 3px 8px;
+    font-size: 0.65rem;
+  }
+
+  .trade-stock {
+    font-size: 0.82rem;
+  }
+
+  .trade-amount {
+    font-size: 0.72rem;
+  }
+
+  .trade-value {
+    font-size: 0.82rem;
+  }
+}
+
 /* ===== Light theme ===== */
 
 body.theme-light .portfolio-metric-card,
