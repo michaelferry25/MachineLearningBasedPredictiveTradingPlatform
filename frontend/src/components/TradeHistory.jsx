@@ -13,7 +13,7 @@ export default function TradeHistory({ authToken }) {
     }
 
     fetchTradeHistory();
-    const interval = setInterval(fetchTradeHistory, 5000);
+    const interval = setInterval(fetchTradeHistory, 10000);
     return () => clearInterval(interval);
   }, [authToken]);
 
@@ -23,6 +23,7 @@ export default function TradeHistory({ authToken }) {
       const res = await fetch(`${API_URL}/api/trading/history`, {
         headers: { Authorization: `Bearer ${authToken}` }
       });
+      if (!res.ok) return;
       const data = await res.json();
       setTrades(data.trades || []);
       setLoading(false);
@@ -35,11 +36,9 @@ export default function TradeHistory({ authToken }) {
   if (!authToken) {
     return (
       <div className="trade-history-card">
-        <h3>📜 Trade History</h3>
+        <h3>Trade History</h3>
         <div className="empty-trades">
-          <div className="empty-icon">🔐</div>
           <p>Sign in to view your trade history</p>
-          <p className="empty-hint">Your simulated trades will appear here</p>
         </div>
       </div>
     );
@@ -48,7 +47,7 @@ export default function TradeHistory({ authToken }) {
   if (loading) {
     return (
       <div className="trade-history-card">
-        <h3>📜 Recent Trades</h3>
+        <h3>Trade History</h3>
         <p className="loading-text">Loading...</p>
       </div>
     );
@@ -57,9 +56,8 @@ export default function TradeHistory({ authToken }) {
   if (trades.length === 0) {
     return (
       <div className="trade-history-card">
-        <h3>📜 Trade History</h3>
+        <h3>Trade History</h3>
         <div className="empty-trades">
-          <div className="empty-icon">📋</div>
           <p>No trades yet</p>
           <p className="empty-hint">Buy or sell stocks to see your history</p>
         </div>
@@ -67,11 +65,22 @@ export default function TradeHistory({ authToken }) {
     );
   }
 
+  const formatTime = (ts) => {
+    try {
+      const d = new Date(ts);
+      return d.toLocaleDateString("en-IE", {
+        month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
+      });
+    } catch {
+      return "";
+    }
+  };
+
   return (
     <div className="trade-history-card">
-      <h3>📜 Recent Trades</h3>
+      <h3>Trade History</h3>
       <div className="trades-list-new">
-        {trades.slice(-5).reverse().map((trade, idx) => (
+        {trades.map((trade, idx) => (
           <div key={idx} className={`trade-row ${trade.type.toLowerCase()}`}>
             <div className="trade-badge">
               <span className={`badge-${trade.type.toLowerCase()}`}>{trade.type}</span>
@@ -80,6 +89,7 @@ export default function TradeHistory({ authToken }) {
               <div className="trade-stock">{trade.symbol}</div>
               <div className="trade-amount">
                 {trade.quantity} shares @ ${trade.price?.toFixed(2)}
+                {trade.timestamp && <span> &middot; {formatTime(trade.timestamp)}</span>}
               </div>
             </div>
             <div className="trade-value">${trade.totalValue?.toFixed(2)}</div>

@@ -1,0 +1,505 @@
+/* ===== Portfolio Page ===== */
+
+.portfolio-page {
+  display: grid;
+  gap: 22px;
+}
+
+.portfolio-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 20px;
+}
+
+.portfolio-header h2 {
+  background: linear-gradient(135deg, #e6edf3, #58a6ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.portfolio-header p {
+  color: #8b949e;
+  line-height: 1.6;
+  margin-top: 6px;
+}
+
+/* ===== Metric Cards ===== */
+
+.portfolio-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+
+.portfolio-metric-card {
+  background: linear-gradient(145deg, rgba(22, 27, 34, 0.9), rgba(13, 17, 23, 0.95));
+  border: 1px solid rgba(48, 54, 61, 0.6);
+  border-radius: 14px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.portfolio-metric-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(88, 166, 255, 0.3), transparent);
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.portfolio-metric-card:hover {
+  border-color: rgba(88, 166, 255, 0.35);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.portfolio-metric-card:hover::before {
+  opacity: 1;
+}
+
+.portfolio-metric-card.highlight {
+  border-color: rgba(88, 166, 255, 0.4);
+  background: linear-gradient(145deg, rgba(22, 27, 34, 0.95), rgba(88, 166, 255, 0.05));
+}
+
+.portfolio-metric-card.highlight::before {
+  opacity: 1;
+  background: linear-gradient(90deg, #58a6ff, #3fb950);
+  height: 3px;
+}
+
+.portfolio-metric-card span {
+  color: #6e7681;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.portfolio-metric-card strong {
+  font-size: 1.35rem;
+  color: #e6edf3;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+
+.portfolio-metric-card small {
+  font-weight: 600;
+  font-size: 0.76rem;
+}
+
+/* ===== Shared Card ===== */
+
+.portfolio-page .portfolio-card {
+  background: linear-gradient(145deg, rgba(22, 27, 34, 0.9), rgba(13, 17, 23, 0.95));
+  border: 1px solid rgba(48, 54, 61, 0.6);
+  border-radius: 14px;
+  padding: 22px;
+  transition: all 0.25s ease;
+}
+
+.portfolio-page .portfolio-card:hover {
+  border-color: rgba(88, 166, 255, 0.2);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.portfolio-page .portfolio-card h3 {
+  margin: 0 0 4px 0;
+  font-size: 1rem;
+  color: #e6edf3;
+  font-weight: 700;
+}
+
+/* ===== Equity Curve ===== */
+
+.equity-curve-card {
+  background: linear-gradient(145deg, rgba(22, 27, 34, 0.9), rgba(13, 17, 23, 0.95));
+  border: 1px solid rgba(48, 54, 61, 0.6);
+  border-radius: 14px;
+  padding: 22px 22px 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+.equity-curve-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(88, 166, 255, 0.25), transparent);
+}
+
+.equity-curve-card h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: #e6edf3;
+  font-weight: 700;
+}
+
+.equity-curve-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  gap: 14px;
+}
+
+.equity-range-bar {
+  display: flex;
+  gap: 2px;
+  background: rgba(13, 17, 23, 0.6);
+  border: 1px solid rgba(48, 54, 61, 0.5);
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.equity-range-btn {
+  background: transparent;
+  border: none;
+  color: #6e7681;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 5px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.3px;
+}
+
+.equity-range-btn:hover {
+  color: #c9d1d9;
+  background: rgba(48, 54, 61, 0.3);
+}
+
+.equity-range-btn.active {
+  background: rgba(88, 166, 255, 0.15);
+  color: #58a6ff;
+  box-shadow: 0 0 8px rgba(88, 166, 255, 0.1);
+}
+
+.equity-curve-stats {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.equity-current {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #e6edf3;
+  letter-spacing: -0.3px;
+}
+
+.equity-curve-empty {
+  background: linear-gradient(145deg, rgba(22, 27, 34, 0.9), rgba(13, 17, 23, 0.95));
+  border: 1px solid rgba(48, 54, 61, 0.6);
+  border-radius: 14px;
+  text-align: center;
+  padding: 50px 22px;
+}
+
+.equity-curve-empty h3 {
+  margin: 0 0 8px 0;
+  font-size: 1rem;
+  color: #e6edf3;
+  font-weight: 700;
+}
+
+.equity-curve-empty p {
+  color: #6e7681;
+  font-size: 0.88rem;
+}
+
+/* ===== Charts Row ===== */
+
+.portfolio-charts-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 16px;
+}
+
+.portfolio-chart-container {
+  height: 260px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chart-empty {
+  color: #6e7681;
+  font-size: 0.88rem;
+  text-align: center;
+  padding: 30px;
+}
+
+/* ===== Holdings Table ===== */
+
+.holdings-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.holdings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.holdings-count {
+  color: #6e7681;
+  font-size: 0.76rem;
+  font-weight: 600;
+  background: rgba(48, 54, 61, 0.4);
+  padding: 3px 10px;
+  border-radius: 12px;
+}
+
+.holdings-table {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-x: auto;
+}
+
+.holdings-row {
+  display: grid;
+  grid-template-columns: 80px 70px 90px 90px 110px 1fr;
+  gap: 10px;
+  padding: 11px 16px;
+  border-radius: 10px;
+  background: rgba(13, 17, 23, 0.4);
+  color: #c9d1d9;
+  font-size: 0.84rem;
+  align-items: center;
+  transition: background 0.15s;
+}
+
+.holdings-row:hover:not(.header-row):not(.totals-row) {
+  background: rgba(88, 166, 255, 0.04);
+}
+
+.holdings-row.header-row {
+  background: transparent;
+  font-weight: 700;
+  color: #6e7681;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(48, 54, 61, 0.4);
+  border-radius: 0;
+}
+
+.holdings-row.totals-row {
+  background: rgba(48, 54, 61, 0.15);
+  border-top: 1px solid rgba(48, 54, 61, 0.5);
+  font-weight: 700;
+  color: #e6edf3;
+  margin-top: 4px;
+}
+
+.holdings-symbol {
+  font-weight: 800;
+  color: #58a6ff;
+  letter-spacing: 0.3px;
+}
+
+.pnl-pct {
+  font-size: 0.7rem;
+  opacity: 0.65;
+  margin-left: 2px;
+}
+
+/* ===== Trade History ===== */
+
+.trade-history-card {
+  background: linear-gradient(145deg, rgba(22, 27, 34, 0.9), rgba(13, 17, 23, 0.95));
+  border: 1px solid rgba(48, 54, 61, 0.6);
+  border-radius: 14px;
+  padding: 22px;
+}
+
+.trade-history-card h3 {
+  margin: 0 0 16px 0;
+  font-size: 1rem;
+  color: #e6edf3;
+  font-weight: 700;
+}
+
+.trades-list-new {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.trade-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: rgba(13, 17, 23, 0.4);
+  transition: all 0.15s;
+}
+
+.trade-row:hover {
+  background: rgba(88, 166, 255, 0.04);
+}
+
+.trade-badge span {
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.badge-buy {
+  background: rgba(63, 185, 80, 0.1);
+  color: #3fb950;
+  border: 1px solid rgba(63, 185, 80, 0.15);
+}
+
+.badge-sell {
+  background: rgba(255, 123, 114, 0.1);
+  color: #ff7b72;
+  border: 1px solid rgba(255, 123, 114, 0.15);
+}
+
+.trade-info {
+  flex: 1;
+}
+
+.trade-stock {
+  font-weight: 800;
+  color: #e6edf3;
+  font-size: 0.88rem;
+  letter-spacing: 0.2px;
+}
+
+.trade-amount {
+  color: #6e7681;
+  font-size: 0.76rem;
+  margin-top: 2px;
+}
+
+.trade-value {
+  font-weight: 700;
+  color: #c9d1d9;
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.empty-trades {
+  text-align: center;
+  padding: 30px;
+  color: #6e7681;
+}
+
+.empty-hint {
+  font-size: 0.76rem;
+  color: rgba(110, 118, 129, 0.6);
+  margin-top: 6px;
+}
+
+.loading-text {
+  color: #6e7681;
+  text-align: center;
+  padding: 20px;
+}
+
+/* ===== Responsive ===== */
+
+@media (max-width: 1100px) {
+  .portfolio-summary-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .portfolio-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .portfolio-summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .portfolio-charts-row {
+    grid-template-columns: 1fr;
+  }
+
+  .holdings-row {
+    grid-template-columns: 70px 55px 75px 75px 90px 1fr;
+    font-size: 0.78rem;
+    gap: 6px;
+    padding: 8px 10px;
+  }
+
+  .equity-curve-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 600px) {
+  .portfolio-summary-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .holdings-row {
+    grid-template-columns: 60px 45px 65px 65px 80px 1fr;
+    font-size: 0.72rem;
+  }
+}
+
+/* ===== Light theme ===== */
+
+body.theme-light .portfolio-metric-card,
+body.theme-light .portfolio-page .portfolio-card,
+body.theme-light .trade-history-card,
+body.theme-light .equity-curve-card {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.08);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+}
+
+body.theme-light .portfolio-metric-card:hover,
+body.theme-light .portfolio-page .portfolio-card:hover {
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.1);
+}
+
+body.theme-light .portfolio-metric-card strong {
+  color: #0f172a;
+}
+
+body.theme-light .holdings-row {
+  background: rgba(15, 23, 42, 0.02);
+  color: #334155;
+}
+
+body.theme-light .holdings-row.header-row {
+  background: transparent;
+  color: #94a3b8;
+}
+
+body.theme-light .trade-row {
+  background: rgba(15, 23, 42, 0.02);
+}

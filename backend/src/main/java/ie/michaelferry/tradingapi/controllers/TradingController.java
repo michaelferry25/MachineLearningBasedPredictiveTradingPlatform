@@ -38,4 +38,9 @@ public class TradingController {
     public Map<String, Object> getHistory(Authentication auth) {
         return Map.of("trades", tradingService.getTradeHistory(auth.getName()));
     }
+
+    @GetMapping("/api/trading/performance")
+    public Map<String, Object> getPerformance(Authentication auth) {
+        return tradingService.getPerformanceMetrics(auth.getName());
+    }
 }
