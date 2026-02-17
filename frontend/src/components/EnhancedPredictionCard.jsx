@@ -64,14 +64,24 @@ const EnhancedPredictionCard = ({ symbol, showAdvanced, onToggleAdvanced }) => {
   const [prediction, setPrediction] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [sentiment, setSentiment] = useState(null);
 
   useEffect(() => {
     if (symbol) {
       fetchPrediction();
+      fetchSentiment();
       const interval = setInterval(fetchPrediction, 60000);
       return () => clearInterval(interval);
     }
   }, [symbol]);
+
+  const fetchSentiment = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/ml/sentiment/${symbol}`);
+      const data = await res.json();
+      if (!data.error) setSentiment(data.combined || data);
+    } catch {}
+  };
 
   const fetchPrediction = async () => {
     if (!symbol) return;
@@ -195,7 +205,14 @@ const EnhancedPredictionCard = ({ symbol, showAdvanced, onToggleAdvanced }) => {
     <div className="enhanced-prediction-card">
       <div className="prediction-header">
         <h3>AI Prediction - {symbol}</h3>
-        <div className="model-badge">Next Day &middot; Ensemble</div>
+        <div className="prediction-header-badges">
+          {sentiment && (
+            <div className={`sentiment-mini-badge ${sentiment.label?.toLowerCase().replace(' ', '-')}`}>
+              {sentiment.label} ({sentiment.score >= 0 ? '+' : ''}{sentiment.score?.toFixed(2)})
+            </div>
+          )}
+          <div className="model-badge">Next Day &middot; Ensemble</div>
+        </div>
       </div>
 
       {/* Zone 1: Smart Summary */}

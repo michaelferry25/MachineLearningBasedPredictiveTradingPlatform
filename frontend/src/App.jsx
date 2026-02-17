@@ -402,13 +402,13 @@ export default function App() {
                 onToggleAdvanced={() => setShowAdvanced(prev => !prev)}
               />
 
+              <NewsSentiment symbol={symbol} />
+
               {showAdvanced && detailedPrediction && (
                 <MLInsightsTabs detailedPrediction={detailedPrediction} />
               )}
 
               <PredictionHistory symbol={symbol} />
-
-              <NewsSentiment symbol={symbol} />
             </>
           ) : (
             <div className="empty-state-main">

@@ -21,6 +21,12 @@
   margin: 0;
 }
 
+.prediction-header-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .model-badge {
   background: linear-gradient(135deg, #58a6ff 0%, #3fb950 100%);
   color: #fff;
@@ -28,6 +34,31 @@
   border-radius: 6px;
   font-size: 0.75rem;
   font-weight: 600;
+}
+
+.sentiment-mini-badge {
+  font-size: 0.72rem;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.sentiment-mini-badge.positive,
+.sentiment-mini-badge.very-positive {
+  background: rgba(63, 185, 80, 0.15);
+  color: #3fb950;
+}
+
+.sentiment-mini-badge.neutral {
+  background: rgba(240, 136, 62, 0.15);
+  color: #f0883e;
+}
+
+.sentiment-mini-badge.negative,
+.sentiment-mini-badge.very-negative {
+  background: rgba(248, 81, 73, 0.15);
+  color: #ff7b72;
 }
 
 /* ===== Zone 1: Smart Signal Hero ===== */
