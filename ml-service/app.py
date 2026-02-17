@@ -1,3 +1,4 @@
+import os
 import time
 from flask import Flask, jsonify, request
 from flask_cors import CORS
@@ -116,4 +117,5 @@ def clear_cache():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    debug = os.getenv('FLASK_DEBUG', 'false').lower() == 'true'
+    app.run(host='0.0.0.0', port=5001, debug=debug)

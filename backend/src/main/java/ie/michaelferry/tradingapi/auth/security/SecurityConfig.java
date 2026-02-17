@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Value("${app.cors.allowed-origins:*}")
+    @Value("${app.cors.allowed-origins}")
     private String allowedOrigins;
 
     @Bean

@@ -10,6 +10,6 @@ COPY app.py .
 ENV FLASK_APP=app.py
 ENV PYTHONUNBUFFERED=1
 
-EXPOSE 5000
+EXPOSE 5001
 
 CMD ["python", "app.py"]

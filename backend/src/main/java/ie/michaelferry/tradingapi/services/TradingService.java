@@ -7,38 +7,47 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class TradingService {
-    
-    private final Portfolio portfolio = new Portfolio(100000.0);
-    private final List<Trade> tradeHistory = new ArrayList<>();
+
+    private final ConcurrentHashMap<String, Portfolio> portfolios = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, List<Trade>> tradeHistories = new ConcurrentHashMap<>();
     private final FinnhubClient finnhubClient;
 
     public TradingService(FinnhubClient finnhubClient) {
         this.finnhubClient = finnhubClient;
     }
 
-    public Map<String, Object> executeBuy(String symbol, int quantity) {
+    private Portfolio getPortfolio(String username) {
+        return portfolios.computeIfAbsent(username, k -> new Portfolio(100000.0));
+    }
+
+    private List<Trade> getTradesForUser(String username) {
+        return tradeHistories.computeIfAbsent(username, k -> new ArrayList<>());
+    }
+
+    public Map<String, Object> executeBuy(String username, String symbol, int quantity) {
+        Portfolio portfolio = getPortfolio(username);
         double currentPrice = finnhubClient.fetchLivePrice(symbol);
-        
+
         if (currentPrice <= 0) {
             return Map.of("error", "Unable to fetch price for " + symbol);
         }
-        
+
         double totalCost = currentPrice * quantity;
-        
+
         if (totalCost > portfolio.getCashBalance()) {
             return Map.of("error", "Insufficient funds", "required", totalCost, "available", portfolio.getCashBalance());
         }
-        
+
         portfolio.setCashBalance(portfolio.getCashBalance() - totalCost);
         portfolio.addHolding(symbol, quantity);
-        
+
         Trade trade = new Trade(symbol, "BUY", currentPrice, quantity);
-        tradeHistory.add(trade);
-        
+        getTradesForUser(username).add(trade);
+
         return Map.of(
             "success", true,
             "message", "Bought " + quantity + " shares of " + symbol,
@@ -49,31 +58,32 @@ public class TradingService {
                 "quantity", quantity,
                 "total", totalCost
             ),
-            "portfolio", getPortfolioSummary()
+            "portfolio", getPortfolioSummary(username)
         );
     }
 
-    public Map<String, Object> executeSell(String symbol, int quantity) {
+    public Map<String, Object> executeSell(String username, String symbol, int quantity) {
+        Portfolio portfolio = getPortfolio(username);
         int currentHolding = portfolio.getHoldings().getOrDefault(symbol, 0);
-        
+
         if (currentHolding < quantity) {
             return Map.of("error", "Insufficient shares", "available", currentHolding, "requested", quantity);
         }
-        
+
         double currentPrice = finnhubClient.fetchLivePrice(symbol);
-        
+
         if (currentPrice <= 0) {
             return Map.of("error", "Unable to fetch price for " + symbol);
         }
-        
+
         double totalValue = currentPrice * quantity;
-        
+
         portfolio.setCashBalance(portfolio.getCashBalance() + totalValue);
         portfolio.removeHolding(symbol, quantity);
-        
+
         Trade trade = new Trade(symbol, "SELL", currentPrice, quantity);
-        tradeHistory.add(trade);
-        
+        getTradesForUser(username).add(trade);
+
         return Map.of(
             "success", true,
             "message", "Sold " + quantity + " shares of " + symbol,
@@ -84,14 +94,15 @@ public class TradingService {
                 "quantity", quantity,
                 "total", totalValue
             ),
-            "portfolio", getPortfolioSummary()
+            "portfolio", getPortfolioSummary(username)
         );
     }
 
-    public Map<String, Object> getPortfolioSummary() {
+    public Map<String, Object> getPortfolioSummary(String username) {
+        Portfolio portfolio = getPortfolio(username);
         double holdingsValue = 0;
         List<Map<String, Object>> positions = new ArrayList<>();
-        
+
         for (Map.Entry<String, Integer> entry : portfolio.getHoldings().entrySet()) {
             if (entry.getValue() > 0) {
                 String symbol = entry.getKey();
@@ -99,7 +110,7 @@ public class TradingService {
                 double currentPrice = finnhubClient.fetchLivePrice(symbol);
                 double value = currentPrice * quantity;
                 holdingsValue += value;
-                
+
                 positions.add(Map.of(
                     "symbol", symbol,
                     "quantity", quantity,
@@ -108,20 +119,20 @@ public class TradingService {
                 ));
             }
         }
-        
+
         double totalValue = portfolio.getCashBalance() + holdingsValue;
         portfolio.setTotalValue(totalValue);
-        
+
         return Map.of(
             "cashBalance", portfolio.getCashBalance(),
             "holdingsValue", holdingsValue,
             "totalValue", totalValue,
             "positions", positions,
-            "tradeCount", tradeHistory.size()
+            "tradeCount", getTradesForUser(username).size()
         );
     }
 
-    public List<Trade> getTradeHistory() {
-        return new ArrayList<>(tradeHistory);
+    public List<Trade> getTradeHistory(String username) {
+        return new ArrayList<>(getTradesForUser(username));
     }
 }

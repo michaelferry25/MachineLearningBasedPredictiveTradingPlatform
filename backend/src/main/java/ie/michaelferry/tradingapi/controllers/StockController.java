@@ -7,7 +7,6 @@ import ie.michaelferry.tradingapi.services.NewsService;
 import ie.michaelferry.tradingapi.services.HistoricalPriceService;
 import ie.michaelferry.tradingapi.services.CandleService;
 
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -17,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@CrossOrigin(origins = "*")
 public class StockController {
 
     private final StockService stockService;

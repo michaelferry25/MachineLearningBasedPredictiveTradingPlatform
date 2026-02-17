@@ -12,9 +12,7 @@ public class FinnhubClient {
     private final String apiKey;
 
     public FinnhubClient() {
-        // Reads from your .env because Mac exports variables into shell env
         this.apiKey = System.getenv("FINNHUB_API_KEY");
-        System.out.println("FinnhubClient loaded API key: " + apiKey);
     }
 
     public double fetchLivePrice(String symbol) {
