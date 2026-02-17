@@ -1,7 +1,7 @@
 package ie.michaelferry.tradingapi.controllers;
 
 import ie.michaelferry.tradingapi.models.StockResponse;
-import ie.michaelferry.tradingapi.models.HistoricalPriceResponse;
+
 import ie.michaelferry.tradingapi.services.StockService;
 import ie.michaelferry.tradingapi.services.NewsService;
 import ie.michaelferry.tradingapi.services.HistoricalPriceService;
@@ -51,8 +51,10 @@ public class StockController {
 
     // Historical stock prices
     @GetMapping("/api/historical/{symbol}")
-    public Map<String, Object> getHistorical(@PathVariable String symbol) {
-        return historicalPriceService.getHistoricalPrices(symbol);
+    public Map<String, Object> getHistorical(
+            @PathVariable String symbol,
+            @RequestParam(required = false) String range) {
+        return historicalPriceService.getHistoricalPrices(symbol, range);
     }
 
     // Candlestick data for advanced charts

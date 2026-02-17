@@ -1,6 +1,6 @@
 #FileLock
-#Tue Feb 10 13:08:59 GMT 2026
-hostName=DESKTOP-RHPK9CO.station
-id=19c47ab5623bf5bed1196e9eff8d951f94b5260a8c8
+#Tue Feb 17 16:36:58 GMT 2026
+hostName=macbookair
+id=19c6c7644570f1a22e160c96102230e9f9f338762fb
 method=file
-server=192.168.1.47\:60407
+server=192.168.1.91\:56859

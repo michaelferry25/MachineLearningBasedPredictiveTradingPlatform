@@ -38,6 +38,28 @@ public class MLController {
         }
     }
 
+    @GetMapping("/api/ml/predict/{symbol}/detailed")
+    public Map<String, Object> getDetailedPrediction(@PathVariable String symbol) {
+        try {
+            String url = ML_SERVICE_URL + "/predict/" + symbol + "/detailed";
+            Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+            return response;
+        } catch (Exception e) {
+            return Map.of(
+                "error", "ML service unavailable",
+                "message", e.getMessage()
+            );
+        }
+    }
+
+    @GetMapping("/api/ml/predictions/{symbol}")
+    public List<PredictionLog> getPredictionsBySymbol(
+            @PathVariable String symbol,
+            @RequestParam(defaultValue = "50") int limit
+    ) {
+        return predictionLogService.getEvaluatedBySymbol(symbol.toUpperCase(), limit);
+    }
+
     @GetMapping("/api/ml/predictions")
     public List<PredictionLog> getPredictions(
             @RequestParam(defaultValue = "25") int limit,

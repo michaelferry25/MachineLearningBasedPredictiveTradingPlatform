@@ -14,6 +14,7 @@ import ProfilePage from "./components/ProfilePage";
 import PortfolioPage from "./components/PortfolioPage";
 import EnhancedPredictionCard from "./components/EnhancedPredictionCard";
 import PredictionHistory from "./components/PredictionHistory";
+import MLInsightsTabs from "./components/MLInsightsTabs";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 const TOKEN_KEY = "marketmind_token";
@@ -58,11 +59,14 @@ export default function App() {
   const [result, setResult] = useState(null);
   const [historical, setHistorical] = useState(null);
   const [prediction, setPrediction] = useState(null);
+  const [detailedPrediction, setDetailedPrediction] = useState(null);
   const [portfolio, setPortfolio] = useState(null);
   const [loading, setLoading] = useState(false);
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [watchlist, setWatchlist] = useState(["AAPL", "GOOGL", "MSFT", "TSLA"]);
   const [newTicker, setNewTicker] = useState("");
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [chartRange, setChartRange] = useState("1mo");
 
   const authToken = auth?.token;
 
@@ -163,17 +167,23 @@ export default function App() {
     setLoading(false);
   };
 
-  const fetchHistorical = async (stockSymbol) => {
+  const fetchHistorical = async (stockSymbol, range) => {
     const sym = stockSymbol || symbol;
+    const r = range || chartRange;
     if (!sym.trim()) return;
 
     try {
-      const res = await fetch(`${API_URL}/api/historical/${sym}`);
+      const res = await fetch(`${API_URL}/api/historical/${sym}?range=${r}`);
       const data = await res.json();
       setHistorical(data);
     } catch (error) {
       console.error("Historical fetch failed", error);
     }
+  };
+
+  const handleRangeChange = (range) => {
+    setChartRange(range);
+    if (symbol) fetchHistorical(symbol, range);
   };
 
   const fetchPrediction = async (stockSymbol) => {
@@ -189,6 +199,22 @@ export default function App() {
       }
     } catch (error) {
       setPrediction(null);
+    }
+  };
+
+  const fetchDetailedPrediction = async (stockSymbol) => {
+    const sym = stockSymbol || symbol;
+    if (!sym.trim()) return;
+    try {
+      const res = await fetch(`${API_URL}/api/ml/predict/${sym}/detailed`);
+      const data = await res.json();
+      if (res.ok && !data.error) {
+        setDetailedPrediction(data);
+      } else {
+        setDetailedPrediction(null);
+      }
+    } catch (error) {
+      setDetailedPrediction(null);
     }
   };
 
@@ -210,11 +236,13 @@ export default function App() {
   };
 
   const handleStockSelect = (stockSymbol) => {
+    setShowAdvanced(false);
     setSymbol(stockSymbol);
     setSearchInput(stockSymbol);
     fetchPrice(stockSymbol);
     fetchHistorical(stockSymbol);
     fetchPrediction(stockSymbol);
+    fetchDetailedPrediction(stockSymbol);
   };
 
   const handleSearch = () => {
@@ -326,19 +354,47 @@ export default function App() {
               </div>
 
               <div className="chart-container">
+                <div className="chart-timeframe-bar">
+                  {[
+                    { key: '5d', label: '1W' },
+                    { key: '1mo', label: '1M' },
+                    { key: '3mo', label: '3M' },
+                    { key: '6mo', label: '6M' },
+                    { key: '1y', label: '1Y' },
+                  ].map(tf => (
+                    <button
+                      key={tf.key}
+                      className={`timeframe-btn ${chartRange === tf.key ? 'active' : ''}`}
+                      onClick={() => handleRangeChange(tf.key)}
+                    >
+                      {tf.label}
+                    </button>
+                  ))}
+                </div>
                 {historical && historical.prices?.length > 0 ? (
                   <HistoricalChart
                     timestamps={historical.timestamps}
                     prices={historical.prices}
                     symbol={symbol}
                     prediction={prediction}
+                    indicatorData={detailedPrediction?.indicator_timeseries}
+                    chartRange={chartRange}
                   />
                 ) : (
                   <div className="chart-loading">Loading chart...</div>
                 )}
               </div>
 
-              <EnhancedPredictionCard symbol={symbol} />
+              <EnhancedPredictionCard
+                symbol={symbol}
+                showAdvanced={showAdvanced}
+                onToggleAdvanced={() => setShowAdvanced(prev => !prev)}
+              />
+
+              {showAdvanced && detailedPrediction && (
+                <MLInsightsTabs detailedPrediction={detailedPrediction} />
+              )}
+
               <PredictionHistory symbol={symbol} />
             </>
           ) : (

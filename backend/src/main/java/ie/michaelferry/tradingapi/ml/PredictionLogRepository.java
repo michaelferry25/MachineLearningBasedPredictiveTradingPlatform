@@ -9,4 +9,5 @@ public interface PredictionLogRepository extends JpaRepository<PredictionLog, Lo
     List<PredictionLog> findByEvaluatedAtIsNullAndCreatedAtBefore(Instant cutoff);
     List<PredictionLog> findByEvaluatedAtIsNotNull();
     List<PredictionLog> findByEvaluatedAtIsNull();
+    List<PredictionLog> findBySymbolAndEvaluatedAtIsNotNullOrderByCreatedAtDesc(String symbol);
 }

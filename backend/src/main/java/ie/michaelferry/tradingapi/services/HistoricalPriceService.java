@@ -13,11 +13,12 @@ public class HistoricalPriceService {
 
     private final HttpClient client = HttpClient.newHttpClient();
 
-    public Map<String, Object> getHistoricalPrices(String symbol) {
+    public Map<String, Object> getHistoricalPrices(String symbol, String range) {
         try {
+            String validRange = range != null && List.of("5d", "1mo", "3mo", "6mo", "1y").contains(range) ? range : "1mo";
             String url = "https://query1.finance.yahoo.com/v8/finance/chart/"
                     + symbol.toUpperCase()
-                    + "?interval=1d&range=1mo";
+                    + "?interval=1d&range=" + validRange;
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))

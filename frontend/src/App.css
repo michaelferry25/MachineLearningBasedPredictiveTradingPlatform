@@ -674,8 +674,8 @@ body {
 .chart-canvas {
   flex: 1;
   position: relative;
-  min-height: 320px;
-  height: 320px;
+  min-height: 370px;
+  height: 370px;
 }
 
 .empty-state {
@@ -4030,9 +4030,40 @@ body.theme-light .nav-btn:hover {
 .chart-container {
   background: rgba(22, 27, 34, 0.8);
   border-radius: 14px;
-  padding: 20px;
+  padding: 22px;
   border: 1px solid rgba(48, 54, 61, 0.8);
-  min-height: 400px;
+  min-height: 440px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.chart-timeframe-bar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.timeframe-btn {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid rgba(48, 54, 61, 0.6);
+  background: rgba(13, 17, 23, 0.5);
+  color: #8b949e;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.timeframe-btn:hover {
+  background: rgba(88, 166, 255, 0.1);
+  color: #c9d1d9;
+  border-color: rgba(88, 166, 255, 0.3);
+}
+
+.timeframe-btn.active {
+  background: rgba(88, 166, 255, 0.15);
+  color: #58a6ff;
+  border-color: rgba(88, 166, 255, 0.4);
 }
 
 .chart-loading {
@@ -4635,5 +4666,59 @@ body.theme-light .nav-btn:hover {
   .hero-btn {
     padding: 14px 24px;
     font-size: 0.95rem;
+  }
+}
+
+/* ML Insights Tabs */
+.ml-insights-card {
+  background: rgba(22, 27, 34, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 14px;
+  padding: 22px;
+  border: 1px solid rgba(48, 54, 61, 0.8);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+}
+
+.insights-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.insights-tab {
+  background: rgba(48, 54, 61, 0.5);
+  color: #8b949e;
+  border: 1px solid rgba(48, 54, 61, 0.8);
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.insights-tab:hover {
+  background: rgba(48, 54, 61, 0.8);
+  color: #e6edf3;
+}
+
+.insights-tab.active {
+  background: rgba(88, 166, 255, 0.15);
+  color: #58a6ff;
+  border-color: rgba(88, 166, 255, 0.4);
+}
+
+.insights-content {
+  min-height: 200px;
+}
+
+@media (max-width: 768px) {
+  .insights-tabs {
+    gap: 6px;
+  }
+  .insights-tab {
+    padding: 6px 12px;
+    font-size: 0.8rem;
   }
 }

@@ -101,6 +101,12 @@ public class PredictionLogService {
         return metrics;
     }
 
+    public List<PredictionLog> getEvaluatedBySymbol(String symbol, int limit) {
+        int capped = Math.min(Math.max(limit, 1), 200);
+        List<PredictionLog> logs = repository.findBySymbolAndEvaluatedAtIsNotNullOrderByCreatedAtDesc(symbol);
+        return logs.size() <= capped ? logs : logs.subList(0, capped);
+    }
+
     public List<PredictionLog> getRecentLogs(int limit, Boolean evaluated) {
         int capped = Math.min(Math.max(limit, 1), 200);
         List<PredictionLog> logs = repository
