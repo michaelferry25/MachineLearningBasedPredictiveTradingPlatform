@@ -74,10 +74,22 @@ kill_tree() {
 }
 
 cleanup() {
+  echo ""
   echo "Shutting down services..."
   for pid in "${pids[@]:-}"; do
     kill_tree "$pid"
   done
+  # Give processes a moment to close, then force kill any that are still around
+  sleep 1
+  # Force kill anything still on our ports
+  for port in 8080 5001 5173; do
+    local stuck
+    stuck=$(lsof -ti :"$port" 2>/dev/null || true)
+    if [[ -n "$stuck" ]]; then
+      kill -9 $stuck 2>/dev/null || true
+    fi
+  done
+  echo "All services stopped."
 }
 
 trap cleanup INT TERM EXIT

@@ -100,7 +100,7 @@ const EnhancedPredictionCard = ({ symbol, showAdvanced, onToggleAdvanced }) => {
       }
     } catch (err) {
       setError("Network error - unable to fetch forecast");
-      console.error(err);
+      /* error Handled silently */
     } finally {
       setLoading(false);
     }

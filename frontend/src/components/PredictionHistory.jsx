@@ -38,7 +38,7 @@ const PredictionHistory = ({ symbol }) => {
       setMetrics(metricsResponse.ok ? metricsData : null);
     } catch (err) {
       setError("Failed to fetch forecast history");
-      console.error(err);
+      /* Error handled silently */
     } finally {
       setLoading(false);
     }

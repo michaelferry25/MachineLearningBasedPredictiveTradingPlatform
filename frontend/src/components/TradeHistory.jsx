@@ -28,7 +28,7 @@ export default function TradeHistory({ authToken }) {
       setTrades(data.trades || []);
       setLoading(false);
     } catch (error) {
-      console.error("Failed to fetch trade history", error);
+      /* Error handled silently */
       setLoading(false);
     }
   };

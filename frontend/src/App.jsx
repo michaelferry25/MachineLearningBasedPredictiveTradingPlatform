@@ -190,7 +190,7 @@ export default function App() {
       const data = await res.json();
       setHistorical(data);
     } catch (error) {
-      console.error("Historical fetch failed", error);
+      /* error handled silently */
     }
   };
 
@@ -244,7 +244,7 @@ export default function App() {
       const data = await res.json();
       setPortfolio(data);
     } catch (error) {
-      console.error("Portfolio fetch failed", error);
+      /* error handled silently */
     }
   };
 
