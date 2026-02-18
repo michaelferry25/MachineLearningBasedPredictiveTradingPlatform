@@ -17,6 +17,8 @@ import PredictionHistory from "./components/PredictionHistory";
 import MLInsightsTabs from "./components/MLInsightsTabs";
 import StockScreener from "./components/StockScreener";
 import NewsSentiment from "./components/NewsSentiment";
+import AboutSection from "./components/AboutSection";
+import SecuritySection from "./components/SecuritySection";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 const TOKEN_KEY = "marketmind_token";
@@ -478,6 +480,10 @@ export default function App() {
         return <SettingsPage settings={settings} onUpdate={updateSettings} onReset={resetSettings} />;
       case "/profile":
         return <ProfilePage user={auth?.user} authToken={authToken} onProfileUpdate={handleProfileUpdate} portfolio={portfolio} />;
+      case "/security":
+        return <SecuritySection />;
+      case "/about":
+        return <AboutSection />;
       case "/overview":
       default:
         return (
