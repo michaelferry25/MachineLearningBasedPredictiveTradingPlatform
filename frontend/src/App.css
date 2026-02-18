@@ -4766,3 +4766,94 @@ body.theme-light .nav-btn:hover {
     font-size: 0.7rem;
   }
 }
+
+/* ===== Chart Explainer Text ===== */
+
+.chart-explainer {
+  font-size: 0.78rem;
+  color: #8b949e;
+  margin-top: 10px;
+  line-height: 1.5;
+}
+
+/* ===== Research Brief Expanded ===== */
+
+.research-card.expanded {
+  border-color: rgba(88, 166, 255, 0.3);
+}
+
+.brief-expanded {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(48, 54, 61, 0.5);
+  overflow-x: auto;
+}
+
+.brief-expanded-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+
+.brief-expanded-table th {
+  text-align: left;
+  color: #6e7681;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 6px 10px;
+  border-bottom: 1px solid rgba(48, 54, 61, 0.5);
+  white-space: nowrap;
+}
+
+.brief-expanded-table td {
+  padding: 8px 10px;
+  color: #c9d1d9;
+  white-space: nowrap;
+}
+
+.brief-expanded-table tbody tr:hover {
+  background: rgba(88, 166, 255, 0.04);
+}
+
+.brief-symbol {
+  font-weight: 800;
+  color: #58a6ff;
+  letter-spacing: 0.3px;
+}
+
+.brief-expanded-table .positive {
+  color: #3fb950;
+}
+
+.brief-expanded-table .negative {
+  color: #ff7b72;
+}
+
+.brief-expanded-table .neutral {
+  color: #f0883e;
+}
+
+.indicator-label {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.indicator-label.positive {
+  background: rgba(63, 185, 80, 0.12);
+  color: #3fb950;
+}
+
+.indicator-label.negative {
+  background: rgba(248, 81, 73, 0.12);
+  color: #ff7b72;
+}
+
+.indicator-label.neutral {
+  background: rgba(240, 136, 62, 0.12);
+  color: #f0883e;
+}

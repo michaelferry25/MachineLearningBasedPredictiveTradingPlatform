@@ -463,13 +463,13 @@ export default function App() {
   const renderPage = () => {
     switch (route) {
       case "/analytics":
-        return <AnalyticsHub />;
+        return <AnalyticsHub authToken={authToken} />;
       case "/screener":
         return <StockScreener />;
       case "/dashboard":
         return renderDashboard();
       case "/research":
-        return <ResearchHub />;
+        return <ResearchHub authToken={authToken} />;
       case "/live":
         return <LiveMarket settings={settings} />;
       case "/portfolio":
@@ -483,7 +483,7 @@ export default function App() {
         return (
           <div className="overview-page">
             <HeroSection />
-            <AnalyticsHub />
+            <AnalyticsHub authToken={authToken} />
           </div>
         );
     }
