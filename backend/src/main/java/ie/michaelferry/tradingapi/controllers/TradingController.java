@@ -1,6 +1,7 @@
 package ie.michaelferry.tradingapi.controllers;
 
 import ie.michaelferry.tradingapi.services.TradingService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,17 +17,37 @@ public class TradingController {
     }
 
     @PostMapping("/api/trading/buy")
-    public Map<String, Object> buy(@RequestBody Map<String, Object> request, Authentication auth) {
-        String symbol = (String) request.get("symbol");
-        int quantity = ((Number) request.get("quantity")).intValue();
-        return tradingService.executeBuy(auth.getName(), symbol.toUpperCase(), quantity);
+    public ResponseEntity<Map<String, Object>> buy(@RequestBody Map<String, Object> request, Authentication auth) {
+        String symbol = request.get("symbol") instanceof String s ? s : null;
+        Number qtyNum = request.get("quantity") instanceof Number n ? n : null;
+
+        if (symbol == null || symbol.isBlank() || qtyNum == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "symbol and quantity are required"));
+        }
+
+        double quantity = qtyNum.doubleValue();
+        if (quantity <= 0) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Quantity must be greater than 0"));
+        }
+
+        return ResponseEntity.ok(tradingService.executeBuy(auth.getName(), symbol.toUpperCase(), quantity));
     }
 
     @PostMapping("/api/trading/sell")
-    public Map<String, Object> sell(@RequestBody Map<String, Object> request, Authentication auth) {
-        String symbol = (String) request.get("symbol");
-        int quantity = ((Number) request.get("quantity")).intValue();
-        return tradingService.executeSell(auth.getName(), symbol.toUpperCase(), quantity);
+    public ResponseEntity<Map<String, Object>> sell(@RequestBody Map<String, Object> request, Authentication auth) {
+        String symbol = request.get("symbol") instanceof String s ? s : null;
+        Number qtyNum = request.get("quantity") instanceof Number n ? n : null;
+
+        if (symbol == null || symbol.isBlank() || qtyNum == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "symbol and quantity are required"));
+        }
+
+        double quantity = qtyNum.doubleValue();
+        if (quantity <= 0) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Quantity must be greater than 0"));
+        }
+
+        return ResponseEntity.ok(tradingService.executeSell(auth.getName(), symbol.toUpperCase(), quantity));
     }
 
     @GetMapping("/api/trading/portfolio")

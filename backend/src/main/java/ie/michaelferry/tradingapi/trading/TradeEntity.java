@@ -24,10 +24,12 @@ public class TradeEntity {
     private double price;
 
     @Column(nullable = false)
-    private int quantity;
+    private double quantity;
 
     @Column(nullable = false)
     private double totalValue;
+
+    private double pnl;
 
     @Column(nullable = false)
     private Instant timestamp;
@@ -46,10 +48,12 @@ public class TradeEntity {
     public void setType(String type) { this.type = type; }
     public double getPrice() { return price; }
     public void setPrice(double price) { this.price = price; }
-    public int getQuantity() { return quantity; }
-    public void setQuantity(int quantity) { this.quantity = quantity; }
+    public double getQuantity() { return quantity; }
+    public void setQuantity(double quantity) { this.quantity = quantity; }
     public double getTotalValue() { return totalValue; }
     public void setTotalValue(double totalValue) { this.totalValue = totalValue; }
+    public double getPnl() { return pnl; }
+    public void setPnl(double pnl) { this.pnl = pnl; }
     public Instant getTimestamp() { return timestamp; }
     public void setTimestamp(Instant timestamp) { this.timestamp = timestamp; }
 }

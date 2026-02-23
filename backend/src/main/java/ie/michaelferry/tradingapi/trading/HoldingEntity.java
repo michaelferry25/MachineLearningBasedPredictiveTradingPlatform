@@ -18,7 +18,7 @@ public class HoldingEntity {
     private String symbol;
 
     @Column(nullable = false)
-    private int quantity;
+    private double quantity;
 
     @Column(nullable = false)
     private double avgPrice;
@@ -28,8 +28,8 @@ public class HoldingEntity {
     public void setUserId(Long userId) { this.userId = userId; }
     public String getSymbol() { return symbol; }
     public void setSymbol(String symbol) { this.symbol = symbol; }
-    public int getQuantity() { return quantity; }
-    public void setQuantity(int quantity) { this.quantity = quantity; }
+    public double getQuantity() { return quantity; }
+    public void setQuantity(double quantity) { this.quantity = quantity; }
     public double getAvgPrice() { return avgPrice; }
     public void setAvgPrice(double avgPrice) { this.avgPrice = avgPrice; }
 }

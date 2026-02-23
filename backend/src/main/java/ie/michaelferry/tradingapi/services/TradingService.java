@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.LinkedHashMap;
 
 @Service
 public class TradingService {
@@ -57,7 +58,11 @@ public class TradingService {
     }
 
     @Transactional
-    public Map<String, Object> executeBuy(String email, String symbol, int quantity) {
+    public Map<String, Object> executeBuy(String email, String symbol, double quantity) {
+        if (quantity <= 0) {
+            return Map.of("error", "Quantity must be greater than 0");
+        }
+
         Long userId = resolveUserId(email);
         double currentPrice = finnhubClient.fetchLivePrice(symbol);
 
@@ -78,7 +83,7 @@ public class TradingService {
         if (existingHolding.isPresent()) {
             HoldingEntity h = existingHolding.get();
             double oldTotal = h.getAvgPrice() * h.getQuantity();
-            int newQty = h.getQuantity() + quantity;
+            double newQty = h.getQuantity() + quantity;
             h.setAvgPrice((oldTotal + totalCost) / newQty);
             h.setQuantity(newQty);
             holdingRepository.save(h);
@@ -104,7 +109,7 @@ public class TradingService {
 
         return Map.of(
             "success", true,
-            "message", "Bought " + quantity + " shares of " + symbol,
+            "message", "Bought " + formatQty(quantity) + " shares of " + symbol,
             "trade", Map.of(
                 "symbol", symbol,
                 "type", "BUY",
@@ -117,11 +122,15 @@ public class TradingService {
     }
 
     @Transactional
-    public Map<String, Object> executeSell(String email, String symbol, int quantity) {
+    public Map<String, Object> executeSell(String email, String symbol, double quantity) {
+        if (quantity <= 0) {
+            return Map.of("error", "Quantity must be greater than 0");
+        }
+
         Long userId = resolveUserId(email);
 
-        Optional<HoldingEntity> existingHolding = holdingRepository.findByUserIdAndSymbol(userId, symbol);
-        int currentQty = existingHolding.map(HoldingEntity::getQuantity).orElse(0);
+        HoldingEntity h = holdingRepository.findByUserIdAndSymbol(userId, symbol).orElse(null);
+        double currentQty = h != null ? h.getQuantity() : 0;
 
         if (currentQty < quantity) {
             return Map.of("error", "Insufficient shares", "available", currentQty, "requested", quantity);
@@ -137,9 +146,10 @@ public class TradingService {
         double cash = getCashBalance(userId);
         setCashBalance(userId, cash + totalValue);
 
-        HoldingEntity h = existingHolding.get();
-        int newQty = h.getQuantity() - quantity;
-        if (newQty == 0) {
+        double realizedPnl = (currentPrice - h.getAvgPrice()) * quantity;
+
+        double newQty = h.getQuantity() - quantity;
+        if (newQty <= 0.000001) {
             holdingRepository.delete(h);
         } else {
             h.setQuantity(newQty);
@@ -153,13 +163,14 @@ public class TradingService {
         trade.setPrice(currentPrice);
         trade.setQuantity(quantity);
         trade.setTotalValue(totalValue);
+        trade.setPnl(realizedPnl);
         tradeRepository.save(trade);
 
         recordSnapshot(userId);
 
         return Map.of(
             "success", true,
-            "message", "Sold " + quantity + " shares of " + symbol,
+            "message", "Sold " + formatQty(quantity) + " shares of " + symbol,
             "trade", Map.of(
                 "symbol", symbol,
                 "type", "SELL",
@@ -179,7 +190,7 @@ public class TradingService {
 
         List<HoldingEntity> holdings = holdingRepository.findByUserId(userId);
         for (HoldingEntity h : holdings) {
-            if (h.getQuantity() > 0) {
+            if (h.getQuantity() > 0.000001) {
                 double currentPrice = finnhubClient.fetchLivePrice(h.getSymbol());
                 double value = currentPrice * h.getQuantity();
                 holdingsValue += value;
@@ -212,14 +223,15 @@ public class TradingService {
         List<TradeEntity> trades = tradeRepository.findByUserIdOrderByTimestampDesc(userId);
         List<Map<String, Object>> result = new ArrayList<>();
         for (TradeEntity t : trades) {
-            result.add(Map.of(
-                "symbol", t.getSymbol(),
-                "type", t.getType(),
-                "price", t.getPrice(),
-                "quantity", t.getQuantity(),
-                "totalValue", t.getTotalValue(),
-                "timestamp", t.getTimestamp().toString()
-            ));
+            Map<String, Object> tradeMap = new LinkedHashMap<>();
+            tradeMap.put("symbol", t.getSymbol());
+            tradeMap.put("type", t.getType());
+            tradeMap.put("price", t.getPrice());
+            tradeMap.put("quantity", t.getQuantity());
+            tradeMap.put("totalValue", t.getTotalValue());
+            tradeMap.put("pnl", t.getPnl());
+            tradeMap.put("timestamp", t.getTimestamp().toString());
+            result.add(tradeMap);
         }
         return result;
     }
@@ -248,13 +260,19 @@ public class TradingService {
         }
 
         double bestTrade = 0, worstTrade = 0;
+        boolean hasSells = false;
         List<TradeEntity> trades = tradeRepository.findByUserIdOrderByTimestampDesc(userId);
         for (TradeEntity t : trades) {
-            // Only SELL trades have realized P&L
             if ("SELL".equals(t.getType())) {
-                double sellValue = t.getTotalValue();
-                if (sellValue > bestTrade) bestTrade = sellValue;
-                if (worstTrade == 0 || sellValue < worstTrade) worstTrade = sellValue;
+                double tradePnl = t.getPnl();
+                if (!hasSells) {
+                    bestTrade = tradePnl;
+                    worstTrade = tradePnl;
+                    hasSells = true;
+                } else {
+                    if (tradePnl > bestTrade) bestTrade = tradePnl;
+                    if (tradePnl < worstTrade) worstTrade = tradePnl;
+                }
             }
         }
 
@@ -266,6 +284,11 @@ public class TradingService {
             "worstTrade", worstTrade,
             "equityCurve", equityCurve
         );
+    }
+
+    private String formatQty(double qty) {
+        if (qty == Math.floor(qty)) return String.valueOf((long) qty);
+        return String.format("%.6f", qty).replaceAll("0+$", "").replaceAll("\\.$", "");
     }
 
     private void recordSnapshot(Long userId) {

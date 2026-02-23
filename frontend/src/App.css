@@ -635,6 +635,85 @@ body {
   border: 2px solid rgba(255, 123, 114, 0.3);
 }
 
+/* ── Trade mode toggle (Shares / Dollars) ── */
+.trade-mode-toggle {
+  display: flex;
+  gap: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid rgba(48, 54, 61, 0.8);
+  background: rgba(13, 17, 23, 0.6);
+}
+
+.trade-mode-btn {
+  flex: 1;
+  padding: 9px 0;
+  background: transparent;
+  border: none;
+  color: rgba(230, 237, 243, 0.5);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  letter-spacing: 0.02em;
+}
+
+.trade-mode-btn.active {
+  background: rgba(88, 166, 255, 0.15);
+  color: #58a6ff;
+}
+
+.trade-mode-btn:hover:not(.active) {
+  color: rgba(230, 237, 243, 0.8);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* ── Conversion hint (dollar mode) ── */
+.trade-conversion-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: rgba(88, 166, 255, 0.7);
+  font-weight: 500;
+}
+
+/* ── Confirmation box ── */
+.trade-confirm-box {
+  padding: 14px;
+  border-radius: 10px;
+  background: rgba(88, 166, 255, 0.06);
+  border: 2px solid rgba(88, 166, 255, 0.2);
+  margin-bottom: 14px;
+}
+
+.trade-confirm-text {
+  font-size: 0.9rem;
+  color: #e6edf3;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  line-height: 1.4;
+}
+
+.trade-confirm-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.trade-cancel-btn {
+  background: rgba(48, 54, 61, 0.6);
+  color: rgba(230, 237, 243, 0.8);
+  border: 2px solid rgba(48, 54, 61, 0.8);
+  box-shadow: none;
+}
+
+.trade-cancel-btn:hover {
+  background: rgba(48, 54, 61, 0.9);
+  color: #e6edf3;
+  transform: none;
+}
+
 .chart-wrapper {
   min-height: 450px;
   padding: 24px;
@@ -3947,6 +4026,10 @@ body.theme-light .nav-btn:hover {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  position: sticky;
+  top: 76px;
+  max-height: calc(100vh - 96px);
+  overflow-y: auto;
 }
 
 .portfolio-summary-card {
