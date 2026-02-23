@@ -537,7 +537,7 @@ export default function App() {
 
   return (
     <>
-      <Navbar user={auth.user} onLogout={handleLogout} variant="app" currentRoute={route} userSkillLevel={userSkillLevel} />
+      <Navbar user={auth.user} onLogout={handleLogout} variant="app" currentRoute={route} userSkillLevel={userSkillLevel} authToken={authToken} portfolio={portfolio} />
       <main className="page-content">{renderPage()}</main>
       <Footer />
     </>
