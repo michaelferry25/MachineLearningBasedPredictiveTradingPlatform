@@ -19,6 +19,7 @@ import StockScreener from "./components/StockScreener";
 import NewsSentiment from "./components/NewsSentiment";
 import AboutSection from "./components/AboutSection";
 import SecuritySection from "./components/SecuritySection";
+import LearnPage from "./components/LearnPage";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 const TOKEN_KEY = "marketmind_token";
@@ -71,6 +72,7 @@ export default function App() {
   const [newTicker, setNewTicker] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [chartRange, setChartRange] = useState("1mo");
+  const [userSkillLevel, setUserSkillLevel] = useState("Beginner");
 
   const authToken = auth?.token;
 
@@ -133,13 +135,31 @@ export default function App() {
       .finally(() => setAuthLoading(false));
   }, []);
 
+  useEffect(() => {
+    if (!authToken) return;
+    fetch(`${API_URL}/api/learning/progress`, {
+      headers: { Authorization: `Bearer ${authToken}` }
+    })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data?.skillLevel) setUserSkillLevel(data.skillLevel);
+      })
+      .catch(() => {});
+  }, [authToken]);
+
   const handleAuthSuccess = (payload) => {
     const token = payload.accessToken;
     const user = payload.user;
     if (token) localStorage.setItem(TOKEN_KEY, token);
     if (user) localStorage.setItem(USER_KEY, JSON.stringify(user));
     setAuth({ token, user });
-    window.location.hash = "#/overview";
+    const isNewSignup = payload.newUser || (!payload.user?.updatedAt);
+    if (isNewSignup) {
+      sessionStorage.setItem("marketmind_new_signup", "true");
+      window.location.hash = "#/learn";
+    } else {
+      window.location.hash = "#/overview";
+    }
   };
 
   const handleLogout = () => {
@@ -480,6 +500,8 @@ export default function App() {
         return <SettingsPage settings={settings} onUpdate={updateSettings} onReset={resetSettings} />;
       case "/profile":
         return <ProfilePage user={auth?.user} authToken={authToken} onProfileUpdate={handleProfileUpdate} portfolio={portfolio} />;
+      case "/learn":
+        return <LearnPage authToken={authToken} user={auth?.user} onSkillLevelChange={setUserSkillLevel} />;
       case "/security":
         return <SecuritySection />;
       case "/about":
@@ -515,7 +537,7 @@ export default function App() {
 
   return (
     <>
-      <Navbar user={auth.user} onLogout={handleLogout} variant="app" currentRoute={route} />
+      <Navbar user={auth.user} onLogout={handleLogout} variant="app" currentRoute={route} userSkillLevel={userSkillLevel} />
       <main className="page-content">{renderPage()}</main>
       <Footer />
     </>

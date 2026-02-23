@@ -1,6 +1,12 @@
 import { useState } from 'react';
 
-export default function Navbar({ user, onLogout, variant = "app", currentRoute = "/overview" }) {
+const SKILL_STYLES = {
+  Beginner: { color: "#4ade80", title: "Beginner Trader", className: "skill-beginner" },
+  Intermediate: { color: "#60a5fa", title: "Market Analyst", className: "skill-intermediate" },
+  Expert: { color: "#f59e0b", title: "Expert Trader", className: "skill-expert" }
+};
+
+export default function Navbar({ user, onLogout, variant = "app", currentRoute = "/overview", userSkillLevel = "Beginner" }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const showAppLinks = variant === "app";
 
@@ -10,7 +16,8 @@ export default function Navbar({ user, onLogout, variant = "app", currentRoute =
     { label: "Scanner", href: "#/screener" },
     { label: "Analytics", href: "#/analytics" },
     { label: "Portfolio", href: "#/portfolio" },
-    { label: "Research", href: "#/research" }
+    { label: "Research", href: "#/research" },
+    { label: "Learn", href: "#/learn" }
   ];
 
   const secondaryLinks = [
@@ -51,9 +58,18 @@ export default function Navbar({ user, onLogout, variant = "app", currentRoute =
         <div className="nav-actions">
           {user ? (
             <>
-              <a href="#/profile" className="user-profile">
-                <div className="user-avatar">{user.displayName?.[0] || 'T'}</div>
-                <span className="user-name-desktop">{user.displayName || 'Trader'}</span>
+              <a href="#/profile" className={`user-profile ${SKILL_STYLES[userSkillLevel]?.className || ''}`}>
+                <div className="user-avatar" style={{ borderColor: SKILL_STYLES[userSkillLevel]?.color }}>
+                  {user.displayName?.[0] || 'T'}
+                </div>
+                <div className="user-name-group">
+                  <span className="user-name-desktop" style={{ color: SKILL_STYLES[userSkillLevel]?.color }}>
+                    {user.displayName || 'Trader'}
+                  </span>
+                  <span className="user-skill-tag" style={{ color: SKILL_STYLES[userSkillLevel]?.color }}>
+                    {SKILL_STYLES[userSkillLevel]?.title}
+                  </span>
+                </div>
               </a>
               <button className="btn-signout" onClick={onLogout}>
                 Sign Out
