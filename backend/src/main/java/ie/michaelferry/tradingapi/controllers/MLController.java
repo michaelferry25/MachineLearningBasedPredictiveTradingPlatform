@@ -22,6 +22,12 @@ public class MLController {
     @Value("${app.ml.symbols}")
     private String mlSymbolsConfig;
 
+    @Value("${app.ml.horizon-hours:24}")
+    private int defaultHorizonHours;
+
+    @Value("${app.ml.schedule-ms:3600000}")
+    private long scheduleMs;
+
     public MLController(PredictionLogService predictionLogService) {
         this.predictionLogService = predictionLogService;
     }
@@ -29,16 +35,54 @@ public class MLController {
     @GetMapping("/api/ml/predict/{symbol}")
     public Map<String, Object> getPrediction(
             @PathVariable String symbol,
-            @RequestParam(defaultValue = "24") int horizonHours
+            @RequestParam(defaultValue = "24") int horizonHours,
+            @RequestParam(defaultValue = "false") boolean refresh,
+            @RequestParam(required = false) String source
     ) {
+        String sym = symbol.toUpperCase();
+        int staleAfterMinutes = (int) Math.max(20, (scheduleMs / 60000L) + 15);
+
+        if (!refresh) {
+            Map<String, Object> latest = (source == null || source.isBlank())
+                    ? predictionLogService.getLatestPredictionPayload(sym, staleAfterMinutes)
+                    : predictionLogService.getLatestPredictionPayload(sym, staleAfterMinutes, source);
+            if (latest != null) {
+                return latest;
+            }
+        }
+
         try {
-            String url = mlServiceUrl + "/predict/" + symbol;
+            String url = mlServiceUrl + "/predict/" + sym;
             Map<String, Object> response = restTemplate.getForObject(url, Map.class);
-            predictionLogService.logPrediction(symbol, response, horizonHours);
-            return response;
+            predictionLogService.logPrediction(
+                    sym,
+                    response,
+                    horizonHours,
+                    refresh ? "manual_refresh" : (source == null || source.isBlank() ? "bootstrap" : source.trim())
+            );
+
+            Map<String, Object> latest = (source == null || source.isBlank())
+                    ? predictionLogService.getLatestPredictionPayload(sym, staleAfterMinutes)
+                    : predictionLogService.getLatestPredictionPayload(sym, staleAfterMinutes, source);
+            return latest != null ? latest : response;
         } catch (Exception e) {
             return errorResponse("ML service unavailable", e);
         }
+    }
+
+    @PostMapping("/api/ml/predict/{symbol}/refresh")
+    public Map<String, Object> refreshPrediction(
+            @PathVariable String symbol,
+            @RequestParam(defaultValue = "24") int horizonHours
+    ) {
+        return getPrediction(symbol, horizonHours, true, null);
+    }
+
+    @GetMapping("/api/ml/predict-comparison/{symbol}")
+    public Map<String, Object> getPredictionComparison(@PathVariable String symbol) {
+        String sym = symbol.toUpperCase();
+        int staleAfterMinutes = (int) Math.max(20, (scheduleMs / 60000L) + 15);
+        return predictionLogService.getPredictionComparison(sym, staleAfterMinutes);
     }
 
     @GetMapping("/api/ml/predict/{symbol}/detailed")
@@ -71,6 +115,23 @@ public class MLController {
 
             Map<String, Object> body = responseEntity.getBody();
             if (body != null && body.containsKey("predictions")) {
+                Object predictionsObj = body.get("predictions");
+                if (predictionsObj instanceof List<?> predictions) {
+                    for (Object item : predictions) {
+                        if (item instanceof Map<?, ?> mapItem) {
+                            Map<String, Object> row = new HashMap<>();
+                            for (Map.Entry<?, ?> entry : mapItem.entrySet()) {
+                                if (entry.getKey() != null) {
+                                    row.put(String.valueOf(entry.getKey()), entry.getValue());
+                                }
+                            }
+                            String sym = String.valueOf(row.getOrDefault("symbol", "")).trim().toUpperCase();
+                            if (!sym.isEmpty()) {
+                                predictionLogService.logPrediction(sym, row, defaultHorizonHours, "scan");
+                            }
+                        }
+                    }
+                }
                 return body;
             }
 
@@ -98,9 +159,10 @@ public class MLController {
     @GetMapping("/api/ml/predictions/{symbol}")
     public List<PredictionLog> getPredictionsBySymbol(
             @PathVariable String symbol,
-            @RequestParam(defaultValue = "50") int limit
+            @RequestParam(defaultValue = "50") int limit,
+            @RequestParam(required = false) Boolean evaluated
     ) {
-        return predictionLogService.getEvaluatedBySymbol(symbol.toUpperCase(), limit);
+        return predictionLogService.getLogsBySymbol(symbol.toUpperCase(), limit, evaluated);
     }
 
     @GetMapping("/api/ml/predictions")
@@ -117,6 +179,23 @@ public class MLController {
     ) {
         int evaluated = predictionLogService.evaluatePending(horizonHours);
         return Map.of("evaluated", evaluated);
+    }
+
+    @GetMapping("/api/ml/accuracy/{symbol}")
+    public Map<String, Object> getAccuracy(
+            @PathVariable String symbol,
+            @RequestParam(defaultValue = "30") int days
+    ) {
+        return predictionLogService.getAccuracyHistory(symbol.toUpperCase(), days);
+    }
+
+    @GetMapping("/api/ml/track-record/{symbol}")
+    public Map<String, Object> getTrackRecord(
+            @PathVariable String symbol,
+            @RequestParam(defaultValue = "180") int days,
+            @RequestParam(defaultValue = "true") boolean includePending
+    ) {
+        return predictionLogService.getTrackRecord(symbol.toUpperCase(), days, includePending);
     }
 
     @GetMapping("/api/ml/metrics")

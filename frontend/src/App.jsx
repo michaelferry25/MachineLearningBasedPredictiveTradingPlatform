@@ -64,7 +64,9 @@ export default function App() {
   const [result, setResult] = useState(null);
   const [historical, setHistorical] = useState(null);
   const [prediction, setPrediction] = useState(null);
+  const [predictionComparison, setPredictionComparison] = useState(null);
   const [detailedPrediction, setDetailedPrediction] = useState(null);
+  const [trackRecord, setTrackRecord] = useState(null);
   const [portfolio, setPortfolio] = useState(null);
   const [loading, setLoading] = useState(false);
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
@@ -219,11 +221,15 @@ export default function App() {
     if (symbol) fetchHistorical(symbol, range);
   };
 
-  const fetchPrediction = async (stockSymbol) => {
+  const fetchPrediction = async (stockSymbol, options = {}) => {
     const sym = stockSymbol || symbol;
     if (!sym.trim()) return;
+    const params = new URLSearchParams();
+    if (options.refresh) params.set("refresh", "true");
+    if (options.source) params.set("source", options.source);
+    const query = params.toString() ? `?${params.toString()}` : "";
     try {
-      const res = await fetch(`${API_URL}/api/ml/predict/${sym}`);
+      const res = await fetch(`${API_URL}/api/ml/predict/${sym}${query}`);
       const data = await res.json();
       if (res.ok && !data.error) {
         setPrediction(data);
@@ -232,6 +238,22 @@ export default function App() {
       }
     } catch (error) {
       setPrediction(null);
+    }
+  };
+
+  const fetchPredictionComparison = async (stockSymbol) => {
+    const sym = stockSymbol || symbol;
+    if (!sym.trim()) return;
+    try {
+      const res = await fetch(`${API_URL}/api/ml/predict-comparison/${sym}`);
+      const data = await res.json();
+      if (res.ok && !data.error) {
+        setPredictionComparison(data);
+      } else {
+        setPredictionComparison(null);
+      }
+    } catch (error) {
+      setPredictionComparison(null);
     }
   };
 
@@ -248,6 +270,30 @@ export default function App() {
       }
     } catch (error) {
       setDetailedPrediction(null);
+    }
+  };
+
+  const handleRefreshPrediction = async () => {
+    if (!symbol) return;
+    await fetchPrediction(symbol, { refresh: true });
+    await fetchPredictionComparison(symbol);
+    await fetchTrackRecord(symbol);
+  };
+
+  const fetchTrackRecord = async (stockSymbol) => {
+    const sym = stockSymbol || symbol;
+    if (!sym.trim()) return;
+
+    try {
+      const res = await fetch(`${API_URL}/api/ml/track-record/${sym}?days=365&includePending=true`);
+      const data = await res.json();
+      if (res.ok && !data.error) {
+        setTrackRecord(data);
+      } else {
+        setTrackRecord(null);
+      }
+    } catch (error) {
+      setTrackRecord(null);
     }
   };
 
@@ -270,12 +316,27 @@ export default function App() {
 
   const handleStockSelect = (stockSymbol) => {
     setShowAdvanced(false);
+    setPrediction(null);
+    setPredictionComparison(null);
+    setDetailedPrediction(null);
+    setTrackRecord(null);
     setSymbol(stockSymbol);
     setSearchInput(stockSymbol);
     fetchPrice(stockSymbol);
     fetchHistorical(stockSymbol);
-    fetchPrediction(stockSymbol);
-    fetchDetailedPrediction(stockSymbol);
+    fetchPrediction(stockSymbol, { source: "scheduler_hourly" });
+    fetchPredictionComparison(stockSymbol);
+    fetchTrackRecord(stockSymbol);
+  };
+
+  const handleToggleAdvanced = () => {
+    setShowAdvanced((prev) => {
+      const next = !prev;
+      if (next && symbol && !detailedPrediction) {
+        fetchDetailedPrediction(symbol);
+      }
+      return next;
+    });
   };
 
   const handleSearch = () => {
@@ -300,6 +361,16 @@ export default function App() {
       fetchPortfolio();
     }
   }, [authToken]);
+
+  useEffect(() => {
+    if (!symbol) return;
+    const timer = setInterval(() => {
+      fetchPrediction(symbol, { source: "scheduler_hourly" });
+      fetchPredictionComparison(symbol);
+      fetchTrackRecord(symbol);
+    }, 300000);
+    return () => clearInterval(timer);
+  }, [symbol]);
 
   const renderDashboard = () => (
     <div className="dashboard-unified">
@@ -379,8 +450,8 @@ export default function App() {
                 {result && !result.error && (
                   <div className="live-price">
                     <span className="price">${result.price?.toFixed(2)}</span>
-                    <span className={`change ${result.change >= 0 ? 'positive' : 'negative'}`}>
-                      {result.change >= 0 ? '↑' : '↓'} {Math.abs(result.change).toFixed(2)} ({result.changePercent?.toFixed(2)}%)
+                    <span className={`change ${(result.change ?? 0) >= 0 ? 'positive' : 'negative'}`}>
+                      {(result.change ?? 0) >= 0 ? '↑' : '↓'} {Math.abs(result.change ?? 0).toFixed(2)} ({(result.changePercent ?? 0).toFixed(2)}%)
                     </span>
                   </div>
                 )}
@@ -410,8 +481,10 @@ export default function App() {
                     prices={historical.prices}
                     symbol={symbol}
                     prediction={prediction}
+                    predictionComparison={predictionComparison}
                     indicatorData={detailedPrediction?.indicator_timeseries}
                     chartRange={chartRange}
+                    trackRecord={trackRecord}
                   />
                 ) : (
                   <div className="chart-loading">Loading chart...</div>
@@ -420,8 +493,11 @@ export default function App() {
 
               <EnhancedPredictionCard
                 symbol={symbol}
+                prediction={prediction}
+                predictionComparison={predictionComparison}
                 showAdvanced={showAdvanced}
-                onToggleAdvanced={() => setShowAdvanced(prev => !prev)}
+                onToggleAdvanced={handleToggleAdvanced}
+                onRefreshPrediction={handleRefreshPrediction}
               />
 
               <NewsSentiment symbol={symbol} />

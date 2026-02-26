@@ -4,7 +4,7 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
 const PredictionHistory = ({ symbol }) => {
   const [history, setHistory] = useState([]);
-  const [metrics, setMetrics] = useState(null);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -15,38 +15,35 @@ const PredictionHistory = ({ symbol }) => {
   }, [symbol]);
 
   const fetchHistory = async () => {
+    if (!symbol) return;
+
     setLoading(true);
     setError(null);
     try {
-      const [logsResponse, metricsResponse] = await Promise.all([
-        fetch(`${API_URL}/api/ml/predictions?limit=200&evaluated=true`),
-        fetch(`${API_URL}/api/ml/metrics`)
-      ]);
+      const response = await fetch(
+        `${API_URL}/api/ml/track-record/${symbol.toUpperCase()}?days=365&includePending=true`
+      );
+      const data = await response.json();
 
-      const logsData = await logsResponse.json();
-      const metricsData = await metricsResponse.json();
-
-      if (!logsResponse.ok) {
-        throw new Error(logsData.error || "Failed to fetch forecast history");
+      if (!response.ok || data.error) {
+        throw new Error(data.error || "Failed to fetch track record");
       }
 
-      const filtered = Array.isArray(logsData)
-        ? logsData.filter((log) => log.symbol === symbol.toUpperCase())
-        : [];
+      const points = Array.isArray(data.points) ? data.points : [];
+      points.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-      setHistory(filtered);
-      setMetrics(metricsResponse.ok ? metricsData : null);
+      setHistory(points);
+      setStats(data.stats || null);
     } catch (err) {
       setError("Failed to fetch forecast history");
-      /* Error handled silently */
+      setHistory([]);
+      setStats(null);
     } finally {
       setLoading(false);
     }
   };
 
-  if (!symbol) {
-    return null;
-  }
+  if (!symbol) return null;
 
   if (loading) {
     return (
@@ -75,80 +72,111 @@ const PredictionHistory = ({ symbol }) => {
     );
   }
 
+  const hitRate = Number(stats?.hitRate || 0);
+  const grade = stats?.reliabilityGrade || "--";
+  const gradeColor = grade === "A" ? "#3fb950" : grade === "B" ? "#6dbb4f" : grade === "C" ? "#f0883e" : "#f85149";
+
   return (
     <div className="prediction-history-card">
       <div className="history-header">
         <h3>Forecast History - {symbol}</h3>
-        <button className="refresh-btn" onClick={fetchHistory}>
-          <span>↻</span> Refresh
-        </button>
+        <div className="history-actions">
+          <span className="grade-pill" style={{ borderColor: gradeColor, color: gradeColor }}>
+            Reliability {grade}
+          </span>
+          <button className="refresh-btn" onClick={fetchHistory}>
+            <span>↻</span> Refresh
+          </button>
+        </div>
       </div>
 
-      {metrics && (
+      {stats && (
         <div className="accuracy-metrics">
           <div className="metric-grid">
             <div className="metric-item">
               <div className="metric-label">Hit Rate</div>
-              <div className={`metric-value ${metrics.hitRate >= 70 ? "high" : metrics.hitRate >= 60 ? "medium" : "low"}`}>
-                {metrics.hitRate}%
+              <div className={`metric-value ${hitRate >= 70 ? "high" : hitRate >= 55 ? "medium" : "low"}`}>
+                {hitRate.toFixed(1)}%
               </div>
             </div>
             <div className="metric-item">
               <div className="metric-label">Evaluated</div>
               <div className="metric-value">
-                {metrics.evaluatedPredictions}/{metrics.totalPredictions}
+                {stats.evaluated}/{stats.total}
               </div>
             </div>
             <div className="metric-item">
-              <div className="metric-label">MAE</div>
-              <div className="metric-value">${metrics.mae}</div>
+              <div className="metric-label">MAPE</div>
+              <div className="metric-value">{Number(stats.mape || 0).toFixed(2)}%</div>
             </div>
             <div className="metric-item">
-              <div className="metric-label">MAPE</div>
-              <div className="metric-value">{metrics.mape}%</div>
+              <div className="metric-label">Reliability Score</div>
+              <div className="metric-value">{Number(stats.reliabilityScore || 0).toFixed(1)}</div>
             </div>
           </div>
         </div>
       )}
 
       <div className="predictions-list">
-        <h4>Recent Forecasts</h4>
+        <h4>Published Track Record</h4>
         <div className="predictions-table">
           <div className="table-header">
             <div>Time</div>
             <div>Forecast</div>
             <div>Actual</div>
             <div>Direction</div>
-            <div>Hit</div>
+            <div>Result</div>
             <div>Confidence</div>
+            <div>Error</div>
           </div>
-          {history.slice(-10).reverse().map((pred, idx) => (
-            <div key={idx} className="table-row">
-              <div className="time-cell">
-                {pred.createdAt
-                  ? new Date(pred.createdAt).toLocaleString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit"
-                    })
-                  : "--"}
+          {history.slice(0, 12).map((pred) => {
+            const status = String(pred.status || "pending").toLowerCase();
+            const resultClass =
+              status === "pending"
+                ? "pending"
+                : pred.hit === true
+                  ? "hit"
+                  : pred.hit === false
+                    ? "miss"
+                    : "pending";
+            const resultText =
+              status === "pending"
+                ? "Pending"
+                : pred.hit === true
+                  ? "Hit"
+                  : pred.hit === false
+                    ? "Miss"
+                    : "--";
+
+            return (
+              <div key={pred.id || `${pred.createdAt}-${pred.predictedPrice}`} className="table-row">
+                <div className="time-cell">
+                  {pred.createdAt
+                    ? new Date(pred.createdAt).toLocaleString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
+                    : "--"}
+                </div>
+                <div className="price-cell">${Number(pred.predictedPrice || 0).toFixed(2)}</div>
+                <div className="price-cell">
+                  {pred.actualPrice != null ? `$${Number(pred.actualPrice).toFixed(2)}` : "--"}
+                </div>
+                <div className={`direction-cell ${pred.direction ? pred.direction.toLowerCase() : ""}`}>
+                  {pred.direction === "UP" ? "↑" : pred.direction === "DOWN" ? "↓" : "→"} {pred.direction || "--"}
+                </div>
+                <div className={`signal-cell ${resultClass}`}>{resultText}</div>
+                <div className="confidence-cell">
+                  {pred.confidence != null ? `${Number(pred.confidence).toFixed(1)}%` : "--"}
+                </div>
+                <div className="confidence-cell">
+                  {pred.percentError != null ? `${Number(pred.percentError).toFixed(2)}%` : "--"}
+                </div>
               </div>
-              <div className="price-cell">${Number(pred.predictedPrice || 0).toFixed(2)}</div>
-              <div className="price-cell">
-                {pred.actualPrice ? `$${Number(pred.actualPrice).toFixed(2)}` : "--"}
-              </div>
-              <div className={`direction-cell ${pred.direction ? pred.direction.toLowerCase() : ""}`}>
-                {pred.direction === "UP" ? "↑" : pred.direction === "DOWN" ? "↓" : "→"} {pred.direction || "--"}
-              </div>
-              <div className={`signal-cell ${pred.hit === true ? "hit" : pred.hit === false ? "miss" : ""}`}>
-                {pred.hit === true ? "Hit" : pred.hit === false ? "Miss" : "--"}
-              </div>
-              <div className="confidence-cell">
-                {pred.confidence != null ? `${pred.confidence}%` : "--"}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -167,6 +195,21 @@ const PredictionHistory = ({ symbol }) => {
           justify-content: space-between;
           align-items: center;
           margin-bottom: 20px;
+          gap: 16px;
+        }
+
+        .history-actions {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .grade-pill {
+          border: 1px solid;
+          border-radius: 999px;
+          font-size: 0.8rem;
+          font-weight: 700;
+          padding: 4px 10px;
         }
 
         .history-header h3 {
@@ -216,7 +259,7 @@ const PredictionHistory = ({ symbol }) => {
         }
 
         .metric-value {
-          font-size: 1.5rem;
+          font-size: 1.4rem;
           font-weight: 700;
           color: #58a6ff;
         }
@@ -246,10 +289,11 @@ const PredictionHistory = ({ symbol }) => {
         .table-header,
         .table-row {
           display: grid;
-          grid-template-columns: 140px 80px 80px 100px 90px 90px;
+          grid-template-columns: 140px 80px 80px 90px 90px 90px 80px;
           gap: 12px;
           padding: 10px;
           font-size: 0.85rem;
+          align-items: center;
         }
 
         .table-header {
@@ -264,12 +308,6 @@ const PredictionHistory = ({ symbol }) => {
           background: rgba(13, 17, 23, 0.4);
           border-radius: 8px;
           margin-bottom: 6px;
-          align-items: center;
-          transition: all 0.2s ease;
-        }
-
-        .table-row:hover {
-          background: rgba(48, 54, 61, 0.3);
         }
 
         .time-cell {
@@ -318,34 +356,14 @@ const PredictionHistory = ({ symbol }) => {
           border: 1px solid rgba(248, 81, 73, 0.2);
         }
 
+        .signal-cell.pending {
+          background: rgba(240, 136, 62, 0.18);
+          color: #f0883e;
+          border: 1px solid rgba(240, 136, 62, 0.25);
+        }
+
         .confidence-cell {
-          color: #58a6ff;
-          font-weight: 600;
-        }
-
-        .loading-spinner,
-        .error-message,
-        .no-data {
-          text-align: center;
-          padding: 40px;
-          color: rgba(230, 237, 243, 0.6);
-        }
-
-        .error-message {
-          color: #f85149;
-        }
-
-        @media (max-width: 768px) {
-          .metric-grid {
-            grid-template-columns: repeat(2, 1fr);
-          }
-
-          .table-header,
-          .table-row {
-            grid-template-columns: 100px 70px 70px 80px 80px 80px;
-            gap: 8px;
-            font-size: 0.75rem;
-          }
+          color: rgba(230, 237, 243, 0.8);
         }
       `}</style>
     </div>

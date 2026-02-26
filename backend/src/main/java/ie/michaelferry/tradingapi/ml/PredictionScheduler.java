@@ -29,12 +29,25 @@ public class PredictionScheduler {
     }
 
     @Scheduled(fixedRateString = "${app.ml.schedule-ms:3600000}")
-    public void logPredictions() {
+    public void logHourlyPredictions() {
         for (String symbol : getSymbols()) {
             try {
                 String url = mlServiceUrl + "/predict/" + symbol;
                 Map<String, Object> response = restTemplate.getForObject(url, Map.class);
-                predictionLogService.logPrediction(symbol, response, horizonHours);
+                predictionLogService.logPrediction(symbol, response, horizonHours, "scheduler_hourly");
+            } catch (Exception ignored) {
+                // ignore transient failures
+            }
+        }
+    }
+
+    @Scheduled(cron = "${app.ml.daily-close-cron:0 0 16 * * MON-FRI}", zone = "America/New_York")
+    public void logDailyClosePredictions() {
+        for (String symbol : getSymbols()) {
+            try {
+                String url = mlServiceUrl + "/predict/" + symbol;
+                Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+                predictionLogService.logPrediction(symbol, response, horizonHours, "scheduler_daily_close");
             } catch (Exception ignored) {
                 // ignore transient failures
             }

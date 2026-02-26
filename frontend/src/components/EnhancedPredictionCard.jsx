@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import "./EnhancedPredictionCard.css";
+import PredictionAccuracyChart from "./PredictionAccuracyChart";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
@@ -60,18 +61,28 @@ const computeTradeLevels = (currentPrice, predictedPrice, ti) => {
   }
 };
 
-const EnhancedPredictionCard = ({ symbol, showAdvanced, onToggleAdvanced }) => {
-  const [prediction, setPrediction] = useState(null);
+const EnhancedPredictionCard = ({
+  symbol,
+  prediction: externalPrediction,
+  predictionComparison,
+  showAdvanced,
+  onToggleAdvanced,
+  onRefreshPrediction
+}) => {
+  const [prediction, setPrediction] = useState(externalPrediction || null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [sentiment, setSentiment] = useState(null);
 
   useEffect(() => {
-    if (symbol) {
+    setPrediction(externalPrediction || null);
+  }, [externalPrediction]);
+
+  useEffect(() => {
+    if (!symbol) return;
+    fetchSentiment();
+    if (!externalPrediction) {
       fetchPrediction();
-      fetchSentiment();
-      const interval = setInterval(fetchPrediction, 60000);
-      return () => clearInterval(interval);
     }
   }, [symbol]);
 
@@ -83,14 +94,15 @@ const EnhancedPredictionCard = ({ symbol, showAdvanced, onToggleAdvanced }) => {
     } catch {}
   };
 
-  const fetchPrediction = async () => {
+  const fetchPrediction = async (force = false) => {
     if (!symbol) return;
 
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(`${API_URL}/api/ml/predict/${symbol}`);
+      const query = force ? "?refresh=true" : "";
+      const response = await fetch(`${API_URL}/api/ml/predict/${symbol}${query}`);
       const data = await response.json();
 
       if (response.ok && !data.error) {
@@ -101,6 +113,27 @@ const EnhancedPredictionCard = ({ symbol, showAdvanced, onToggleAdvanced }) => {
     } catch (err) {
       setError("Network error - unable to fetch forecast");
       /* error Handled silently */
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRefreshClick = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      if (onRefreshPrediction) {
+        await onRefreshPrediction();
+        const response = await fetch(`${API_URL}/api/ml/predict/${symbol}`);
+        const data = await response.json();
+        if (response.ok && !data.error) {
+          setPrediction(data);
+        }
+      } else {
+        await fetchPrediction(true);
+      }
+    } catch (err) {
+      setError("Failed to refresh prediction");
     } finally {
       setLoading(false);
     }
@@ -184,12 +217,36 @@ const EnhancedPredictionCard = ({ symbol, showAdvanced, onToggleAdvanced }) => {
     current_price: currentPrice,
     price_change_percent: Number.isFinite(changePercent) ? changePercent : 0,
     confidence: Number.isFinite(confidence) ? confidence : 0,
-    signal: buildSignal(direction, confidence)
+    signal: prediction.signal || buildSignal(direction, confidence)
   };
 
   const ti = prediction.technical_indicators;
   const mm = prediction.model_metrics;
+  const ha = prediction.historical_accuracy;
+  const predictionMeta = prediction.prediction_meta || {};
+  const predictionTimestamp = prediction.last_prediction_at || predictionMeta.createdAt || prediction.timestamp;
+  const predictionAgeMins = Number(
+    prediction.last_prediction_age_minutes ?? predictionMeta.ageMinutes ?? NaN
+  );
+  const isStale = Boolean(prediction.last_prediction_stale ?? predictionMeta.stale);
+  const sourceKey = String(predictionMeta.source || "scheduler").toLowerCase();
+  const sourceLabelMap = {
+    scheduler: "Auto Hourly",
+    scheduler_hourly: "Auto Hourly",
+    scheduler_daily_close: "Daily Close Model",
+    manual_refresh: "Manual Refresh",
+    bootstrap: "On Demand",
+    scan: "Batch Scan",
+    unknown: "Unknown Source",
+  };
+  const predictionSource = sourceLabelMap[sourceKey] || sourceKey.replaceAll("_", " ");
   const priceChangeColor = pred.price_change_percent > 0 ? "#3fb950" : pred.price_change_percent < 0 ? "#f85149" : "#f0883e";
+  const hourlyComparisonPrice = Number(predictionComparison?.hourlyPrediction?.prediction ?? NaN);
+  const dailyComparisonPrice = Number(predictionComparison?.dailyClosePrediction?.prediction ?? NaN);
+  const hasHourlyComparison = Number.isFinite(hourlyComparisonPrice);
+  const hasDailyComparison = Number.isFinite(dailyComparisonPrice);
+  const spreadAbsolute = Number(predictionComparison?.spread?.absoluteSpread ?? NaN);
+  const spreadPct = Number(predictionComparison?.spread?.spreadPercentOfDaily ?? NaN);
 
   const rsiClass = (val) => val > 70 ? 'overbought' : val < 30 ? 'oversold' : 'neutral';
   const stochClass = (val) => val > 80 ? 'overbought' : val < 20 ? 'oversold' : 'neutral';
@@ -206,14 +263,60 @@ const EnhancedPredictionCard = ({ symbol, showAdvanced, onToggleAdvanced }) => {
       <div className="prediction-header">
         <h3>AI Prediction - {symbol}</h3>
         <div className="prediction-header-badges">
+          {predictionTimestamp && (
+            <div className={`freshness-mini-badge ${isStale ? "stale" : "fresh"}`}>
+              {isStale ? "Stale" : "Fresh"} · {Number.isFinite(predictionAgeMins) ? `${predictionAgeMins}m ago` : "recent"}
+            </div>
+          )}
           {sentiment && (
             <div className={`sentiment-mini-badge ${sentiment.label?.toLowerCase().replace(' ', '-')}`}>
               {sentiment.label} ({sentiment.score >= 0 ? '+' : ''}{sentiment.score?.toFixed(2)})
             </div>
           )}
-          <div className="model-badge">Next Day &middot; Ensemble</div>
+          <div className="model-badge">Next Day &middot; {predictionSource}</div>
+          {ha && ha.count >= 5 && (
+            <div className="accuracy-mini-badge" style={{
+              color: ha.hit_rate >= 0.7 ? '#3fb950' : ha.hit_rate >= 0.55 ? '#f0883e' : '#f85149'
+            }}>
+              {(ha.hit_rate * 100).toFixed(0)}% accurate ({ha.count})
+            </div>
+          )}
+          <button className="prediction-refresh-btn" onClick={handleRefreshClick} disabled={loading}>
+            {loading ? "Refreshing..." : "Refresh Now"}
+          </button>
         </div>
       </div>
+      {predictionTimestamp && (
+        <div className="scheduled-prediction-meta">
+          Last prediction made: {new Date(predictionTimestamp).toLocaleString()} · Source: {predictionSource} ·
+          {Number.isFinite(predictionAgeMins) ? ` ${predictionAgeMins} min old` : " recent"}
+        </div>
+      )}
+      {(hasHourlyComparison || hasDailyComparison) && (
+        <div className="dual-forecast-row">
+          {hasHourlyComparison && (
+            <div className="dual-forecast-item hourly">
+              <span className="dual-label">Hourly</span>
+              <strong>${hourlyComparisonPrice.toFixed(2)}</strong>
+            </div>
+          )}
+          {hasDailyComparison && (
+            <div className="dual-forecast-item daily">
+              <span className="dual-label">Daily Close</span>
+              <strong>${dailyComparisonPrice.toFixed(2)}</strong>
+            </div>
+          )}
+          {Number.isFinite(spreadAbsolute) && (
+            <div className="dual-forecast-item spread">
+              <span className="dual-label">Spread</span>
+              <strong>
+                ${spreadAbsolute.toFixed(2)}
+                {Number.isFinite(spreadPct) ? ` (${spreadPct >= 0 ? "+" : ""}${spreadPct.toFixed(2)}%)` : ""}
+              </strong>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Zone 1: Smart Summary */}
       <div className="smart-signal-hero">
@@ -256,6 +359,9 @@ const EnhancedPredictionCard = ({ symbol, showAdvanced, onToggleAdvanced }) => {
           ></div>
         </div>
       </div>
+
+      {/* Prediction Track Record */}
+      <PredictionAccuracyChart symbol={symbol} />
 
       {/* Zone 2: AI Insights + Trade Levels */}
       {ti && (

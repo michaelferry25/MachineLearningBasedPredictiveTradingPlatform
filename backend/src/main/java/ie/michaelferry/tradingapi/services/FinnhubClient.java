@@ -28,6 +28,23 @@ public class FinnhubClient {
         }
     }
 
+    public Map<String, Object> fetchFullQuote(String symbol) {
+        try {
+            String url = "https://finnhub.io/api/v1/quote?symbol=" + symbol + "&token=" + apiKey;
+
+            Map<String, Object> response = rest.getForObject(url, Map.class);
+            if (response == null || response.get("c") == null) return null;
+
+            double price = ((Number) response.get("c")).doubleValue();
+            double change = response.get("d") != null ? ((Number) response.get("d")).doubleValue() : 0;
+            double changePercent = response.get("dp") != null ? ((Number) response.get("dp")).doubleValue() : 0;
+
+            return Map.of("price", price, "change", change, "changePercent", changePercent);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     public Map<String, Object> fetchHistoricalPrices(String symbol) {
         try {
             long now = System.currentTimeMillis() / 1000;

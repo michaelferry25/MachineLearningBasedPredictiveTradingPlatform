@@ -24,16 +24,39 @@ public class PredictionLog {
     @Column(nullable = false)
     private double currentPrice;
 
+    private Double predictedReturnPercent;
+
+    private Double lowerBoundPrice;
+
+    private Double upperBoundPrice;
+
     private Double confidence;
 
     @Column(length = 12)
     private String direction;
+
+    @Column(length = 32)
+    private String regime;
+
+    @Column(length = 80)
+    private String modelVersion;
+
+    private Double sentimentScore;
+
+    @Column(length = 24)
+    private String predictionSource;
+
+    @Lob
+    @Column(columnDefinition = "CLOB")
+    private String payloadJson;
 
     @Column(nullable = false)
     private int horizonHours;
 
     @Column(nullable = false)
     private Instant createdAt;
+
+    private Instant targetAt;
 
     private Instant evaluatedAt;
 
@@ -44,6 +67,9 @@ public class PredictionLog {
     private Double percentError;
 
     private Boolean hit;
+
+    @Column(length = 12)
+    private String realizedDirection;
 
     public Long getId() {
         return id;
@@ -97,6 +123,30 @@ public class PredictionLog {
         this.direction = direction;
     }
 
+    public String getRegime() {
+        return regime;
+    }
+
+    public void setRegime(String regime) {
+        this.regime = regime;
+    }
+
+    public String getModelVersion() {
+        return modelVersion;
+    }
+
+    public void setModelVersion(String modelVersion) {
+        this.modelVersion = modelVersion;
+    }
+
+    public Double getSentimentScore() {
+        return sentimentScore;
+    }
+
+    public void setSentimentScore(Double sentimentScore) {
+        this.sentimentScore = sentimentScore;
+    }
+
     public int getHorizonHours() {
         return horizonHours;
     }
@@ -119,6 +169,14 @@ public class PredictionLog {
 
     public void setEvaluatedAt(Instant evaluatedAt) {
         this.evaluatedAt = evaluatedAt;
+    }
+
+    public Instant getTargetAt() {
+        return targetAt;
+    }
+
+    public void setTargetAt(Instant targetAt) {
+        this.targetAt = targetAt;
     }
 
     public Double getActualPrice() {
@@ -151,5 +209,53 @@ public class PredictionLog {
 
     public void setHit(Boolean hit) {
         this.hit = hit;
+    }
+
+    public Double getPredictedReturnPercent() {
+        return predictedReturnPercent;
+    }
+
+    public void setPredictedReturnPercent(Double predictedReturnPercent) {
+        this.predictedReturnPercent = predictedReturnPercent;
+    }
+
+    public Double getLowerBoundPrice() {
+        return lowerBoundPrice;
+    }
+
+    public void setLowerBoundPrice(Double lowerBoundPrice) {
+        this.lowerBoundPrice = lowerBoundPrice;
+    }
+
+    public Double getUpperBoundPrice() {
+        return upperBoundPrice;
+    }
+
+    public void setUpperBoundPrice(Double upperBoundPrice) {
+        this.upperBoundPrice = upperBoundPrice;
+    }
+
+    public String getRealizedDirection() {
+        return realizedDirection;
+    }
+
+    public void setRealizedDirection(String realizedDirection) {
+        this.realizedDirection = realizedDirection;
+    }
+
+    public String getPredictionSource() {
+        return predictionSource;
+    }
+
+    public void setPredictionSource(String predictionSource) {
+        this.predictionSource = predictionSource;
+    }
+
+    public String getPayloadJson() {
+        return payloadJson;
+    }
+
+    public void setPayloadJson(String payloadJson) {
+        this.payloadJson = payloadJson;
     }
 }

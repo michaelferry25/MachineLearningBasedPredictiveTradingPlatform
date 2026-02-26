@@ -11,7 +11,7 @@ CORS(app)
 
 # In-memory prediction cache: symbol -> {data, timestamp}
 _cache = {}
-_CACHE_TTL = 3600  # seconds (1 hour)
+_CACHE_TTL = 1800  # seconds (30 minutes)
 
 # Sentiment analyzer + cache
 _sentiment_analyzer = SentimentAnalyzer()
@@ -19,14 +19,14 @@ _sentiment_cache = {}
 _SENTIMENT_CACHE_TTL = 1800  # 30 minutes
 
 
-def _cached_prediction(symbol):
+def _cached_prediction(symbol, sentiment_snapshot=None):
     """Return cached result if fresh, otherwise compute and cache."""
     now = time.time()
     entry = _cache.get(symbol)
     if entry and (now - entry['ts']) < _CACHE_TTL:
         return entry['data'], True
 
-    result = get_prediction(symbol)
+    result = get_prediction(symbol, sentiment_snapshot=sentiment_snapshot)
     if result:
         _cache[symbol] = {'data': result, 'ts': now}
     return result, False
@@ -61,6 +61,11 @@ def _apply_sentiment_fusion(result, sentiment):
     - Strong sentiment can shift borderline signals (Hold -> Buy/Sell)
     """
     if not sentiment or not result:
+        return result
+
+    # New model already integrates sentiment into the forecast target.
+    sentiment_context = result.get('sentiment_context')
+    if isinstance(sentiment_context, dict) and sentiment_context.get('blend', {}).get('integrated_in_model'):
         return result
 
     combined = sentiment.get('combined', {})
@@ -138,7 +143,8 @@ def health():
 def predict(symbol):
     try:
         sym = symbol.upper()
-        result, from_cache = _cached_prediction(sym)
+        sentiment = _cached_sentiment(sym)
+        result, from_cache = _cached_prediction(sym, sentiment_snapshot=sentiment)
 
         if not result:
             return jsonify({
@@ -146,8 +152,7 @@ def predict(symbol):
                 'symbol': sym,
             }), 400
 
-        # Fuse sentiment into prediction (uses cache, won't slow down)
-        sentiment = _cached_sentiment(sym)
+        # Legacy fallback fusion if response does not already include in-model sentiment integration
         if sentiment:
             result = _apply_sentiment_fusion(result, sentiment)
 
@@ -155,7 +160,7 @@ def predict(symbol):
             'symbol': sym,
             'timestamp': datetime.now().isoformat(),
             'cached': from_cache,
-            'model': 'RF + GradientBoosting + XGBoost Ensemble + Sentiment Fusion',
+            'model': 'Return-Based RF/GB/XGB Ensemble + Regime + Integrated Sentiment',
             **result,
         })
 
@@ -169,21 +174,21 @@ def predict_detailed(symbol):
         sym = symbol.upper()
         cache_key = sym + '_detailed'
         now = time.time()
+        sentiment = _cached_sentiment(sym)
         entry = _cache.get(cache_key)
         if entry and (now - entry['ts']) < _CACHE_TTL:
             data = entry['data']
-            sentiment = _cached_sentiment(sym)
             if sentiment:
                 data = _apply_sentiment_fusion(data, sentiment)
             return jsonify({
                 'symbol': sym,
                 'timestamp': datetime.now().isoformat(),
                 'cached': True,
-                'model': 'RF + GradientBoosting + XGBoost Ensemble + Sentiment Fusion',
+                'model': 'Return-Based RF/GB/XGB Ensemble + Regime + Integrated Sentiment',
                 **data,
             })
 
-        result = get_detailed_prediction(sym)
+        result = get_detailed_prediction(sym, sentiment_snapshot=sentiment)
         if not result:
             return jsonify({
                 'error': 'Unable to generate detailed prediction',
@@ -192,7 +197,6 @@ def predict_detailed(symbol):
 
         _cache[cache_key] = {'data': result, 'ts': now}
 
-        sentiment = _cached_sentiment(sym)
         if sentiment:
             result = _apply_sentiment_fusion(result, sentiment)
 
@@ -200,7 +204,7 @@ def predict_detailed(symbol):
             'symbol': sym,
             'timestamp': datetime.now().isoformat(),
             'cached': False,
-            'model': 'RF + GradientBoosting + XGBoost Ensemble + Sentiment Fusion',
+            'model': 'Return-Based RF/GB/XGB Ensemble + Regime + Integrated Sentiment',
             **result,
         })
 
@@ -217,9 +221,9 @@ def batch_predict():
         results = []
         for symbol in symbols:
             sym = symbol.upper()
-            result, from_cache = _cached_prediction(sym)
+            sentiment = _cached_sentiment(sym)
+            result, from_cache = _cached_prediction(sym, sentiment_snapshot=sentiment)
             if result:
-                sentiment = _cached_sentiment(sym)
                 if sentiment:
                     result = _apply_sentiment_fusion(result, sentiment)
                 results.append({'symbol': sym, 'cached': from_cache, **result})
