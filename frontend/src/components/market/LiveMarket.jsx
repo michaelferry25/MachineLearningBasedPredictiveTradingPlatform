@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import CandleChart from "./CandleChart";
-import TradingViewWidget from "./TradingViewWidget";
+import CandleChart from "../charts/CandleChart";
+import TradingViewWidget from "../trading/TradingViewWidget";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 

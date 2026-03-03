@@ -1,25 +1,41 @@
 import { useState, useEffect } from "react";
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
-import HeroSection from "./components/HeroSection";
 import "./App.css";
-import HistoricalChart from "./components/HistoricalChart";
-import TradingPanel from "./components/TradingPanel";
-import AuthPanel from "./components/AuthPanel";
-import AnalyticsHub from "./components/AnalyticsHub";
-import ResearchHub from "./components/ResearchHub";
-import LiveMarket from "./components/LiveMarket";
-import SettingsPage from "./components/SettingsPage";
-import ProfilePage from "./components/ProfilePage";
-import PortfolioPage from "./components/PortfolioPage";
-import EnhancedPredictionCard from "./components/EnhancedPredictionCard";
-import PredictionHistory from "./components/PredictionHistory";
-import MLInsightsTabs from "./components/MLInsightsTabs";
-import StockScreener from "./components/StockScreener";
-import NewsSentiment from "./components/NewsSentiment";
-import AboutSection from "./components/AboutSection";
-import SecuritySection from "./components/SecuritySection";
-import LearnPage from "./components/LearnPage";
+
+// Layout
+import Navbar from "./components/layout/Navbar";
+import Footer from "./components/layout/Footer";
+import HeroSection from "./components/layout/HeroSection";
+
+// Auth
+import AuthPanel from "./components/auth/AuthPanel";
+import ProfilePage from "./components/auth/ProfilePage";
+
+// Market
+import LiveMarket from "./components/market/LiveMarket";
+import StockScreener from "./components/market/StockScreener";
+
+// Trading
+import TradingPanel from "./components/trading/TradingPanel";
+import PortfolioPage from "./components/trading/PortfolioPage";
+
+// Charts
+import HistoricalChart from "./components/charts/HistoricalChart";
+
+// Predictions
+import EnhancedPredictionCard from "./components/predictions/EnhancedPredictionCard";
+import PredictionHistory from "./components/predictions/PredictionHistory";
+import MLInsightsTabs from "./components/predictions/MLInsightsTabs";
+
+// Research
+import AnalyticsHub from "./components/research/AnalyticsHub";
+import ResearchHub from "./components/research/ResearchHub";
+import NewsSentiment from "./components/research/NewsSentiment";
+
+// Pages
+import SettingsPage from "./components/pages/SettingsPage";
+import AboutSection from "./components/pages/AboutSection";
+import SecuritySection from "./components/pages/SecuritySection";
+import LearnPage from "./components/pages/LearnPage";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 const TOKEN_KEY = "marketmind_token";

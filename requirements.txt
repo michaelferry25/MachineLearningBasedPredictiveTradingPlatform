@@ -1,4 +1,0 @@
-requests
-textblob
-pandas
-python-dotenv
