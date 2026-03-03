@@ -1,18 +1,41 @@
 import React, { useState, useEffect } from "react";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+const ET_ZONE = "America/New_York";
+
+const SOURCE_OPTIONS = [
+  { key: "scheduler_daily_close", label: "Daily Close (Official)" },
+  { key: "scheduler_hourly", label: "Hourly Drift" },
+  { key: "all", label: "All Sources" },
+];
+
+const formatEt = (value) => {
+  if (!value) return "--";
+  const d = new Date(value);
+  if (!Number.isFinite(d.getTime())) return "--";
+  return d.toLocaleString("en-US", {
+    timeZone: ET_ZONE,
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+    timeZoneName: "short",
+  });
+};
 
 const PredictionHistory = ({ symbol }) => {
   const [history, setHistory] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [sourceFilter, setSourceFilter] = useState("scheduler_daily_close");
 
   useEffect(() => {
     if (symbol) {
       fetchHistory();
     }
-  }, [symbol]);
+  }, [symbol, sourceFilter]);
 
   const fetchHistory = async () => {
     if (!symbol) return;
@@ -20,9 +43,15 @@ const PredictionHistory = ({ symbol }) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(
-        `${API_URL}/api/ml/track-record/${symbol.toUpperCase()}?days=365&includePending=true`
-      );
+      const params = new URLSearchParams({
+        days: "365",
+        includePending: "true",
+      });
+      if (sourceFilter !== "all") {
+        params.set("source", sourceFilter);
+      }
+
+      const response = await fetch(`${API_URL}/api/ml/track-record/${symbol.toUpperCase()}?${params.toString()}`);
       const data = await response.json();
 
       if (!response.ok || data.error) {
@@ -81,6 +110,17 @@ const PredictionHistory = ({ symbol }) => {
       <div className="history-header">
         <h3>Forecast History - {symbol}</h3>
         <div className="history-actions">
+          <div className="source-toggle">
+            {SOURCE_OPTIONS.map((opt) => (
+              <button
+                key={opt.key}
+                className={`source-toggle-btn ${sourceFilter === opt.key ? "active" : ""}`}
+                onClick={() => setSourceFilter(opt.key)}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
           <span className="grade-pill" style={{ borderColor: gradeColor, color: gradeColor }}>
             Reliability {grade}
           </span>
@@ -102,7 +142,7 @@ const PredictionHistory = ({ symbol }) => {
             <div className="metric-item">
               <div className="metric-label">Evaluated</div>
               <div className="metric-value">
-                {stats.evaluated}/{stats.total}
+                {stats.evaluated}/{stats.total} ({stats.pending || 0} pending)
               </div>
             </div>
             <div className="metric-item">
@@ -151,14 +191,7 @@ const PredictionHistory = ({ symbol }) => {
             return (
               <div key={pred.id || `${pred.createdAt}-${pred.predictedPrice}`} className="table-row">
                 <div className="time-cell">
-                  {pred.createdAt
-                    ? new Date(pred.createdAt).toLocaleString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })
-                    : "--"}
+                  {formatEt(pred.targetAt || pred.createdAt)}
                 </div>
                 <div className="price-cell">${Number(pred.predictedPrice || 0).toFixed(2)}</div>
                 <div className="price-cell">
@@ -202,6 +235,31 @@ const PredictionHistory = ({ symbol }) => {
           display: flex;
           align-items: center;
           gap: 10px;
+          flex-wrap: wrap;
+          justify-content: flex-end;
+        }
+
+        .source-toggle {
+          display: flex;
+          gap: 6px;
+          flex-wrap: wrap;
+        }
+
+        .source-toggle-btn {
+          border: 1px solid rgba(88, 166, 255, 0.3);
+          background: rgba(13, 17, 23, 0.45);
+          color: rgba(230, 237, 243, 0.8);
+          border-radius: 999px;
+          padding: 4px 10px;
+          font-size: 0.72rem;
+          font-weight: 700;
+          cursor: pointer;
+        }
+
+        .source-toggle-btn.active {
+          border-color: rgba(88, 166, 255, 0.7);
+          background: rgba(88, 166, 255, 0.2);
+          color: #9ecbff;
         }
 
         .grade-pill {

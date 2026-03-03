@@ -160,17 +160,21 @@ public class MLController {
     public List<PredictionLog> getPredictionsBySymbol(
             @PathVariable String symbol,
             @RequestParam(defaultValue = "50") int limit,
-            @RequestParam(required = false) Boolean evaluated
+            @RequestParam(required = false) Boolean evaluated,
+            @RequestParam(required = false) String source,
+            @RequestParam(required = false) String modelVersion
     ) {
-        return predictionLogService.getLogsBySymbol(symbol.toUpperCase(), limit, evaluated);
+        return predictionLogService.getLogsBySymbol(symbol.toUpperCase(), limit, evaluated, source, modelVersion);
     }
 
     @GetMapping("/api/ml/predictions")
     public List<PredictionLog> getPredictions(
             @RequestParam(defaultValue = "25") int limit,
-            @RequestParam(required = false) Boolean evaluated
+            @RequestParam(required = false) Boolean evaluated,
+            @RequestParam(required = false) String source,
+            @RequestParam(required = false) String modelVersion
     ) {
-        return predictionLogService.getRecentLogs(limit, evaluated);
+        return predictionLogService.getRecentLogs(limit, evaluated, source, modelVersion);
     }
 
     @PostMapping("/api/ml/evaluate")
@@ -184,18 +188,22 @@ public class MLController {
     @GetMapping("/api/ml/accuracy/{symbol}")
     public Map<String, Object> getAccuracy(
             @PathVariable String symbol,
-            @RequestParam(defaultValue = "30") int days
+            @RequestParam(defaultValue = "30") int days,
+            @RequestParam(required = false) String source,
+            @RequestParam(required = false) String modelVersion
     ) {
-        return predictionLogService.getAccuracyHistory(symbol.toUpperCase(), days);
+        return predictionLogService.getAccuracyHistory(symbol.toUpperCase(), days, source, modelVersion);
     }
 
     @GetMapping("/api/ml/track-record/{symbol}")
     public Map<String, Object> getTrackRecord(
             @PathVariable String symbol,
             @RequestParam(defaultValue = "180") int days,
-            @RequestParam(defaultValue = "true") boolean includePending
+            @RequestParam(defaultValue = "true") boolean includePending,
+            @RequestParam(required = false) String source,
+            @RequestParam(required = false) String modelVersion
     ) {
-        return predictionLogService.getTrackRecord(symbol.toUpperCase(), days, includePending);
+        return predictionLogService.getTrackRecord(symbol.toUpperCase(), days, includePending, source, modelVersion);
     }
 
     @GetMapping("/api/ml/metrics")

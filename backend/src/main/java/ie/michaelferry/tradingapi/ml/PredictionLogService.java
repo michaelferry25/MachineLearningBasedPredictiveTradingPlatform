@@ -65,7 +65,7 @@ public class PredictionLogService {
         log.setDirection(getString(payload, "direction", null));
         log.setRegime(getString(payload, "regime", null));
         log.setSentimentScore(extractNestedDouble(payload, "sentiment_context", "score"));
-        log.setPredictionSource(source);
+        log.setPredictionSource(normalizeSource(source));
 
         Object intervalObj = payload.get("prediction_interval");
         if (intervalObj instanceof Map<?, ?> intervalMap) {
@@ -96,14 +96,7 @@ public class PredictionLogService {
             return getLatestPredictionPayload(sym, staleAfterMinutes);
         }
 
-        PredictionLog latest = repository.findTopBySymbolAndPredictionSourceOrderByCreatedAtDesc(sym, source.trim());
-
-        // Backward compatibility with existing scheduler source names in older rows.
-        if (latest == null && "scheduler_hourly".equalsIgnoreCase(source)) {
-            latest = repository.findTopBySymbolAndPredictionSourceOrderByCreatedAtDesc(sym, "scheduler");
-        } else if (latest == null && "scheduler_daily_close".equalsIgnoreCase(source)) {
-            latest = repository.findTopBySymbolAndPredictionSourceOrderByCreatedAtDesc(sym, "daily_close");
-        }
+        PredictionLog latest = findLatestBySource(sym, source);
 
         if (latest == null) {
             return null;
@@ -246,6 +239,16 @@ public class PredictionLogService {
     }
 
     public List<PredictionLog> getLogsBySymbol(String symbol, int limit, Boolean evaluated) {
+        return getLogsBySymbol(symbol, limit, evaluated, null, null);
+    }
+
+    public List<PredictionLog> getLogsBySymbol(
+            String symbol,
+            int limit,
+            Boolean evaluated,
+            String source,
+            String modelVersion
+    ) {
         int capped = Math.min(Math.max(limit, 1), 400);
         List<PredictionLog> logs = repository.findBySymbolOrderByCreatedAtDesc(symbol.toUpperCase());
 
@@ -255,17 +258,28 @@ public class PredictionLogService {
                     .toList();
         }
 
+        logs = applyFilters(logs, source, modelVersion);
+
         return logs.size() <= capped ? logs : logs.subList(0, capped);
     }
 
     public List<PredictionLog> getRecentLogs(int limit, Boolean evaluated) {
+        return getRecentLogs(limit, evaluated, null, null);
+    }
+
+    public List<PredictionLog> getRecentLogs(
+            int limit,
+            Boolean evaluated,
+            String source,
+            String modelVersion
+    ) {
         int capped = Math.min(Math.max(limit, 1), 400);
         List<PredictionLog> logs = repository
                 .findAll(PageRequest.of(0, capped, Sort.by(Sort.Direction.DESC, "createdAt")))
                 .getContent();
 
         if (evaluated == null) {
-            return logs;
+            return applyFilters(logs, source, modelVersion);
         }
 
         List<PredictionLog> filtered = new ArrayList<>();
@@ -276,14 +290,30 @@ public class PredictionLogService {
                 filtered.add(log);
             }
         }
-        return filtered;
+        return applyFilters(filtered, source, modelVersion);
     }
 
     public Map<String, Object> getAccuracyHistory(String symbol, int days) {
+        return getAccuracyHistory(symbol, days, null, null);
+    }
+
+    public Map<String, Object> getAccuracyHistory(
+            String symbol,
+            int days,
+            String source,
+            String modelVersion
+    ) {
         Instant after = Instant.now().minus(Duration.ofDays(days));
-        List<PredictionLog> logs = repository
+        List<PredictionLog> logs = applyFilters(
+                repository
                 .findBySymbolAndEvaluatedAtIsNotNullAndCreatedAtAfterOrderByCreatedAtAsc(
-                        symbol.toUpperCase(), after);
+                        symbol.toUpperCase(), after),
+                source,
+                modelVersion
+        );
+        logs = logs.stream()
+                .sorted(Comparator.comparing(this::targetSortInstant))
+                .toList();
 
         List<Map<String, Object>> predictions = new ArrayList<>();
         long hitCount = 0;
@@ -294,6 +324,7 @@ public class PredictionLogService {
             Map<String, Object> entry = new LinkedHashMap<>();
             entry.put("date", log.getCreatedAt().toString());
             entry.put("targetAt", log.getTargetAt() != null ? log.getTargetAt().toString() : null);
+            entry.put("issuedAt", log.getCreatedAt() != null ? log.getCreatedAt().toString() : null);
             entry.put("predictedPrice", log.getPredictedPrice());
             entry.put("actualPrice", log.getActualPrice());
             entry.put("currentPrice", log.getCurrentPrice());
@@ -303,7 +334,8 @@ public class PredictionLogService {
             entry.put("confidence", log.getConfidence());
             entry.put("direction", log.getDirection());
             entry.put("realizedDirection", log.getRealizedDirection());
-            entry.put("predictionSource", log.getPredictionSource());
+            entry.put("predictionSource", normalizedSourceForLog(log));
+            entry.put("modelVersion", log.getModelVersion());
             predictions.add(entry);
 
             if (Boolean.TRUE.equals(log.getHit())) hitCount++;
@@ -319,6 +351,11 @@ public class PredictionLogService {
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("symbol", symbol.toUpperCase());
         result.put("predictions", predictions);
+        Map<String, Object> filterMeta = new LinkedHashMap<>();
+        filterMeta.put("source", normalizeSourceOrNull(source));
+        filterMeta.put("modelVersion", normalizeModelVersion(modelVersion));
+        filterMeta.put("windowDays", days);
+        result.put("filter", filterMeta);
         result.put("stats", Map.of(
                 "hitRate", roundTwo(hitRate),
                 "avgError", roundTwo(avgError),
@@ -329,10 +366,27 @@ public class PredictionLogService {
     }
 
     public Map<String, Object> getTrackRecord(String symbol, int days, boolean includePending) {
+        return getTrackRecord(symbol, days, includePending, null, null);
+    }
+
+    public Map<String, Object> getTrackRecord(
+            String symbol,
+            int days,
+            boolean includePending,
+            String source,
+            String modelVersion
+    ) {
         Instant after = Instant.now().minus(Duration.ofDays(days));
-        List<PredictionLog> allLogs = repository.findBySymbolAndCreatedAtAfterOrderByCreatedAtAsc(
+        List<PredictionLog> allLogs = applyFilters(
+                repository.findBySymbolAndCreatedAtAfterOrderByCreatedAtAsc(
                 symbol.toUpperCase(), after
+                ),
+                source,
+                modelVersion
         );
+        allLogs = allLogs.stream()
+                .sorted(Comparator.comparing(this::targetSortInstant))
+                .toList();
 
         List<Map<String, Object>> points = new ArrayList<>();
         List<PredictionLog> evaluated = new ArrayList<>();
@@ -370,7 +424,8 @@ public class PredictionLogService {
             row.put("sentimentScore", log.getSentimentScore());
             row.put("intervalLow", log.getLowerBoundPrice());
             row.put("intervalHigh", log.getUpperBoundPrice());
-            row.put("predictionSource", log.getPredictionSource());
+            row.put("predictionSource", normalizedSourceForLog(log));
+            row.put("rawPredictionSource", log.getPredictionSource());
             points.add(row);
         }
 
@@ -418,12 +473,19 @@ public class PredictionLogService {
         stats.put("calibrationGap", roundTwo(calibrationGap * 100));
         stats.put("reliabilityScore", roundTwo(reliabilityScore));
         stats.put("reliabilityGrade", gradeFromScore(reliabilityScore));
+        stats.put("official", "scheduler_daily_close".equals(normalizeSourceOrNull(source)));
         stats.put("lastUpdatedAt", Instant.now().toString());
+        stats.put("sourceBreakdown", sourceBreakdown(allLogs));
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("symbol", symbol.toUpperCase());
         response.put("points", points);
         response.put("stats", stats);
+        Map<String, Object> filterMeta = new LinkedHashMap<>();
+        filterMeta.put("source", normalizeSourceOrNull(source));
+        filterMeta.put("modelVersion", normalizeModelVersion(modelVersion));
+        filterMeta.put("includePending", includePending);
+        response.put("filter", filterMeta);
         return response;
     }
 
@@ -491,7 +553,7 @@ public class PredictionLogService {
         meta.put("ageMinutes", ageMinutes);
         meta.put("stale", stale);
         meta.put("logId", log.getId());
-        meta.put("source", log.getPredictionSource() == null ? "unknown" : log.getPredictionSource());
+        meta.put("source", normalizedSourceForLog(log));
         meta.put("horizonHours", log.getHorizonHours());
         meta.put("evaluated", log.getEvaluatedAt() != null);
         if (log.getEvaluatedAt() != null) {
@@ -623,6 +685,107 @@ public class PredictionLogService {
             return null;
         }
         return getDoubleOrNull(payload.get("prediction"));
+    }
+
+    private PredictionLog findLatestBySource(String symbol, String source) {
+        String normalizedSource = normalizeSourceOrNull(source);
+        if (normalizedSource == null) {
+            return repository.findTopBySymbolOrderByCreatedAtDesc(symbol.toUpperCase());
+        }
+
+        List<PredictionLog> logs = repository.findBySymbolOrderByCreatedAtDesc(symbol.toUpperCase());
+        for (PredictionLog log : logs) {
+            if (normalizedSource.equals(normalizedSourceForLog(log))) {
+                return log;
+            }
+        }
+        return null;
+    }
+
+    private List<PredictionLog> applyFilters(List<PredictionLog> logs, String source, String modelVersion) {
+        if (logs == null || logs.isEmpty()) {
+            return List.of();
+        }
+
+        String normalizedSource = normalizeSourceOrNull(source);
+        String normalizedModelVersion = normalizeModelVersion(modelVersion);
+
+        return logs.stream()
+                .filter(log -> normalizedSource == null || normalizedSource.equals(normalizedSourceForLog(log)))
+                .filter(log -> {
+                    if (normalizedModelVersion == null) {
+                        return true;
+                    }
+                    String logVersion = normalizeModelVersion(log.getModelVersion());
+                    return logVersion != null && logVersion.equalsIgnoreCase(normalizedModelVersion);
+                })
+                .toList();
+    }
+
+    private String normalizeSourceOrNull(String source) {
+        if (source == null || source.isBlank()) {
+            return null;
+        }
+        return normalizeSource(source);
+    }
+
+    private String normalizeSource(String source) {
+        if (source == null || source.isBlank()) {
+            return "legacy_unknown";
+        }
+
+        String normalized = source.trim().toLowerCase(Locale.ROOT);
+        return switch (normalized) {
+            case "scheduler", "hourly", "scheduler_hourly", "auto_hourly" -> "scheduler_hourly";
+            case "daily_close", "daily", "scheduler_daily_close" -> "scheduler_daily_close";
+            case "manual", "manual_refresh" -> "manual_refresh";
+            case "boot", "bootstrap" -> "bootstrap";
+            case "scan", "batch_scan" -> "scan";
+            case "unknown", "legacy_unknown", "n/a" -> "legacy_unknown";
+            default -> normalized;
+        };
+    }
+
+    private String normalizedSourceForLog(PredictionLog log) {
+        if (log == null) {
+            return "legacy_unknown";
+        }
+        return normalizeSource(log.getPredictionSource());
+    }
+
+    private String normalizeModelVersion(String modelVersion) {
+        if (modelVersion == null) {
+            return null;
+        }
+        String normalized = modelVersion.trim();
+        return normalized.isEmpty() ? null : normalized;
+    }
+
+    private Instant targetSortInstant(PredictionLog log) {
+        if (log == null) {
+            return Instant.EPOCH;
+        }
+        if (log.getTargetAt() != null) {
+            return log.getTargetAt();
+        }
+        if (log.getCreatedAt() != null) {
+            return log.getCreatedAt();
+        }
+        return Instant.EPOCH;
+    }
+
+    private Map<String, Object> sourceBreakdown(List<PredictionLog> logs) {
+        Map<String, Object> counts = new LinkedHashMap<>();
+        if (logs == null || logs.isEmpty()) {
+            return Map.of();
+        }
+
+        for (PredictionLog log : logs) {
+            String source = normalizedSourceForLog(log);
+            long prior = ((Number) counts.getOrDefault(source, 0L)).longValue();
+            counts.put(source, prior + 1L);
+        }
+        return counts;
     }
 
     private Instant resolveEvaluationInstant(PredictionLog log, int defaultHorizonHours) {

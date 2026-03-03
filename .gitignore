@@ -24,3 +24,18 @@ node_modules/
 # Python bytecode
 *.pyc
 __pycache__/
+
+# Gradle
+.gradle/
+.gradle-cache/
+build/
+
+# H2 lock files
+*.lock.db
+
+# Python venv
+venv/
+
+# IDE
+.idea/
+*.iml

@@ -3,6 +3,23 @@ import "./EnhancedPredictionCard.css";
 import PredictionAccuracyChart from "./PredictionAccuracyChart";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+const ET_ZONE = "America/New_York";
+
+const formatEtDateTime = (value) => {
+  if (!value) return "--";
+  const d = new Date(value);
+  if (!Number.isFinite(d.getTime())) return "--";
+  return d.toLocaleString("en-US", {
+    timeZone: ET_ZONE,
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+    timeZoneName: "short",
+  });
+};
 
 const generateSummary = (ti) => {
   const insights = [];
@@ -101,7 +118,9 @@ const EnhancedPredictionCard = ({
     setError(null);
 
     try {
-      const query = force ? "?refresh=true" : "";
+      const params = new URLSearchParams({ source: "scheduler_hourly" });
+      if (force) params.set("refresh", "true");
+      const query = `?${params.toString()}`;
       const response = await fetch(`${API_URL}/api/ml/predict/${symbol}${query}`);
       const data = await response.json();
 
@@ -124,7 +143,7 @@ const EnhancedPredictionCard = ({
     try {
       if (onRefreshPrediction) {
         await onRefreshPrediction();
-        const response = await fetch(`${API_URL}/api/ml/predict/${symbol}`);
+        const response = await fetch(`${API_URL}/api/ml/predict/${symbol}?source=scheduler_hourly`);
         const data = await response.json();
         if (response.ok && !data.error) {
           setPrediction(data);
@@ -225,6 +244,8 @@ const EnhancedPredictionCard = ({
   const ha = prediction.historical_accuracy;
   const predictionMeta = prediction.prediction_meta || {};
   const predictionTimestamp = prediction.last_prediction_at || predictionMeta.createdAt || prediction.timestamp;
+  const predictionTarget = prediction.prediction_target_at || predictionMeta.targetAt || null;
+  const predictionModelVersion = prediction.model_version || prediction.modelVersion || predictionMeta.modelVersion || "legacy";
   const predictionAgeMins = Number(
     prediction.last_prediction_age_minutes ?? predictionMeta.ageMinutes ?? NaN
   );
@@ -288,7 +309,8 @@ const EnhancedPredictionCard = ({
       </div>
       {predictionTimestamp && (
         <div className="scheduled-prediction-meta">
-          Last prediction made: {new Date(predictionTimestamp).toLocaleString()} · Source: {predictionSource} ·
+          Last forecast (ET): {formatEtDateTime(predictionTimestamp)} · Target close (ET): {formatEtDateTime(predictionTarget)} ·
+          {" "}Source: {predictionSource} · Model: {predictionModelVersion} ·
           {Number.isFinite(predictionAgeMins) ? ` ${predictionAgeMins} min old` : " recent"}
         </div>
       )}
@@ -361,7 +383,16 @@ const EnhancedPredictionCard = ({
       </div>
 
       {/* Prediction Track Record */}
-      <PredictionAccuracyChart symbol={symbol} />
+      <PredictionAccuracyChart
+        symbol={symbol}
+        source="scheduler_daily_close"
+        title="Official Daily Close Track Record"
+      />
+      <PredictionAccuracyChart
+        symbol={symbol}
+        source="scheduler_hourly"
+        title="Hourly Drift Track Record"
+      />
 
       {/* Zone 2: AI Insights + Trade Levels */}
       {ti && (

@@ -285,10 +285,26 @@ export default function App() {
     if (!sym.trim()) return;
 
     try {
-      const res = await fetch(`${API_URL}/api/ml/track-record/${sym}?days=365&includePending=true`);
-      const data = await res.json();
-      if (res.ok && !data.error) {
-        setTrackRecord(data);
+      const fetchBySource = async (source) => {
+        const params = new URLSearchParams({
+          days: "365",
+          includePending: "true",
+          source,
+        });
+        const res = await fetch(`${API_URL}/api/ml/track-record/${sym}?${params.toString()}`);
+        const data = await res.json();
+        return { ok: res.ok && !data.error, data };
+      };
+
+      // Canonical chart overlay: use daily close records first.
+      let response = await fetchBySource("scheduler_daily_close");
+      if (!response.ok || !Array.isArray(response.data?.points) || response.data.points.length === 0) {
+        // Safe fallback so the chart never goes blank on new datasets.
+        response = await fetchBySource("scheduler_hourly");
+      }
+
+      if (response.ok) {
+        setTrackRecord(response.data);
       } else {
         setTrackRecord(null);
       }

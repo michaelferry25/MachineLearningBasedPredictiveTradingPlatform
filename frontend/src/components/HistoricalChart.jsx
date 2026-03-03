@@ -615,8 +615,13 @@ export default function HistoricalChart({
     parts.push(`Hourly vs Daily Δ $${Number(predictionComparison.spread.absoluteSpread).toFixed(2)}`);
   }
   if (trackRecord?.stats) {
+    const sourceTag = trackRecord?.filter?.source === "scheduler_daily_close"
+      ? "Official Daily Track Record"
+      : trackRecord?.filter?.source === "scheduler_hourly"
+      ? "Hourly Track Record"
+      : "Track Record";
     parts.push(
-      "T+1 Targets",
+      sourceTag,
       `Track Record ${Number(trackRecord.stats.hitRate || 0).toFixed(0)}%`,
       `Grade ${trackRecord.stats.reliabilityGrade || "--"}`
     );
