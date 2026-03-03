@@ -31,6 +31,9 @@ public class UserAccount {
     @Column(nullable = false)
     private Instant updatedAt;
 
+    @Column(columnDefinition = "TEXT")
+    private String settingsJson;
+
     @PrePersist
     protected void onCreate() {
         Instant now = Instant.now();
@@ -97,5 +100,13 @@ public class UserAccount {
 
     public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getSettingsJson() {
+        return settingsJson;
+    }
+
+    public void setSettingsJson(String settingsJson) {
+        this.settingsJson = settingsJson;
     }
 }

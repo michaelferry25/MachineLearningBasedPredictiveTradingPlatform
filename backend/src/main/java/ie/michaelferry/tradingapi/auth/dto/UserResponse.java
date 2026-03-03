@@ -9,7 +9,8 @@ public record UserResponse(
         String email,
         String displayName,
         String role,
-        Instant createdAt
+        Instant createdAt,
+        String settingsJson
 ) {
     public static UserResponse from(UserAccount user) {
         return new UserResponse(
@@ -17,7 +18,8 @@ public record UserResponse(
                 user.getEmail(),
                 user.getDisplayName(),
                 user.getRole().name(),
-                user.getCreatedAt()
+                user.getCreatedAt(),
+                user.getSettingsJson()
         );
     }
 }

@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+
 const TIMEFRAME_OPTIONS = [
   "1 minute",
   "5 minutes",
@@ -8,8 +10,18 @@ const TIMEFRAME_OPTIONS = [
   "1 day"
 ];
 
-export default function SettingsPage({ settings, onUpdate, onReset }) {
+export default function SettingsPage({ settings, onUpdate, onReset, authToken }) {
   const [savedAt, setSavedAt] = useState(null);
+  const [advancedPassword, setAdvancedPassword] = useState("");
+  const [advancedUnlocked, setAdvancedUnlocked] = useState(false);
+  const [advancedError, setAdvancedError] = useState("");
+  const [resetConfirmText, setResetConfirmText] = useState("");
+  const [clearConfirmText, setClearConfirmText] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordStatus, setPasswordStatus] = useState("");
+  const [passwordSaving, setPasswordSaving] = useState(false);
 
   const handleChange = (patch) => {
     onUpdate(patch);
@@ -25,6 +37,78 @@ export default function SettingsPage({ settings, onUpdate, onReset }) {
     });
   };
 
+  const handleChangePassword = async () => {
+    setPasswordStatus("");
+    if (!currentPassword || !newPassword) {
+      setPasswordStatus("All fields are required.");
+      return;
+    }
+    if (newPassword.length < 6) {
+      setPasswordStatus("New password must be at least 6 characters.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordStatus("New passwords do not match.");
+      return;
+    }
+    setPasswordSaving(true);
+    try {
+      const res = await fetch(`${API_URL}/api/auth/password`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`
+        },
+        body: JSON.stringify({ currentPassword, newPassword })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setPasswordStatus(data.message || "Failed to update password.");
+      } else {
+        setPasswordStatus("Password updated successfully.");
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+      }
+    } catch {
+      setPasswordStatus("Unable to reach the server.");
+    } finally {
+      setPasswordSaving(false);
+    }
+  };
+
+  const handleUnlockAdvanced = async () => {
+    setAdvancedError("");
+    if (!advancedPassword) {
+      setAdvancedError("Enter your password to continue.");
+      return;
+    }
+    try {
+      const res = await fetch(`${API_URL}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "_verify_", password: advancedPassword })
+      });
+      // We use the change-password endpoint to verify — if current password is wrong it returns 400
+      const verifyRes = await fetch(`${API_URL}/api/auth/password`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`
+        },
+        body: JSON.stringify({ currentPassword: advancedPassword, newPassword: advancedPassword })
+      });
+      if (verifyRes.ok) {
+        setAdvancedUnlocked(true);
+        setAdvancedPassword("");
+      } else {
+        setAdvancedError("Incorrect password.");
+      }
+    } catch {
+      setAdvancedError("Unable to verify. Please try again.");
+    }
+  };
+
   const lastSavedLabel = savedAt
     ? new Date(savedAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
     : "";
@@ -38,7 +122,9 @@ export default function SettingsPage({ settings, onUpdate, onReset }) {
           <button type="button" onClick={() => scrollToSection("settings-appearance")}>Appearance</button>
           <button type="button" onClick={() => scrollToSection("settings-trading")}>Trading</button>
           <button type="button" onClick={() => scrollToSection("settings-notifications")}>Notifications</button>
+          <button type="button" onClick={() => scrollToSection("settings-security")}>Security</button>
           <button type="button" onClick={() => scrollToSection("settings-privacy")}>Privacy</button>
+          <button type="button" onClick={() => scrollToSection("settings-advanced")}>Advanced</button>
         </div>
         <div className="settings-footer">
           <button type="button" className="btn secondary" onClick={onReset}>Reset to default</button>
@@ -47,6 +133,7 @@ export default function SettingsPage({ settings, onUpdate, onReset }) {
       </div>
 
       <div className="settings-content">
+        {/* Appearance */}
         <div className="settings-card" id="settings-appearance">
           <div className="settings-card-header">
             <div>
@@ -104,6 +191,7 @@ export default function SettingsPage({ settings, onUpdate, onReset }) {
           </div>
         </div>
 
+        {/* Trading & Data */}
         <div className="settings-card" id="settings-trading">
           <div className="settings-card-header">
             <div>
@@ -150,9 +238,22 @@ export default function SettingsPage({ settings, onUpdate, onReset }) {
                 onChange={(event) => handleChange({ showOverlays: event.target.checked })}
               />
             </label>
+
+            <label className="toggle-row">
+              <span>
+                <strong>Prediction auto-load</strong>
+                <small>Automatically fetch ML predictions when viewing a stock.</small>
+              </span>
+              <input
+                type="checkbox"
+                checked={settings.predictionAutoLoad !== false}
+                onChange={(event) => handleChange({ predictionAutoLoad: event.target.checked })}
+              />
+            </label>
           </div>
         </div>
 
+        {/* Notifications */}
         <div className="settings-card" id="settings-notifications">
           <div className="settings-card-header">
             <div>
@@ -184,9 +285,88 @@ export default function SettingsPage({ settings, onUpdate, onReset }) {
                 onChange={(event) => handleChange({ volatilityAlerts: event.target.checked })}
               />
             </label>
+
+            <label className="toggle-row">
+              <span>
+                <strong>Prediction signals</strong>
+                <small>Alert when the ML model issues a Strong Buy or Strong Sell signal.</small>
+              </span>
+              <input
+                type="checkbox"
+                checked={settings.predictionAlerts !== false}
+                onChange={(event) => handleChange({ predictionAlerts: event.target.checked })}
+              />
+            </label>
           </div>
         </div>
 
+        {/* Security */}
+        <div className="settings-card" id="settings-security">
+          <div className="settings-card-header">
+            <div>
+              <h3>Security</h3>
+              <p>Manage your password and account security.</p>
+            </div>
+          </div>
+          <div className="settings-grid">
+            {authToken ? (
+              <>
+                <div className="settings-password-form">
+                  <div className="profile-field">
+                    <label>Current password</label>
+                    <input
+                      type="password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      placeholder="Enter current password"
+                    />
+                  </div>
+                  <div className="profile-field">
+                    <label>New password</label>
+                    <input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Enter new password (min 6 chars)"
+                    />
+                  </div>
+                  <div className="profile-field">
+                    <label>Confirm new password</label>
+                    <input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Confirm new password"
+                    />
+                  </div>
+                  <button
+                    className="btn primary-btn"
+                    type="button"
+                    onClick={handleChangePassword}
+                    disabled={passwordSaving}
+                  >
+                    {passwordSaving ? "Updating..." : "Change password"}
+                  </button>
+                  {passwordStatus && <div className="profile-status">{passwordStatus}</div>}
+                </div>
+                <div className="settings-security-info">
+                  <ul>
+                    <li>Passwords hashed with BCrypt</li>
+                    <li>JWT session tokens (60 min expiry)</li>
+                    <li>Role-based access controls active</li>
+                  </ul>
+                </div>
+              </>
+            ) : (
+              <div className="settings-login-prompt">
+                <p>Log in to manage your password and security settings.</p>
+                <a href="#/login" className="btn primary-btn">Log in</a>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Privacy */}
         <div className="settings-card" id="settings-privacy">
           <div className="settings-card-header">
             <div>
@@ -218,6 +398,105 @@ export default function SettingsPage({ settings, onUpdate, onReset }) {
                 onChange={(event) => handleChange({ usageAnalytics: event.target.checked })}
               />
             </label>
+          </div>
+        </div>
+
+        {/* Advanced */}
+        <div className="settings-card" id="settings-advanced">
+          <div className="settings-card-header">
+            <div>
+              <h3>Advanced</h3>
+              <p>Data management and account maintenance options.</p>
+            </div>
+          </div>
+          <div className="settings-grid">
+            {!advancedUnlocked ? (
+              authToken ? (
+                <div className="settings-password-form">
+                  <p><small>Enter your password to access these options.</small></p>
+                  <div className="profile-field">
+                    <label>Password</label>
+                    <input
+                      type="password"
+                      value={advancedPassword}
+                      onChange={(e) => setAdvancedPassword(e.target.value)}
+                      placeholder="Enter your account password"
+                      onKeyDown={(e) => e.key === "Enter" && handleUnlockAdvanced()}
+                    />
+                  </div>
+                  <button
+                    className="btn primary-btn"
+                    type="button"
+                    onClick={handleUnlockAdvanced}
+                  >
+                    Unlock
+                  </button>
+                  {advancedError && <div className="profile-status">{advancedError}</div>}
+                </div>
+              ) : (
+                <div className="settings-login-prompt">
+                  <p>Log in to access advanced options.</p>
+                  <a href="#/login" className="btn primary-btn">Log in</a>
+                </div>
+              )
+            ) : (
+              <>
+                <div className="advanced-action-block">
+                  <div className="advanced-action-info">
+                    <strong>Reset all settings</strong>
+                    <small>Restore all preferences to their default values. Type <code>RESET</code> to confirm.</small>
+                  </div>
+                  <div className="advanced-action-confirm">
+                    <input
+                      type="text"
+                      value={resetConfirmText}
+                      onChange={(e) => setResetConfirmText(e.target.value)}
+                      placeholder='Type "RESET" to confirm'
+                      className="confirm-input"
+                    />
+                    <button
+                      type="button"
+                      className="btn secondary"
+                      disabled={resetConfirmText !== "RESET"}
+                      onClick={() => {
+                        onReset();
+                        setResetConfirmText("");
+                        setAdvancedUnlocked(false);
+                      }}
+                    >
+                      Reset settings
+                    </button>
+                  </div>
+                </div>
+
+                <div className="advanced-action-block">
+                  <div className="advanced-action-info">
+                    <strong>Clear local data</strong>
+                    <small>Remove all cached data, watchlists, and preferences from this browser. Type <code>DELETE</code> to confirm.</small>
+                  </div>
+                  <div className="advanced-action-confirm">
+                    <input
+                      type="text"
+                      value={clearConfirmText}
+                      onChange={(e) => setClearConfirmText(e.target.value)}
+                      placeholder='Type "DELETE" to confirm'
+                      className="confirm-input"
+                    />
+                    <button
+                      type="button"
+                      className="btn secondary"
+                      disabled={clearConfirmText !== "DELETE"}
+                      onClick={() => {
+                        localStorage.clear();
+                        window.location.reload();
+                      }}
+                    >
+                      Clear data
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

@@ -1,14 +1,20 @@
 package ie.michaelferry.tradingapi.auth;
 
 import ie.michaelferry.tradingapi.auth.dto.AuthResponse;
+import ie.michaelferry.tradingapi.auth.dto.ChangePasswordRequest;
 import ie.michaelferry.tradingapi.auth.dto.LoginRequest;
 import ie.michaelferry.tradingapi.auth.dto.RegisterRequest;
 import ie.michaelferry.tradingapi.auth.dto.UpdateProfileRequest;
 import ie.michaelferry.tradingapi.auth.dto.UserResponse;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -32,12 +38,7 @@ public class AuthController {
 
     @GetMapping("/me")
     public UserResponse me(@AuthenticationPrincipal UserDetails userDetails) {
-        if (userDetails == null) {
-            throw new org.springframework.web.server.ResponseStatusException(
-                    org.springframework.http.HttpStatus.UNAUTHORIZED,
-                    "Not authenticated"
-            );
-        }
+        requireAuth(userDetails);
         return authService.getCurrentUser(userDetails.getUsername());
     }
 
@@ -46,12 +47,44 @@ public class AuthController {
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody UpdateProfileRequest request
     ) {
-        if (userDetails == null) {
-            throw new org.springframework.web.server.ResponseStatusException(
-                    org.springframework.http.HttpStatus.UNAUTHORIZED,
-                    "Not authenticated"
-            );
-        }
+        requireAuth(userDetails);
         return authService.updateProfile(userDetails.getUsername(), request);
+    }
+
+    @PutMapping("/password")
+    public ResponseEntity<Map<String, String>> changePassword(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody ChangePasswordRequest request
+    ) {
+        requireAuth(userDetails);
+        authService.changePassword(userDetails.getUsername(), request);
+        return ResponseEntity.ok(Map.of("message", "Password updated successfully"));
+    }
+
+    @GetMapping("/settings")
+    public ResponseEntity<Map<String, String>> getSettings(
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        requireAuth(userDetails);
+        String json = authService.getSettings(userDetails.getUsername());
+        return ResponseEntity.ok(Map.of("settings", json != null ? json : "{}"));
+    }
+
+    @PutMapping("/settings")
+    public ResponseEntity<Map<String, String>> updateSettings(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody Map<String, Object> body
+    ) {
+        requireAuth(userDetails);
+        String json = new com.fasterxml.jackson.databind.ObjectMapper()
+                .valueToTree(body.get("settings")).toString();
+        authService.updateSettings(userDetails.getUsername(), json);
+        return ResponseEntity.ok(Map.of("settings", json));
+    }
+
+    private void requireAuth(UserDetails userDetails) {
+        if (userDetails == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not authenticated");
+        }
     }
 }

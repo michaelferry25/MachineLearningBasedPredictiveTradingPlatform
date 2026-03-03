@@ -3,6 +3,7 @@ package ie.michaelferry.tradingapi.auth;
 import ie.michaelferry.tradingapi.auth.dto.AuthResponse;
 import ie.michaelferry.tradingapi.auth.dto.LoginRequest;
 import ie.michaelferry.tradingapi.auth.dto.RegisterRequest;
+import ie.michaelferry.tradingapi.auth.dto.ChangePasswordRequest;
 import ie.michaelferry.tradingapi.auth.dto.UpdateProfileRequest;
 import ie.michaelferry.tradingapi.auth.dto.UserResponse;
 import ie.michaelferry.tradingapi.auth.security.JwtService;
@@ -77,6 +78,32 @@ public class AuthService {
         user.setDisplayName(displayName);
         UserAccount saved = userRepository.save(user);
         return UserResponse.from(saved);
+    }
+
+    public void changePassword(String email, ChangePasswordRequest request) {
+        UserAccount user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Current password is incorrect");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
+    }
+
+    public String getSettings(String email) {
+        UserAccount user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+        return user.getSettingsJson();
+    }
+
+    public String updateSettings(String email, String settingsJson) {
+        UserAccount user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+        user.setSettingsJson(settingsJson);
+        userRepository.save(user);
+        return settingsJson;
     }
 
     private AuthResponse buildAuthResponse(UserAccount user) {

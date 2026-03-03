@@ -129,6 +129,7 @@ export default function App() {
         const user = await res.json();
         localStorage.setItem(USER_KEY, JSON.stringify(user));
         setAuth({ token, user });
+        loadSettingsFromBackend(token);
       })
       .catch(() => {
         localStorage.removeItem(TOKEN_KEY);
@@ -149,12 +150,32 @@ export default function App() {
       .catch(() => {});
   }, [authToken]);
 
+  const loadSettingsFromBackend = (token) => {
+    fetch(`${API_URL}/api/auth/settings`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data?.settings && data.settings !== "{}") {
+          try {
+            const remote = typeof data.settings === "string" ? JSON.parse(data.settings) : data.settings;
+            setSettings((prev) => ({ ...prev, ...remote }));
+          } catch {}
+        }
+      })
+      .catch(() => {});
+  };
+
   const handleAuthSuccess = (payload) => {
     const token = payload.accessToken;
     const user = payload.user;
     if (token) localStorage.setItem(TOKEN_KEY, token);
     if (user) localStorage.setItem(USER_KEY, JSON.stringify(user));
     setAuth({ token, user });
+
+    // Load user settings from backend
+    if (token) loadSettingsFromBackend(token);
+
     const isNewSignup = payload.newUser || (!payload.user?.updatedAt);
     if (isNewSignup) {
       sessionStorage.setItem("marketmind_new_signup", "true");
@@ -176,12 +197,26 @@ export default function App() {
     localStorage.setItem(USER_KEY, JSON.stringify(user));
   };
 
+  const syncSettingsToBackend = (newSettings) => {
+    if (!authToken) return;
+    fetch(`${API_URL}/api/auth/settings`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+      body: JSON.stringify({ settings: newSettings })
+    }).catch(() => {});
+  };
+
   const updateSettings = (patch) => {
-    setSettings((prev) => ({ ...prev, ...patch }));
+    setSettings((prev) => {
+      const next = { ...prev, ...patch };
+      syncSettingsToBackend(next);
+      return next;
+    });
   };
 
   const resetSettings = () => {
     setSettings(DEFAULT_SETTINGS);
+    syncSettingsToBackend(DEFAULT_SETTINGS);
   };
 
   const fetchPrice = async (stockSymbol) => {
@@ -589,7 +624,7 @@ export default function App() {
       case "/portfolio":
         return <PortfolioPage portfolio={portfolio} onRefresh={fetchPortfolio} authToken={authToken} />;
       case "/settings":
-        return <SettingsPage settings={settings} onUpdate={updateSettings} onReset={resetSettings} />;
+        return <SettingsPage settings={settings} onUpdate={updateSettings} onReset={resetSettings} authToken={authToken} />;
       case "/profile":
         return <ProfilePage user={auth?.user} authToken={authToken} onProfileUpdate={handleProfileUpdate} portfolio={portfolio} />;
       case "/learn":

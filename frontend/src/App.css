@@ -2932,6 +2932,149 @@ body {
   accent-color: #58a6ff;
 }
 
+.settings-password-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 400px;
+}
+
+.settings-password-form .profile-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.settings-password-form .profile-field label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #8b949e;
+}
+
+.settings-password-form .profile-field input {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(48, 54, 61, 0.7);
+  background: rgba(13, 17, 23, 0.85);
+  color: #e6edf3;
+  font-size: 0.9rem;
+}
+
+.settings-password-form .profile-field input:focus {
+  outline: none;
+  border-color: #58a6ff;
+}
+
+.settings-security-info {
+  margin-top: 4px;
+  padding: 14px 16px;
+  background: rgba(13, 17, 23, 0.5);
+  border-radius: 12px;
+  border: 1px solid rgba(48, 54, 61, 0.4);
+}
+
+.settings-security-info ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #8b949e;
+  font-size: 0.85rem;
+}
+
+.settings-security-info li::before {
+  content: "\2713 ";
+  color: #3fb950;
+  font-weight: 700;
+  margin-right: 6px;
+}
+
+.settings-login-prompt {
+  text-align: center;
+  padding: 20px;
+  color: #8b949e;
+}
+
+.settings-login-prompt p {
+  margin-bottom: 12px;
+}
+
+.advanced-action-block {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(248, 81, 73, 0.2);
+  background: rgba(248, 81, 73, 0.04);
+}
+
+.advanced-action-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.advanced-action-info strong {
+  font-size: 0.9rem;
+  color: #e6edf3;
+}
+
+.advanced-action-info small {
+  color: #8b949e;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.advanced-action-info code {
+  background: rgba(248, 81, 73, 0.15);
+  color: #f85149;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.advanced-action-confirm {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.confirm-input {
+  flex: 1;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(248, 81, 73, 0.3);
+  background: rgba(13, 17, 23, 0.85);
+  color: #e6edf3;
+  font-size: 0.85rem;
+  font-family: monospace;
+  letter-spacing: 1px;
+}
+
+.confirm-input:focus {
+  outline: none;
+  border-color: #f85149;
+}
+
+.confirm-input::placeholder {
+  font-family: inherit;
+  letter-spacing: 0;
+  color: rgba(139, 148, 158, 0.5);
+}
+
+.advanced-action-confirm .btn {
+  white-space: nowrap;
+}
+
+.advanced-action-confirm .btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 .profile-shell {
   display: grid;
   gap: 28px;
@@ -3250,6 +3393,44 @@ body.theme-light .toggle-group {
 
 body.theme-light .pill-btn {
   color: #1f2937;
+}
+
+body.theme-light .settings-password-form .profile-field input,
+body.theme-light .confirm-input {
+  background: #f8fafc;
+  border-color: rgba(15, 23, 42, 0.15);
+  color: #0f172a;
+}
+
+body.theme-light .settings-security-info {
+  background: #f8fafc;
+  border-color: rgba(15, 23, 42, 0.08);
+}
+
+body.theme-light .settings-security-info ul {
+  color: #475569;
+}
+
+body.theme-light .advanced-action-block {
+  border-color: rgba(220, 38, 38, 0.15);
+  background: rgba(220, 38, 38, 0.03);
+}
+
+body.theme-light .advanced-action-info strong {
+  color: #0f172a;
+}
+
+body.theme-light .advanced-action-info code {
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+}
+
+body.theme-light .confirm-input {
+  border-color: rgba(220, 38, 38, 0.2);
+}
+
+body.theme-light .confirm-input:focus {
+  border-color: #dc2626;
 }
 
 body.theme-light .chart-empty,
