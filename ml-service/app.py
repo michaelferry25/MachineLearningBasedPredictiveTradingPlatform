@@ -1,10 +1,15 @@
 import os
 import time
+import threading
+import logging
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from datetime import datetime
 from ml_model import EnhancedStockPredictor, get_prediction, get_detailed_prediction
 from sentiment_analyzer import SentimentAnalyzer
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 CORS(app)
@@ -257,6 +262,66 @@ def clear_cache():
     return jsonify({'status': 'cache cleared'})
 
 
+# --- Background Prediction Scheduler ---
+TRACKED_SYMBOLS = os.getenv(
+    'TRACKED_SYMBOLS', 'AAPL,MSFT,TSLA,AMZN,NVDA,META,NFLX,GOOGL'
+).split(',')
+SCHEDULER_INTERVAL = int(os.getenv('SCHEDULER_INTERVAL', '3600'))  # seconds
+
+_scheduler_results = {}
+
+
+def _run_scheduled_predictions():
+    """Background thread that runs predictions for all tracked symbols."""
+    while True:
+        logger.info(f"[Scheduler] Running predictions for {len(TRACKED_SYMBOLS)} symbols...")
+        for sym in TRACKED_SYMBOLS:
+            try:
+                sentiment = _cached_sentiment(sym)
+                result = get_prediction(sym, sentiment_snapshot=sentiment)
+                if result:
+                    if sentiment:
+                        result = _apply_sentiment_fusion(result, sentiment)
+                    _cache[sym] = {'data': result, 'ts': time.time()}
+                    _scheduler_results[sym] = {
+                        'last_run': datetime.now().isoformat(),
+                        'status': 'success',
+                        'signal': result.get('signal', 'N/A'),
+                        'confidence': result.get('confidence', 0),
+                    }
+                    logger.info(f"[Scheduler] {sym}: {result.get('signal')} (confidence: {result.get('confidence')}%)")
+                else:
+                    _scheduler_results[sym] = {
+                        'last_run': datetime.now().isoformat(),
+                        'status': 'no_data',
+                    }
+            except Exception as e:
+                logger.error(f"[Scheduler] {sym} failed: {e}")
+                _scheduler_results[sym] = {
+                    'last_run': datetime.now().isoformat(),
+                    'status': 'error',
+                    'error': str(e),
+                }
+        logger.info(f"[Scheduler] Done. Next run in {SCHEDULER_INTERVAL}s")
+        time.sleep(SCHEDULER_INTERVAL)
+
+
+@app.route('/scheduler/status', methods=['GET'])
+def scheduler_status():
+    return jsonify({
+        'enabled': True,
+        'interval_seconds': SCHEDULER_INTERVAL,
+        'tracked_symbols': TRACKED_SYMBOLS,
+        'results': _scheduler_results,
+    })
+
+
 if __name__ == '__main__':
     debug = os.getenv('FLASK_DEBUG', 'false').lower() == 'true'
+
+    # Start the background scheduler
+    scheduler = threading.Thread(target=_run_scheduled_predictions, daemon=True)
+    scheduler.start()
+    logger.info(f"[Scheduler] Started — tracking {TRACKED_SYMBOLS} every {SCHEDULER_INTERVAL}s")
+
     app.run(host='0.0.0.0', port=5001, debug=debug)
