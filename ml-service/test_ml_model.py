@@ -66,6 +66,16 @@ def lighten_models(predictor: EnhancedStockPredictor):
     predictor.xgb_model.set_params(n_estimators=80, max_depth=4, learning_rate=0.03)
     predictor._fetch_historical_accuracy = lambda: None
 
+    # Mock macro data to avoid yfinance calls in tests
+    original_fetch = predictor._fetch_macro_data
+    def mock_macro(df):
+        df["VIX_level"] = 0.20
+        df["VIX_change_5d"] = 0.0
+        df["SPY_vs_SMA50"] = 0.01
+        df["SPY_Return_5"] = 0.005
+        return df
+    predictor._fetch_macro_data = mock_macro
+
 
 # ---------------------------------------------------------------------------
 # Feature Engineering
@@ -80,7 +90,7 @@ class TestFeatureEngineering:
     def test_expected_columns_exist(self):
         tech = self.predictor.calculate_technical_indicators(self.df)
         for col in [
-            "SMA_10",
+            "SMA_20",
             "MACD",
             "RSI",
             "BB_pct",
@@ -89,7 +99,8 @@ class TestFeatureEngineering:
             "Momentum_10",
             "sentiment_score",
             "sentiment_confidence",
-            "sentiment_divergence",
+            "VIX_level",
+            "SPY_vs_SMA50",
         ]:
             assert col in tech.columns, f"Missing feature column: {col}"
 
@@ -99,7 +110,7 @@ class TestFeatureEngineering:
 
     def test_sentiment_columns_are_constant_in_snapshot_mode(self):
         tech = self.predictor.calculate_technical_indicators(self.df)
-        for col in ["sentiment_score", "sentiment_confidence", "sentiment_total_sources"]:
+        for col in ["sentiment_score", "sentiment_confidence"]:
             assert tech[col].nunique() == 1
 
 

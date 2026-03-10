@@ -1,0 +1,89 @@
+{
+  "timestamp": "2026-03-10T14:53:57.412964",
+  "predictions": [],
+  "backtests": [
+    {
+      "symbol": "AAPL",
+      "test_samples": 150,
+      "direction_accuracy": 56.7,
+      "mae_pct": 3.653,
+      "strong_signal_accuracy": 55.1,
+      "strong_signal_count": 78,
+      "model_direction_accuracy": {
+        "RandomForest": 56.7,
+        "GradientBoosting": 55.3,
+        "XGBoost": 59.3
+      }
+    },
+    {
+      "symbol": "MSFT",
+      "test_samples": 150,
+      "direction_accuracy": 52.7,
+      "mae_pct": 2.676,
+      "strong_signal_accuracy": 33.3,
+      "strong_signal_count": 6,
+      "model_direction_accuracy": {
+        "RandomForest": 52.7,
+        "GradientBoosting": 49.3,
+        "XGBoost": 50.0
+      }
+    },
+    {
+      "symbol": "TSLA",
+      "test_samples": 150,
+      "direction_accuracy": 46.0,
+      "mae_pct": 7.31,
+      "strong_signal_accuracy": 46.2,
+      "strong_signal_count": 143,
+      "model_direction_accuracy": {
+        "RandomForest": 46.0,
+        "GradientBoosting": 46.0,
+        "XGBoost": 46.0
+      }
+    },
+    {
+      "symbol": "GOOGL",
+      "test_samples": 150,
+      "direction_accuracy": 37.3,
+      "mae_pct": 5.202,
+      "strong_signal_accuracy": 40.7,
+      "strong_signal_count": 108,
+      "model_direction_accuracy": {
+        "RandomForest": 37.3,
+        "GradientBoosting": 37.3,
+        "XGBoost": 36.0
+      }
+    },
+    {
+      "symbol": "AMZN",
+      "test_samples": 150,
+      "direction_accuracy": 54.7,
+      "mae_pct": 3.671,
+      "strong_signal_accuracy": 52.4,
+      "strong_signal_count": 21,
+      "model_direction_accuracy": {
+        "RandomForest": 51.3,
+        "GradientBoosting": 49.3,
+        "XGBoost": 57.3
+      }
+    },
+    {
+      "symbol": "NVDA",
+      "test_samples": 150,
+      "direction_accuracy": 55.3,
+      "mae_pct": 3.662,
+      "strong_signal_accuracy": 65.7,
+      "strong_signal_count": 70,
+      "model_direction_accuracy": {
+        "RandomForest": 55.3,
+        "GradientBoosting": 56.7,
+        "XGBoost": 56.0
+      }
+    }
+  ],
+  "summary": {
+    "avg_direction_accuracy": 50.4,
+    "avg_strong_signal_accuracy": 48.9,
+    "avg_mae_pct": 4.362
+  }
+}

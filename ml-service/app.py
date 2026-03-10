@@ -262,6 +262,84 @@ def clear_cache():
     return jsonify({'status': 'cache cleared'})
 
 
+@app.route('/market-fear', methods=['GET'])
+def market_fear():
+    """
+    Fear & Greed index (0-100) derived from VIX and SPY signals.
+    0 = Extreme Fear, 50 = Neutral, 100 = Extreme Greed.
+    """
+    try:
+        import yfinance as yf
+
+        # Fetch VIX
+        vix = yf.download("^VIX", period="1mo", interval="1d", progress=False)
+        spy = yf.download("SPY", period="3mo", interval="1d", progress=False)
+
+        if vix.empty or spy.empty:
+            return jsonify({'error': 'Market data unavailable'}), 503
+
+        vix_level = float(vix["Close"].iloc[-1].iloc[0]) if hasattr(vix["Close"].iloc[-1], 'iloc') else float(vix["Close"].iloc[-1])
+        vix_prev = float(vix["Close"].iloc[-6].iloc[0]) if hasattr(vix["Close"].iloc[-6], 'iloc') else float(vix["Close"].iloc[-6]) if len(vix) > 5 else vix_level
+        vix_change = ((vix_level - vix_prev) / vix_prev) * 100 if vix_prev != 0 else 0
+
+        spy_close = spy["Close"].squeeze() if hasattr(spy["Close"], 'squeeze') else spy["Close"]
+        spy_sma50 = float(spy_close.rolling(50).mean().iloc[-1])
+        spy_price = float(spy_close.iloc[-1])
+        spy_vs_sma = ((spy_price - spy_sma50) / spy_sma50) * 100 if spy_sma50 != 0 else 0
+        spy_ret_5d = ((spy_price - float(spy_close.iloc[-6])) / float(spy_close.iloc[-6])) * 100 if len(spy) > 5 else 0
+
+        # --- Score components (each 0-100, 100 = Greed) ---
+        # VIX level: <12 = extreme greed, >35 = extreme fear
+        vix_score = max(0, min(100, 100 - ((vix_level - 12) / 23) * 100))
+
+        # VIX momentum: falling VIX = greed, rising VIX = fear
+        vix_mom_score = max(0, min(100, 50 - vix_change * 5))
+
+        # SPY vs SMA50: above = greed, below = fear
+        spy_trend_score = max(0, min(100, 50 + spy_vs_sma * 10))
+
+        # SPY 5-day momentum
+        spy_mom_score = max(0, min(100, 50 + spy_ret_5d * 15))
+
+        # Weighted composite
+        score = round(
+            vix_score * 0.40 +
+            vix_mom_score * 0.20 +
+            spy_trend_score * 0.25 +
+            spy_mom_score * 0.15
+        )
+        score = max(0, min(100, score))
+
+        if score <= 20:
+            label = "Extreme Fear"
+        elif score <= 40:
+            label = "Fear"
+        elif score <= 60:
+            label = "Neutral"
+        elif score <= 80:
+            label = "Greed"
+        else:
+            label = "Extreme Greed"
+
+        return jsonify({
+            'score': score,
+            'label': label,
+            'components': {
+                'vix_level': round(vix_level, 2),
+                'vix_score': round(vix_score),
+                'vix_momentum': round(vix_change, 2),
+                'vix_momentum_score': round(vix_mom_score),
+                'spy_trend': round(spy_vs_sma, 2),
+                'spy_trend_score': round(spy_trend_score),
+                'spy_momentum': round(spy_ret_5d, 2),
+                'spy_momentum_score': round(spy_mom_score),
+            }
+        })
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 # --- Background Prediction Scheduler ---
 TRACKED_SYMBOLS = os.getenv(
     'TRACKED_SYMBOLS', 'AAPL,MSFT,TSLA,AMZN,NVDA,META,NFLX,GOOGL'

@@ -33,49 +33,40 @@ class EnhancedStockPredictor:
 
         self.scaler = StandardScaler()
         self.rf_model = RandomForestRegressor(
-            n_estimators=500,
+            n_estimators=300,
             random_state=42,
-            max_depth=10,
+            max_depth=8,
             min_samples_split=5,
-            min_samples_leaf=2,
+            min_samples_leaf=4,
             n_jobs=-1,
         )
         self.gb_model = GradientBoostingRegressor(
-            n_estimators=500,
+            n_estimators=250,
             random_state=42,
             max_depth=4,
             learning_rate=0.02,
             subsample=0.8,
-            min_samples_leaf=3,
+            min_samples_leaf=5,
         )
         self.xgb_model = XGBRegressor(
-            n_estimators=500,
+            n_estimators=300,
             random_state=42,
-            max_depth=6,
+            max_depth=5,
             learning_rate=0.02,
             subsample=0.85,
             colsample_bytree=0.85,
-            reg_alpha=0.1,
-            reg_lambda=1.0,
+            reg_alpha=0.3,
+            reg_lambda=2.0,
             objective="reg:squarederror",
             verbosity=0,
         )
 
         self.feature_columns = [
-            "SMA_10",
             "SMA_20",
             "SMA_50",
-            "SMA_200",
-            "EMA_12",
-            "EMA_26",
-            "EMA_50",
-            "SMA_10_vs_20",
             "SMA_20_vs_50",
-            "SMA_50_vs_200",
-            "Close_vs_SMA_20",
             "Close_vs_SMA_200",
             "MACD",
-            "Signal",
             "MACD_Hist",
             "Dist_SMA_200",
             "RSI",
@@ -85,15 +76,9 @@ class EnhancedStockPredictor:
             "OBV_Signal",
             "ATR_Ratio",
             "Stoch_K",
-            "Stoch_D",
-            "Williams_R",
             "ADX",
             "Volatility",
-            "High_Low_Ratio",
-            "Close_Open_Ratio",
             "Return_1",
-            "Return_2",
-            "Return_3",
             "Return_5",
             "Return_10",
             "Momentum_10",
@@ -102,11 +87,10 @@ class EnhancedStockPredictor:
             "Pct_from_52w_low",
             "sentiment_score",
             "sentiment_confidence",
-            "sentiment_total_sources",
-            "news_score",
-            "reddit_score",
-            "sentiment_agreement_score",
-            "sentiment_divergence",
+            "VIX_level",
+            "VIX_change_5d",
+            "SPY_vs_SMA50",
+            "SPY_Return_5",
         ]
 
         self.model_weights = np.array([1.0 / 3, 1.0 / 3, 1.0 / 3], dtype=float)
@@ -128,34 +112,58 @@ class EnhancedStockPredictor:
             return float(fallback)
 
     def _extract_sentiment_features(self, sentiment_snapshot=None):
+        """Extract only 2 sentiment features: score and confidence (FinBERT-powered)."""
         snapshot = sentiment_snapshot or self.sentiment_snapshot or {}
         combined = snapshot.get("combined", snapshot if isinstance(snapshot, dict) else {})
-        news = snapshot.get("news", {}) if isinstance(snapshot, dict) else {}
-        reddit = snapshot.get("reddit", {}) if isinstance(snapshot, dict) else {}
 
         score = np.clip(self._to_float(combined.get("score", 0.0)), -1.0, 1.0)
         confidence = np.clip(self._to_float(combined.get("confidence", 50.0)), 0.0, 100.0) / 100.0
-        total_sources = self._to_float(combined.get("total_sources", 0.0))
-        news_score = np.clip(self._to_float(news.get("score", score)), -1.0, 1.0)
-        reddit_score = np.clip(self._to_float(reddit.get("score", score)), -1.0, 1.0)
-
-        agreement_text = str(combined.get("agreement", "mixed")).lower()
-        if agreement_text == "strong":
-            agreement_score = 1.0
-        elif agreement_text == "divergent":
-            agreement_score = -1.0
-        else:
-            agreement_score = 0.0
 
         return {
             "sentiment_score": float(score),
             "sentiment_confidence": float(confidence),
-            "sentiment_total_sources": float(total_sources),
-            "news_score": float(news_score),
-            "reddit_score": float(reddit_score),
-            "sentiment_agreement_score": float(agreement_score),
-            "sentiment_divergence": float(abs(news_score - reddit_score)),
         }
+
+    def _fetch_macro_data(self, df):
+        """Fetch VIX and SPY data for macro context features."""
+        try:
+            start_date = df.index.min()
+            end_date = df.index.max() + pd.Timedelta(days=5)
+
+            vix_data = yf.Ticker("^VIX").history(start=start_date, end=end_date)
+            spy_data = yf.Ticker("^GSPC").history(start=start_date, end=end_date)
+
+            if vix_data.empty or spy_data.empty:
+                raise ValueError("Empty macro data")
+
+            # Normalize index to remove timezone info for alignment
+            if hasattr(df.index, 'tz') and df.index.tz is not None:
+                df.index = df.index.tz_localize(None)
+            if hasattr(vix_data.index, 'tz') and vix_data.index.tz is not None:
+                vix_data.index = vix_data.index.tz_localize(None)
+            if hasattr(spy_data.index, 'tz') and spy_data.index.tz is not None:
+                spy_data.index = spy_data.index.tz_localize(None)
+
+            # VIX features
+            vix_close = vix_data["Close"].reindex(df.index, method="ffill")
+            df["VIX_level"] = vix_close / 100.0  # Normalize: VIX 20 -> 0.20
+            df["VIX_change_5d"] = vix_close.pct_change(5)
+
+            # SPY features
+            spy_close = spy_data["Close"].reindex(df.index, method="ffill")
+            spy_sma50 = spy_close.rolling(window=50).mean()
+            spy_sma50_safe = spy_sma50.replace(0, np.nan)
+            df["SPY_vs_SMA50"] = (spy_close - spy_sma50) / spy_sma50_safe
+            df["SPY_Return_5"] = spy_close.pct_change(5)
+
+        except Exception as e:
+            print(f"Macro data fetch error (non-fatal): {e}")
+            df["VIX_level"] = 0.20
+            df["VIX_change_5d"] = 0.0
+            df["SPY_vs_SMA50"] = 0.0
+            df["SPY_Return_5"] = 0.0
+
+        return df
 
     def calculate_technical_indicators(self, df, sentiment_snapshot=None):
         df = df.copy()
@@ -240,7 +248,7 @@ class EnhancedStockPredictor:
         df["High_Low_Ratio"] = (df["High"] - df["Low"]) / df["Close"].replace(0, np.nan)
         df["Close_Open_Ratio"] = (df["Close"] - df["Open"]) / df["Open"].replace(0, np.nan)
 
-        for lag in [1, 2, 3, 5, 10]:
+        for lag in [1, 5, 10]:
             df[f"Return_{lag}"] = df["Close"].pct_change(lag)
 
         df["Momentum_10"] = (df["Close"] - df["Close"].shift(10)) / df["Close"].shift(10).replace(0, np.nan)
@@ -251,16 +259,20 @@ class EnhancedStockPredictor:
         df["Pct_from_52w_high"] = (df["Close"] - df["High_52w"]) / df["High_52w"].replace(0, np.nan)
         df["Pct_from_52w_low"] = (df["Close"] - df["Low_52w"]) / df["Low_52w"].replace(0, np.nan)
 
+        # Sentiment features (FinBERT-powered)
         sentiment_features = self._extract_sentiment_features(sentiment_snapshot)
         for key, value in sentiment_features.items():
             df[key] = value
+
+        # Macro context features (VIX + SPY)
+        df = self._fetch_macro_data(df)
 
         return df.dropna()
 
     def prepare_features(self, df):
         X_all = df[self.feature_columns].values
-        # Predict next period return (not raw level)
-        y_return = df["Close"].pct_change().shift(-1).values
+        # Predict 5-day forward return to capture trend and filter daily noise
+        y_return = df["Close"].pct_change(5).shift(-5).values
         close_values = df["Close"].values
 
         valid_idx = np.isfinite(y_return)
@@ -459,11 +471,12 @@ class EnhancedStockPredictor:
             return None
 
     def _blend_with_sentiment(self, model_return, sentiment_features):
+        """Blend model prediction with FinBERT-powered sentiment.
+        Higher trust than TextBlob: max 2% return contribution, 40% blend ceiling."""
         score = sentiment_features["sentiment_score"]
         conf = sentiment_features["sentiment_confidence"]
-        sources = sentiment_features["sentiment_total_sources"]
 
-        if abs(score) < 0.03 or conf < 0.35:
+        if abs(score) < 0.03 or conf < 0.25:
             return model_return, {
                 "integrated_in_model": True,
                 "blend_weight": 0.0,
@@ -471,13 +484,15 @@ class EnhancedStockPredictor:
                 "agreement": "mixed",
             }
 
-        sentiment_return = float(np.clip(score * 0.012, -0.015, 0.015))
-        source_boost = min(1.0, sources / 80.0)
-        blend_weight = float(min(0.35, 0.08 + (conf * 0.18) + (source_boost * 0.09)))
+        # FinBERT is more reliable: higher max return and blend ceiling
+        sentiment_return = float(np.clip(score * 0.018, -0.020, 0.020))
+        blend_weight = float(min(0.40, 0.10 + (conf * 0.22)))
 
         agreement = "mixed"
         if model_return * sentiment_return > 0:
             agreement = "aligned"
+            # Alignment bonus: boost blend when model and sentiment agree
+            blend_weight = min(0.40, blend_weight * 1.15)
         elif model_return * sentiment_return < 0:
             agreement = "opposed"
             blend_weight *= 0.55
@@ -779,7 +794,7 @@ class EnhancedStockPredictor:
             "sentiment_context": {
                 "score": round(run["sentiment_features"]["sentiment_score"], 3),
                 "confidence": round(run["sentiment_features"]["sentiment_confidence"] * 100, 1),
-                "total_sources": int(round(run["sentiment_features"]["sentiment_total_sources"])),
+                "total_sources": int(round(run["sentiment_features"].get("sentiment_total_sources", 0))),
                 "blend": run["sentiment_blend"],
             },
             "stability_guardrail": run["stability_guardrail"],
@@ -932,7 +947,7 @@ class EnhancedStockPredictor:
             "sentiment_context": {
                 "score": round(run["sentiment_features"]["sentiment_score"], 3),
                 "confidence": round(run["sentiment_features"]["sentiment_confidence"] * 100, 1),
-                "total_sources": int(round(run["sentiment_features"]["sentiment_total_sources"])),
+                "total_sources": int(round(run["sentiment_features"].get("sentiment_total_sources", 0))),
                 "blend": run["sentiment_blend"],
             },
             "stability_guardrail": run["stability_guardrail"],

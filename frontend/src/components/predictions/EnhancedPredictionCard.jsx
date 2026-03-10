@@ -90,6 +90,43 @@ const EnhancedPredictionCard = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [sentiment, setSentiment] = useState(null);
+  const [displayConfidence, setDisplayConfidence] = useState(0);
+  const [barWidth, setBarWidth] = useState(0);
+
+  // Animate the confidence score to make it feel "live"
+  useEffect(() => {
+    if (prediction && prediction.confidence) {
+      const target = Number(prediction.confidence);
+      
+      setDisplayConfidence(0);
+      setBarWidth(0);
+
+      const wTimer = setTimeout(() => {
+        setBarWidth(target);
+      }, 50);
+
+      let current = 0;
+      const duration = 1200; // 1.2s animation
+      const steps = 40;
+      const stepTime = duration / steps;
+      const increment = target / steps;
+      
+      const timer = setInterval(() => {
+        current += increment;
+        if (current >= target) {
+          setDisplayConfidence(target);
+          clearInterval(timer);
+        } else {
+          setDisplayConfidence(current);
+        }
+      }, stepTime);
+      
+      return () => {
+        clearInterval(timer);
+        clearTimeout(wTimer);
+      };
+    }
+  }, [prediction]);
 
   useEffect(() => {
     setPrediction(externalPrediction || null);
@@ -281,39 +318,24 @@ const EnhancedPredictionCard = ({
 
   return (
     <div className="enhanced-prediction-card">
+      {/* Clean header: signal type + compact timestamp */}
       <div className="prediction-header">
         <h3>AI Prediction - {symbol}</h3>
         <div className="prediction-header-badges">
-          {predictionTimestamp && (
-            <div className={`freshness-mini-badge ${isStale ? "stale" : "fresh"}`}>
-              {isStale ? "Stale" : "Fresh"} · {Number.isFinite(predictionAgeMins) ? `${predictionAgeMins}m ago` : "recent"}
-            </div>
-          )}
-          {sentiment && (
-            <div className={`sentiment-mini-badge ${sentiment.label?.toLowerCase().replace(' ', '-')}`}>
-              {sentiment.label} ({sentiment.score >= 0 ? '+' : ''}{sentiment.score?.toFixed(2)})
-            </div>
-          )}
-          <div className="model-badge">Next Day &middot; {predictionSource}</div>
-          {ha && ha.count >= 5 && (
-            <div className="accuracy-mini-badge" style={{
-              color: ha.hit_rate >= 0.7 ? '#3fb950' : ha.hit_rate >= 0.55 ? '#f0883e' : '#f85149'
-            }}>
-              {(ha.hit_rate * 100).toFixed(0)}% accurate ({ha.count})
-            </div>
+          {sourceKey === 'bootstrap' && (
+            <div className="on-demand-badge">⚡ Live</div>
           )}
           <button className="prediction-refresh-btn" onClick={handleRefreshClick} disabled={loading}>
-            {loading ? "Refreshing..." : "Refresh Now"}
+            {loading ? "Refreshing..." : "↻ Refresh"}
           </button>
         </div>
       </div>
-      {predictionTimestamp && (
-        <div className="scheduled-prediction-meta">
-          Last forecast (ET): {formatEtDateTime(predictionTimestamp)} · Target close (ET): {formatEtDateTime(predictionTarget)} ·
-          {" "}Source: {predictionSource} · Model: {predictionModelVersion} ·
-          {Number.isFinite(predictionAgeMins) ? ` ${predictionAgeMins} min old` : " recent"}
-        </div>
-      )}
+      <div className="prediction-timestamp-line">
+        {Number.isFinite(predictionAgeMins)
+          ? `Updated ${predictionAgeMins < 60 ? `${predictionAgeMins}m` : `${Math.floor(predictionAgeMins/60)}h`} ago`
+          : 'Updated recently'}
+        {' · '}{predictionSource}
+      </div>
       {(hasHourlyComparison || hasDailyComparison) && (
         <div className="dual-forecast-row">
           {hasHourlyComparison && (
@@ -368,31 +390,35 @@ const EnhancedPredictionCard = ({
 
       <div className="confidence-meter">
         <div className="confidence-top">
-          <span className="label">Model Confidence</span>
-          <span className="confidence-value">{pred.confidence.toFixed(1)}%</span>
+          <span className="label">Live AI Confidence<span className="pulse-dot"></span></span>
+          <span className="confidence-value">{displayConfidence.toFixed(1)}%</span>
         </div>
         <div className="confidence-bar">
           <div
-            className="confidence-fill"
+            className="confidence-fill animated-fill"
             style={{
-              width: `${pred.confidence}%`,
-              background: pred.confidence >= 75 ? '#3fb950' : pred.confidence >= 60 ? '#f0883e' : '#f85149'
+              width: `${barWidth}%`,
+              background: pred.confidence >= 75 ? '#3fb950' : pred.confidence >= 60 ? '#f0883e' : '#f85149',
+              transition: 'width 1.2s cubic-bezier(0.4, 0, 0.2, 1)'
             }}
           ></div>
         </div>
+        <div className="confidence-subtitle">
+          {pred.confidence >= 75 ? '⚡ High conviction signal' : pred.confidence >= 60 ? '⚖️ Moderate conviction' : '⚠️ Low visibility (mixed signals)'}
+        </div>
       </div>
-
-      {/* Prediction Track Record */}
-      <PredictionAccuracyChart
-        symbol={symbol}
-        source="scheduler_daily_close"
-        title="Official Daily Close Track Record"
-      />
-      <PredictionAccuracyChart
-        symbol={symbol}
-        source="scheduler_hourly"
-        title="Hourly Drift Track Record"
-      />
+      {/* Sentiment Pulse - plain English */}
+      {sentiment && (
+        <div className="sentiment-pulse">
+          <span className="sentiment-pulse-icon">
+            {sentiment.score > 0.1 ? '📈' : sentiment.score < -0.1 ? '📉' : '📊'}
+          </span>
+          <span className="sentiment-pulse-text">
+            News & Reddit are {sentiment.score > 0.1 ? 'bullish' : sentiment.score < -0.1 ? 'bearish' : 'neutral'}
+            {sentiment.score > 0.1 ? ' ✅' : sentiment.score < -0.1 ? ' ⚠️' : ''}
+          </span>
+        </div>
+      )}
 
       {/* Zone 2: AI Insights + Trade Levels */}
       {ti && (
@@ -562,6 +588,18 @@ const EnhancedPredictionCard = ({
               </div>
             </div>
           )}
+
+          {/* Track Record Charts - hidden in advanced */}
+          <PredictionAccuracyChart
+            symbol={symbol}
+            source="scheduler_daily_close"
+            title="Daily Close Track Record"
+          />
+          <PredictionAccuracyChart
+            symbol={symbol}
+            source="scheduler_hourly"
+            title="Hourly Drift Track Record"
+          />
         </div>
       )}
     </div>

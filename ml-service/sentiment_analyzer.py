@@ -1,13 +1,104 @@
 import requests
-from textblob import TextBlob
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
 import time
+import logging
+
+logger = logging.getLogger(__name__)
+
+# ── FinBERT Setup ──────────────────────────────────────────────
+# ProsusAI/finbert: 89% accuracy on financial text (vs TextBlob ~70%)
+_finbert_pipeline = None
+
+
+def _get_finbert():
+    """Lazy-load FinBERT pipeline (cached after first call)."""
+    global _finbert_pipeline
+    if _finbert_pipeline is not None:
+        return _finbert_pipeline
+
+    try:
+        from transformers import pipeline as hf_pipeline
+
+        logger.info("Loading FinBERT model (first time may take a minute)...")
+        _finbert_pipeline = hf_pipeline(
+            "sentiment-analysis",
+            model="ProsusAI/finbert",
+            tokenizer="ProsusAI/finbert",
+            truncation=True,
+            max_length=512,
+            top_k=None,
+        )
+        logger.info("FinBERT loaded successfully.")
+        return _finbert_pipeline
+    except Exception as e:
+        logger.warning(f"FinBERT unavailable, falling back to TextBlob: {e}")
+        return None
+
+
+def _finbert_polarity(texts):
+    """
+    Batch-score texts with FinBERT.
+
+    Returns list of dicts: {'polarity': float, 'subjectivity': float, 'method': str}
+    polarity = P(positive) - P(negative), range [-1, +1]
+    """
+    pipe = _get_finbert()
+
+    if pipe is None:
+        # Fallback to TextBlob
+        from textblob import TextBlob
+
+        results = []
+        for text in texts:
+            blob = TextBlob(text)
+            results.append({
+                'polarity': blob.sentiment.polarity,
+                'subjectivity': blob.sentiment.subjectivity,
+                'method': 'textblob',
+            })
+        return results
+
+    # FinBERT batch inference
+    try:
+        raw_outputs = pipe(texts, batch_size=16)
+    except Exception as e:
+        logger.warning(f"FinBERT inference failed, falling back: {e}")
+        from textblob import TextBlob
+
+        results = []
+        for text in texts:
+            blob = TextBlob(text)
+            results.append({
+                'polarity': blob.sentiment.polarity,
+                'subjectivity': blob.sentiment.subjectivity,
+                'method': 'textblob',
+            })
+        return results
+
+    results = []
+    for output in raw_outputs:
+        scores = {item['label']: item['score'] for item in output}
+        pos = scores.get('positive', 0.0)
+        neg = scores.get('negative', 0.0)
+        neu = scores.get('neutral', 0.0)
+
+        polarity = pos - neg  # range [-1, +1]
+        # Subjectivity proxy: 1 - neutral probability
+        subjectivity = 1.0 - neu
+
+        results.append({
+            'polarity': round(polarity, 4),
+            'subjectivity': round(subjectivity, 4),
+            'method': 'finbert',
+        })
+
+    return results
 
 
 class SentimentAnalyzer:
-    """Multi-source NLP sentiment engine combining news articles and Reddit social data."""
+    """Multi-source NLP sentiment engine using FinBERT for financial text analysis."""
 
     SUBREDDITS = ['wallstreetbets', 'stocks', 'investing', 'StockMarket', 'options', 'Daytrading']
     REDDIT_HEADERS = {'User-Agent': 'MarketMind/1.0 (Sentiment Research Bot)'}
@@ -38,20 +129,31 @@ class SentimentAnalyzer:
             if not articles:
                 return self._default_news()
 
-            analyzed = []
+            # Gather texts for batch FinBERT analysis
+            texts = []
+            valid_articles = []
             for article in articles:
                 title = article.get('title', '') or ''
                 description = article.get('description', '') or ''
                 text = f"{title} {description}".strip()
                 if not text or len(text) < 10:
                     continue
+                texts.append(text)
+                valid_articles.append(article)
 
-                blob = TextBlob(text)
-                polarity = blob.sentiment.polarity
-                subjectivity = blob.sentiment.subjectivity
+            if not texts:
+                return self._default_news()
+
+            # Batch FinBERT inference
+            sentiment_results = _finbert_polarity(texts)
+
+            analyzed = []
+            for article, sent in zip(valid_articles, sentiment_results):
+                polarity = sent['polarity']
+                subjectivity = sent['subjectivity']
 
                 analyzed.append({
-                    'title': title,
+                    'title': article.get('title', ''),
                     'source': article.get('source', {}).get('name', 'Unknown'),
                     'url': article.get('url', ''),
                     'published': article.get('publishedAt', ''),
@@ -91,7 +193,6 @@ class SentimentAnalyzer:
         all_posts = []
         subreddit_counts = {}
 
-        # Fetch all subreddits in parallel
         with ThreadPoolExecutor(max_workers=6) as executor:
             futures = {executor.submit(self._fetch_subreddit, sub, symbol): sub for sub in self.SUBREDDITS}
             for future in as_completed(futures):
@@ -107,18 +208,27 @@ class SentimentAnalyzer:
         if not all_posts:
             return self._default_reddit()
 
-        # NLP analysis with upvote weighting
-        analyzed = []
+        # Gather texts for batch FinBERT analysis
+        texts = []
+        valid_posts = []
         for post in all_posts:
             text = f"{post['title']} {post.get('selftext', '')}".strip()
             if len(text) < 10:
                 continue
+            texts.append(text)
+            valid_posts.append(post)
 
-            blob = TextBlob(text)
-            polarity = blob.sentiment.polarity
-            subjectivity = blob.sentiment.subjectivity
+        if not texts:
+            return self._default_reddit()
 
-            # Weight by engagement: more upvotes = more influential
+        # Batch FinBERT inference
+        sentiment_results = _finbert_polarity(texts)
+
+        analyzed = []
+        for post, sent in zip(valid_posts, sentiment_results):
+            polarity = sent['polarity']
+            subjectivity = sent['subjectivity']
+
             ups = max(post.get('ups', 1), 1)
             comments = max(post.get('num_comments', 0), 0)
             engagement = ups + (comments * 2)
@@ -141,7 +251,6 @@ class SentimentAnalyzer:
         if not analyzed:
             return self._default_reddit()
 
-        # Weighted average sentiment
         total_weight = sum(a['weight'] for a in analyzed)
         weighted_avg = sum(a['weighted_polarity'] for a in analyzed) / total_weight if total_weight else 0
 
@@ -150,7 +259,6 @@ class SentimentAnalyzer:
         neg = len([p for p in polarities if p < -0.1])
         neu = len(polarities) - pos - neg
 
-        # Sort by engagement for display
         top_posts = sorted(analyzed, key=lambda a: a['ups'] + a['num_comments'], reverse=True)[:10]
 
         return {
@@ -211,7 +319,6 @@ class SentimentAnalyzer:
     # ──────────────── Combined Intelligence ────────────────
 
     def get_combined_sentiment(self, symbol):
-        # Fetch news and Reddit in parallel
         with ThreadPoolExecutor(max_workers=2) as executor:
             news_future = executor.submit(self.get_news_sentiment, symbol)
             reddit_future = executor.submit(self.get_reddit_sentiment, symbol)
@@ -223,7 +330,6 @@ class SentimentAnalyzer:
         news_count = news.get('article_count', 0)
         reddit_count = reddit.get('post_count', 0)
 
-        # Dynamic weighting: more data = more influence
         total_sources = news_count + reddit_count
         if total_sources == 0:
             news_weight, reddit_weight = 0.5, 0.5
@@ -234,7 +340,6 @@ class SentimentAnalyzer:
         combined_score = (news_score * news_weight) + (reddit_score * reddit_weight)
         combined_confidence = (news.get('confidence', 50) * news_weight) + (reddit.get('confidence', 50) * reddit_weight)
 
-        # Agreement check: do news and Reddit agree?
         news_dir = 1 if news_score > 0.05 else (-1 if news_score < -0.05 else 0)
         reddit_dir = 1 if reddit_score > 0.05 else (-1 if reddit_score < -0.05 else 0)
         sources_agree = news_dir == reddit_dir and news_dir != 0

@@ -31,6 +31,9 @@ import AnalyticsHub from "./components/research/AnalyticsHub";
 import ResearchHub from "./components/research/ResearchHub";
 import NewsSentiment from "./components/research/NewsSentiment";
 
+// Infographics
+import FearGreedGauge from "./components/FearGreedGauge";
+
 // Pages
 import SettingsPage from "./components/pages/SettingsPage";
 import AboutSection from "./components/pages/AboutSection";
@@ -443,7 +446,7 @@ export default function App() {
     <div className="dashboard-unified">
       <div className="dashboard-grid">
         
-        <aside className="stock-selector-panel">
+        {/* Left/Top controls: Search, Popular, Watchlist - no column wrapper */}
           <div className="search-section">
             <h3>Search Stock</h3>
             <div className="symbol-input">
@@ -507,9 +510,7 @@ export default function App() {
               ))}
             </div>
           </div>
-        </aside>
-
-        <main className="chart-prediction-panel">
+        {/* End of controls */}
           {symbol ? (
             <>
               <div className="stock-header">
@@ -582,9 +583,9 @@ export default function App() {
               <p>Choose from popular stocks or search for a symbol to get started</p>
             </div>
           )}
-        </main>
+        {/* End of main chart panel */}
 
-        <aside className="trading-portfolio-panel">
+        {/* Trading, Portfolio, Fear & Greed */}
           <TradingPanel
             symbol={symbol}
             currentPrice={result?.price}
@@ -619,7 +620,9 @@ export default function App() {
               </button>
             </div>
           )}
-        </aside>
+
+          <FearGreedGauge />
+
 
       </div>
     </div>
