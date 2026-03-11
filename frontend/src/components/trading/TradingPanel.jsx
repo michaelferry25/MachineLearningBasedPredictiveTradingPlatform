@@ -148,6 +148,17 @@ export default function TradingPanel({ symbol, currentPrice, onTradeComplete, au
               value={dollarsInput}
               onChange={handleDollarsChange}
             />
+            <div className="quick-amount-buttons">
+              {[100, 500, 1000, 5000].map((amt) => (
+                <button
+                  key={amt}
+                  className={`quick-amount-btn ${dollarsInput === String(amt) ? "active" : ""}`}
+                  onClick={() => setDollarsInput(String(amt))}
+                >
+                  ${amt >= 1000 ? `${amt / 1000}K` : amt}
+                </button>
+              ))}
+            </div>
             {currentPrice > 0 && resolvedQuantity > 0 && (
               <span className="trade-conversion-hint">
                 ≈ {fmtQty(resolvedQuantity)} share{resolvedQuantity !== 1 ? "s" : ""} at ${currentPrice.toFixed(2)}

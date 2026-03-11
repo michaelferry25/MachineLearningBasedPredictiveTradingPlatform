@@ -680,6 +680,39 @@ body {
   background: rgba(255, 255, 255, 0.04);
 }
 
+/* ── Quick amount preset buttons (dollar mode) ── */
+.quick-amount-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.quick-amount-btn {
+  padding: 7px 0;
+  background: rgba(13, 17, 23, 0.6);
+  border: 1.5px solid rgba(48, 54, 61, 0.8);
+  border-radius: 8px;
+  color: rgba(230, 237, 243, 0.65);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.quick-amount-btn:hover {
+  border-color: rgba(88, 166, 255, 0.4);
+  color: #58a6ff;
+  background: rgba(88, 166, 255, 0.08);
+}
+
+.quick-amount-btn.active {
+  border-color: rgba(88, 166, 255, 0.5);
+  color: #58a6ff;
+  background: rgba(88, 166, 255, 0.12);
+}
+
 /* ── Conversion hint (dollar mode) ── */
 .trade-conversion-hint {
   display: block;
