@@ -1,3 +1,4 @@
+import logging
 import warnings
 
 import numpy as np
@@ -9,6 +10,8 @@ from sklearn.preprocessing import StandardScaler
 from xgboost import XGBRegressor
 
 warnings.filterwarnings("ignore")
+
+logger = logging.getLogger(__name__)
 
 BACKEND_URL = "http://localhost:8080"
 
@@ -157,7 +160,7 @@ class EnhancedStockPredictor:
             df["SPY_Return_5"] = spy_close.pct_change(5)
 
         except Exception as e:
-            print(f"Macro data fetch error (non-fatal): {e}")
+            logger.warning(f"Macro data fetch error (non-fatal): {e}")
             df["VIX_level"] = 0.20
             df["VIX_change_5d"] = 0.0
             df["SPY_vs_SMA50"] = 0.0
@@ -978,7 +981,7 @@ def get_prediction(symbol, sentiment_snapshot=None):
 
         return predictor.predict_next_price(df, sentiment_snapshot=sentiment_snapshot)
     except Exception as e:
-        print(f"Error getting prediction for {symbol}: {e}")
+        logger.error(f"Error getting prediction for {symbol}: {e}")
         return None
 
 
@@ -992,5 +995,5 @@ def get_detailed_prediction(symbol, sentiment_snapshot=None):
 
         return predictor.predict_next_price_detailed(df, sentiment_snapshot=sentiment_snapshot)
     except Exception as e:
-        print(f"Error getting detailed prediction for {symbol}: {e}")
+        logger.error(f"Error getting detailed prediction for {symbol}: {e}")
         return None
