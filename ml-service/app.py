@@ -49,7 +49,7 @@ def _cached_sentiment(symbol):
         _sentiment_cache[symbol] = {'data': result, 'ts': now}
         return result
     except Exception as e:
-        print(f"Sentiment fetch failed for {symbol}: {e}")
+        logger.warning(f"Sentiment fetch failed for {symbol}: {e}")
         return None
 
 

@@ -184,7 +184,7 @@ class SentimentAnalyzer:
             }
 
         except Exception as e:
-            print(f"News sentiment error: {e}")
+            logger.error(f"News sentiment error: {e}")
             return self._default_news()
 
     # ──────────────── Reddit Public JSON API ────────────────
@@ -202,7 +202,7 @@ class SentimentAnalyzer:
                     subreddit_counts[sub] = len(posts)
                     all_posts.extend(posts)
                 except Exception as e:
-                    print(f"Reddit r/{sub} error: {e}")
+                    logger.error(f"Reddit r/{sub} error: {e}")
                     subreddit_counts[sub] = 0
 
         if not all_posts:
