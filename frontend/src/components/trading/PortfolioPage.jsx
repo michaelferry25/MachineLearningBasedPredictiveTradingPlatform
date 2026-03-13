@@ -94,6 +94,36 @@ export default function PortfolioPage({ portfolio, onRefresh, authToken }) {
 
   const hasEquityData = (performance?.equityCurve || []).length > 0;
 
+  const exportToCSV = () => {
+    const rows = [["Symbol", "Shares", "Avg Cost", "Current Price", "Value", "P&L", "P&L %"]];
+    sortedPositions.forEach((pos) => {
+      const pnl = pos.pnl ?? 0;
+      const pnlPct = pos.avgPrice > 0 ? ((pos.currentPrice - pos.avgPrice) / pos.avgPrice) * 100 : 0;
+      rows.push([
+        pos.symbol,
+        pos.quantity,
+        pos.avgPrice?.toFixed(2) ?? "0",
+        pos.currentPrice?.toFixed(2) ?? "0",
+        pos.value?.toFixed(2) ?? "0",
+        pnl.toFixed(2),
+        pnlPct.toFixed(2) + "%",
+      ]);
+    });
+    rows.push([]);
+    rows.push(["Cash Balance", cashBalance.toFixed(2)]);
+    rows.push(["Total Value", totalValue.toFixed(2)]);
+    rows.push(["Total Return", totalReturn.toFixed(2) + "%"]);
+
+    const csv = rows.map((r) => r.join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `MarketMind_Portfolio_${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <section className="section-wrapper portfolio-page" id="portfolio">
       <div className="portfolio-header">
@@ -102,9 +132,16 @@ export default function PortfolioPage({ portfolio, onRefresh, authToken }) {
           <h2>Portfolio Command Centre</h2>
           <p>Track balance, allocation, and exposure in real time.</p>
         </div>
-        <button className="btn secondary" onClick={() => onRefresh && onRefresh()} type="button">
-          Refresh
-        </button>
+        <div className="portfolio-header-actions">
+          <button className="btn secondary" onClick={() => onRefresh && onRefresh()} type="button">
+            Refresh
+          </button>
+          {positions.length > 0 && (
+            <button className="btn secondary export-btn" onClick={exportToCSV} type="button">
+              Export CSV
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ── Metric Cards ── */}

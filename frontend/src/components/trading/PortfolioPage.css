@@ -25,6 +25,16 @@
   margin-top: 6px;
 }
 
+.portfolio-header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.export-btn {
+  font-size: 0.85rem;
+}
+
 /* ===== Metric Cards ===== */
 
 .portfolio-summary-grid {
