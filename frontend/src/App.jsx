@@ -591,6 +591,7 @@ export default function App() {
             currentPrice={result?.price}
             onTradeComplete={fetchPortfolio}
             authToken={authToken}
+            heldQuantity={portfolio?.positions?.find(p => p.symbol === symbol)?.quantity || 0}
           />
 
           {portfolio && (

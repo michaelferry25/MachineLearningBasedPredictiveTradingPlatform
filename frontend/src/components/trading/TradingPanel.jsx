@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
-export default function TradingPanel({ symbol, currentPrice, onTradeComplete, authToken }) {
+export default function TradingPanel({ symbol, currentPrice, onTradeComplete, authToken, heldQuantity = 0 }) {
   const [mode, setMode] = useState("shares"); // "shares" | "dollars"
   const [sharesInput, setSharesInput] = useState("1");
   const [dollarsInput, setDollarsInput] = useState("");
@@ -67,6 +67,20 @@ export default function TradingPanel({ symbol, currentPrice, onTradeComplete, au
   };
 
   const cancelOrder = () => setConfirming(null);
+
+  const handleSellAll = () => {
+    if (!authToken) {
+      setTradeResult({ error: "Please sign in to place trades." });
+      return;
+    }
+    if (!symbol || !currentPrice || currentPrice <= 0) {
+      setTradeResult({ error: "Please fetch a valid stock price first" });
+      return;
+    }
+    setMode("shares");
+    setSharesInput(String(parseFloat(heldQuantity.toFixed(6))));
+    setConfirming("sell");
+  };
 
   const confirmOrder = async () => {
     const type = confirming;
@@ -179,13 +193,24 @@ export default function TradingPanel({ symbol, currentPrice, onTradeComplete, au
       </div>
 
       {!confirming ? (
-        <div className="trade-buttons">
-          <button className="btn buy-btn" onClick={() => initiateOrder("buy")} disabled={buttonsDisabled}>
-            {loading ? "Processing..." : "Buy"}
-          </button>
-          <button className="btn sell-btn" onClick={() => initiateOrder("sell")} disabled={buttonsDisabled}>
-            {loading ? "Processing..." : "Sell"}
-          </button>
+        <div className="trade-buttons-group">
+          <div className="trade-buttons">
+            <button className="btn buy-btn" onClick={() => initiateOrder("buy")} disabled={buttonsDisabled}>
+              {loading ? "Processing..." : "Buy"}
+            </button>
+            <button className="btn sell-btn" onClick={() => initiateOrder("sell")} disabled={buttonsDisabled}>
+              {loading ? "Processing..." : "Sell"}
+            </button>
+          </div>
+          {heldQuantity > 0 && (
+            <button
+              className="btn sell-all-btn"
+              onClick={handleSellAll}
+              disabled={loading || cooldown || !currentPrice}
+            >
+              Sell All ({fmtQty(heldQuantity)} shares)
+            </button>
+          )}
         </div>
       ) : (
         <div className="trade-confirm-box">

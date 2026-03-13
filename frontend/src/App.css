@@ -598,11 +598,42 @@ body {
   color: #58a6ff;
 }
 
+.trade-buttons-group {
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .trade-buttons {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
-  margin-bottom: 14px;
+}
+
+.sell-all-btn {
+  width: 100%;
+  padding: 9px 0;
+  background: linear-gradient(135deg, rgba(255, 123, 114, 0.12) 0%, rgba(218, 54, 51, 0.12) 100%);
+  color: #ff7b72;
+  border: 1.5px solid rgba(255, 123, 114, 0.3);
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.sell-all-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(255, 123, 114, 0.2) 0%, rgba(218, 54, 51, 0.2) 100%);
+  border-color: rgba(255, 123, 114, 0.5);
+  transform: translateY(-1px);
+}
+
+.sell-all-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .buy-btn {
