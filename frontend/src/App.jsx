@@ -95,8 +95,39 @@ export default function App() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [chartRange, setChartRange] = useState("1mo");
   const [userSkillLevel, setUserSkillLevel] = useState("Beginner");
+  const [showShortcuts, setShowShortcuts] = useState(false);
 
   const authToken = auth?.token;
+
+  // Keyboard shortcuts (active on dashboard)
+  useEffect(() => {
+    const handler = (e) => {
+      // Ignore if typing in an input
+      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+
+      const currentRoute = getRoute();
+
+      if (e.key === "?") {
+        setShowShortcuts((prev) => !prev);
+        return;
+      }
+      if (e.key === "Escape") {
+        setShowShortcuts(false);
+        return;
+      }
+
+      // Only stock/trade shortcuts on dashboard
+      if (currentRoute !== "/dashboard") return;
+
+      const num = parseInt(e.key);
+      if (num >= 1 && num <= POPULAR_STOCKS.length) {
+        handleStockSelect(POPULAR_STOCKS[num - 1].symbol);
+        return;
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   useEffect(() => {
     const onHashChange = () => {
@@ -625,6 +656,9 @@ export default function App() {
 
           <FearGreedGauge />
 
+          <div className="keyboard-hint">
+            Press <kbd>1</kbd>-<kbd>8</kbd> to quick-select stocks or <kbd>?</kbd> for all shortcuts
+          </div>
 
       </div>
     </div>
@@ -686,6 +720,22 @@ export default function App() {
   return (
     <>
       <ToastContainer />
+      {showShortcuts && (
+        <div className="shortcuts-overlay" onClick={() => setShowShortcuts(false)}>
+          <div className="shortcuts-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Keyboard Shortcuts</h3>
+            <div className="shortcuts-grid">
+              <div className="shortcut-group">
+                <h4>Dashboard</h4>
+                <div className="shortcut-row"><kbd>1</kbd>-<kbd>8</kbd><span>Select popular stock</span></div>
+                <div className="shortcut-row"><kbd>?</kbd><span>Toggle this overlay</span></div>
+                <div className="shortcut-row"><kbd>Esc</kbd><span>Close overlay</span></div>
+              </div>
+            </div>
+            <p className="shortcuts-hint">Press <kbd>?</kbd> to close</p>
+          </div>
+        </div>
+      )}
       <Navbar user={auth.user} onLogout={handleLogout} variant="app" currentRoute={route} userSkillLevel={userSkillLevel} authToken={authToken} portfolio={portfolio} />
       <main className="page-content">{renderPage()}</main>
       <Footer />

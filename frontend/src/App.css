@@ -5948,6 +5948,113 @@ body.theme-light .nav-btn:hover {
   color: #f0883e;
 }
 
+/* ── Keyboard Shortcut Hint ── */
+.keyboard-hint {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 10px;
+  font-size: 0.78rem;
+  color: #8b949e;
+  border-top: 1px solid rgba(48, 54, 61, 0.4);
+}
+
+.keyboard-hint kbd {
+  font-size: 0.72rem;
+  margin: 0 2px;
+}
+
+/* ── Keyboard Shortcuts Overlay ── */
+.shortcuts-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.shortcuts-modal {
+  background: linear-gradient(145deg, rgba(22, 27, 34, 0.98), rgba(13, 17, 23, 0.98));
+  border: 1px solid rgba(48, 54, 61, 0.8);
+  border-radius: 16px;
+  padding: 32px 36px;
+  max-width: 420px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.shortcuts-modal h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #e6edf3;
+  margin-bottom: 20px;
+  background: linear-gradient(135deg, #58a6ff, #3fb950);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.shortcuts-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.shortcut-group h4 {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8b949e;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.shortcut-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0;
+}
+
+.shortcut-row span {
+  color: #c9d1d9;
+  font-size: 0.88rem;
+}
+
+kbd {
+  display: inline-block;
+  padding: 3px 8px;
+  background: rgba(13, 17, 23, 0.8);
+  border: 1px solid rgba(48, 54, 61, 0.8);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #e6edf3;
+  min-width: 24px;
+  text-align: center;
+  box-shadow: 0 2px 0 rgba(48, 54, 61, 0.6);
+}
+
+.shortcuts-hint {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 0.78rem;
+  color: #8b949e;
+}
+
+.shortcuts-hint kbd {
+  font-size: 0.72rem;
+}
+
 /* ── Toast Notifications ── */
 .toast-container {
   position: fixed;
