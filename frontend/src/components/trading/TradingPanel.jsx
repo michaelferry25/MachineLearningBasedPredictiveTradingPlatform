@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { showToast } from "../layout/Toast";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
@@ -101,11 +102,15 @@ export default function TradingPanel({ symbol, currentPrice, onTradeComplete, au
       const data = await res.json();
       setTradeResult(data);
 
-      if (data.success && onTradeComplete) {
-        onTradeComplete();
+      if (data.success) {
+        showToast(data.message, "success");
+        if (onTradeComplete) onTradeComplete();
+      } else if (data.error) {
+        showToast(data.error, "error");
       }
     } catch (error) {
       setTradeResult({ error: "Trade failed: " + error.message });
+      showToast("Trade failed: " + error.message, "error");
     }
 
     setLoading(false);

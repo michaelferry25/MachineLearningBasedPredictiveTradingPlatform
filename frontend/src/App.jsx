@@ -5,6 +5,7 @@ import "./App.css";
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
 import HeroSection from "./components/layout/HeroSection";
+import ToastContainer from "./components/layout/Toast";
 
 // Auth
 import AuthPanel from "./components/auth/AuthPanel";
@@ -684,6 +685,7 @@ export default function App() {
 
   return (
     <>
+      <ToastContainer />
       <Navbar user={auth.user} onLogout={handleLogout} variant="app" currentRoute={route} userSkillLevel={userSkillLevel} authToken={authToken} portfolio={portfolio} />
       <main className="page-content">{renderPage()}</main>
       <Footer />
