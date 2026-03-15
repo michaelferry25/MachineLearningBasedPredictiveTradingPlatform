@@ -6144,3 +6144,89 @@ kbd {
 .toast-close:hover {
   color: #e6edf3;
 }
+
+/* ── Market Status Indicator ── */
+.market-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  white-space: nowrap;
+}
+
+.market-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.market-status-label {
+  color: #c9d1d9;
+}
+
+.market-status-countdown {
+  color: #8b949e;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Open — green pulsing dot */
+.market-status-open .market-status-dot {
+  background: #3fb950;
+  box-shadow: 0 0 6px rgba(63, 185, 80, 0.6);
+  animation: marketPulse 2s ease-in-out infinite;
+}
+.market-status-open .market-status-label {
+  color: #3fb950;
+}
+
+/* Pre-Market — blue */
+.market-status-pre-market .market-status-dot {
+  background: #58a6ff;
+  box-shadow: 0 0 6px rgba(88, 166, 255, 0.5);
+  animation: marketPulse 2.5s ease-in-out infinite;
+}
+.market-status-pre-market .market-status-label {
+  color: #58a6ff;
+}
+
+/* After-Hours — orange */
+.market-status-after-hours .market-status-dot {
+  background: #f0883e;
+  box-shadow: 0 0 6px rgba(240, 136, 62, 0.5);
+  animation: marketPulse 2.5s ease-in-out infinite;
+}
+.market-status-after-hours .market-status-label {
+  color: #f0883e;
+}
+
+/* Closed — dim gray */
+.market-status-closed .market-status-dot {
+  background: #484f58;
+}
+.market-status-closed .market-status-label {
+  color: #8b949e;
+}
+
+@keyframes marketPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+
+/* Hide countdown on very small screens */
+@media (max-width: 480px) {
+  .market-status-countdown {
+    display: none;
+  }
+  .market-status {
+    padding: 5px 10px;
+    gap: 6px;
+  }
+}

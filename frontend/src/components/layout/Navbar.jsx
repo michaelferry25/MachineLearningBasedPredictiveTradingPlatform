@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import MarketStatus from './MarketStatus';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
@@ -183,6 +184,9 @@ export default function Navbar({ user, onLogout, variant = "app", currentRoute =
               <span className="hamburger-line" />
             </button>
           )}
+
+          {/* ── Market Status ── */}
+          {showAppLinks && <MarketStatus />}
 
           {/* ── Profile / Auth ── */}
           <div className="nav-actions">
