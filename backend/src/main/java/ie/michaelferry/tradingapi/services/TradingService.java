@@ -176,7 +176,8 @@ public class TradingService {
                 "type", "SELL",
                 "price", currentPrice,
                 "quantity", quantity,
-                "total", totalValue
+                "total", totalValue,
+                "pnl", realizedPnl
             ),
             "portfolio", getPortfolioSummary(email)
         );
