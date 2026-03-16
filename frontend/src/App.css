@@ -6241,3 +6241,186 @@ kbd {
   pointer-events: none;
   z-index: 9999;
 }
+
+/* ── Trade Receipt Modal ── */
+.receipt-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5000;
+  animation: receiptFadeIn 0.2s ease-out;
+}
+
+@keyframes receiptFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes receiptSlideUp {
+  from { opacity: 0; transform: translateY(30px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.receipt-modal {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 16px;
+  width: 380px;
+  max-width: 92vw;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: receiptSlideUp 0.35s ease-out;
+}
+
+.receipt-header {
+  padding: 24px 24px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
+.receipt-header.receipt-buy {
+  background: linear-gradient(135deg, rgba(63, 185, 80, 0.12), rgba(63, 185, 80, 0.03));
+  border-bottom: 1px solid rgba(63, 185, 80, 0.15);
+}
+
+.receipt-header.receipt-sell {
+  background: linear-gradient(135deg, rgba(255, 123, 114, 0.12), rgba(255, 123, 114, 0.03));
+  border-bottom: 1px solid rgba(255, 123, 114, 0.15);
+}
+
+.receipt-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.receipt-buy .receipt-icon {
+  background: rgba(63, 185, 80, 0.15);
+  color: #3fb950;
+}
+
+.receipt-sell .receipt-icon {
+  background: rgba(255, 123, 114, 0.15);
+  color: #ff7b72;
+}
+
+.receipt-type {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #c9d1d9;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.receipt-symbol {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #e6edf3;
+}
+
+.receipt-body {
+  padding: 20px 24px;
+}
+
+.receipt-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.receipt-label {
+  color: #8b949e;
+  font-size: 0.85rem;
+}
+
+.receipt-value {
+  color: #c9d1d9;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.receipt-value-bold {
+  color: #e6edf3;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.receipt-tag {
+  padding: 2px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.tag-buy {
+  background: rgba(63, 185, 80, 0.15);
+  color: #3fb950;
+}
+
+.tag-sell {
+  background: rgba(255, 123, 114, 0.15);
+  color: #ff7b72;
+}
+
+.receipt-divider {
+  height: 1px;
+  background: #21262d;
+  margin: 6px 0;
+}
+
+.receipt-total-row .receipt-value {
+  font-size: 1.1rem;
+}
+
+.receipt-profit {
+  color: #3fb950;
+  font-weight: 600;
+}
+
+.receipt-loss {
+  color: #ff7b72;
+  font-weight: 600;
+}
+
+.receipt-meta .receipt-label,
+.receipt-meta .receipt-value {
+  font-size: 0.78rem;
+  color: #484f58;
+}
+
+.receipt-order-id {
+  font-family: "SF Mono", "Fira Code", monospace;
+  letter-spacing: 0.05em;
+}
+
+.receipt-close-btn {
+  display: block;
+  width: calc(100% - 48px);
+  margin: 0 24px 20px;
+  padding: 12px;
+  background: rgba(88, 166, 255, 0.1);
+  color: #58a6ff;
+  border: 1px solid rgba(88, 166, 255, 0.2);
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.receipt-close-btn:hover {
+  background: rgba(88, 166, 255, 0.18);
+  border-color: rgba(88, 166, 255, 0.35);
+}

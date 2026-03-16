@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { showToast } from "../layout/Toast";
 import Confetti from "../layout/Confetti";
+import TradeReceipt from "./TradeReceipt";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
@@ -13,8 +14,10 @@ export default function TradingPanel({ symbol, currentPrice, onTradeComplete, au
   const [confirming, setConfirming] = useState(null); // null | "buy" | "sell"
   const [cooldown, setCooldown] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [receipt, setReceipt] = useState(null);
   const resultTimer = useRef(null);
   const handleConfettiDone = useCallback(() => setShowConfetti(false), []);
+  const closeReceipt = useCallback(() => setReceipt(null), []);
 
   // Clear result after 5 seconds
   useEffect(() => {
@@ -107,6 +110,7 @@ export default function TradingPanel({ symbol, currentPrice, onTradeComplete, au
 
       if (data.success) {
         showToast(data.message, "success");
+        if (data.trade) setReceipt(data.trade);
         if (type === "sell" && data.trade?.pnl > 0) setShowConfetti(true);
         if (onTradeComplete) onTradeComplete();
       } else if (data.error) {
@@ -243,6 +247,7 @@ export default function TradingPanel({ symbol, currentPrice, onTradeComplete, au
         </div>
       )}
       <Confetti active={showConfetti} onDone={handleConfettiDone} />
+      <TradeReceipt trade={receipt} onClose={closeReceipt} />
     </div>
   );
 }
