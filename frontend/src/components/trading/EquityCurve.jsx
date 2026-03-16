@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -14,15 +14,42 @@ import zoomPlugin from "chartjs-plugin-zoom";
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, zoomPlugin);
 
 const RANGES = ["1D", "1W", "1M", "ALL"];
+const INITIAL_CASH = 100000;
+
+/* Crosshair plugin — draws vertical + horizontal line on hover */
+const crosshairPlugin = {
+  id: "crosshair",
+  afterDraw(chart) {
+    const { ctx, tooltip, chartArea } = chart;
+    if (!tooltip || !tooltip.getActiveElements().length) return;
+    const { x } = tooltip.getActiveElements()[0].element;
+    const y = tooltip.getActiveElements()[0].element.y;
+    ctx.save();
+    ctx.setLineDash([4, 4]);
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgba(139,148,158,0.4)";
+    ctx.beginPath();
+    ctx.moveTo(x, chartArea.top);
+    ctx.lineTo(x, chartArea.bottom);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(chartArea.left, y);
+    ctx.lineTo(chartArea.right, y);
+    ctx.stroke();
+    ctx.restore();
+  },
+};
+ChartJS.register(crosshairPlugin);
 
 export default function EquityCurve({ equityCurve, totalValue, totalReturn }) {
-  const [range, setRange] = useState("1D");
+  const [range, setRange] = useState("ALL");
+  const chartRef = useRef(null);
   const isPositive = (totalReturn || 0) >= 0;
   const color = isPositive ? "#3fb950" : "#ff7b72";
-  const pnl = (totalValue || 0) - 100000;
+  const pnl = (totalValue || 0) - INITIAL_CASH;
   const sign = pnl >= 0 ? "+" : "";
 
-  const { chartData, options } = useMemo(() => {
+  const { chartData, options, highWatermark, lowWatermark, rangeReturn } = useMemo(() => {
     const curve = equityCurve || [];
     const now = new Date();
 
@@ -37,10 +64,10 @@ export default function EquityCurve({ equityCurve, totalValue, totalReturn }) {
 
     const points = [];
     if (filtered.length === 0) {
-      points.push({ time: cutoff > new Date(0) ? cutoff : new Date(now.getTime() - 86400000), value: 100000 });
-      points.push({ time: now, value: 100000 });
+      points.push({ time: cutoff > new Date(0) ? cutoff : new Date(now.getTime() - 86400000), value: INITIAL_CASH });
+      points.push({ time: now, value: INITIAL_CASH });
     } else {
-      points.push({ time: new Date(new Date(filtered[0].timestamp).getTime() - 60000), value: 100000 });
+      points.push({ time: new Date(new Date(filtered[0].timestamp).getTime() - 60000), value: INITIAL_CASH });
       filtered.forEach((pt) => points.push({ time: new Date(pt.timestamp), value: pt.value }));
     }
 
@@ -50,13 +77,16 @@ export default function EquityCurve({ equityCurve, totalValue, totalReturn }) {
       return d.toLocaleDateString("en-IE", { month: "short", day: "numeric" });
     };
 
-    // Adaptive Y scale — zoom to actual data range
     const values = points.map((p) => p.value);
     const minVal = Math.min(...values);
     const maxVal = Math.max(...values);
-    const maxDev = Math.max(Math.abs(maxVal - 100000), Math.abs(100000 - minVal));
+    const maxDev = Math.max(Math.abs(maxVal - INITIAL_CASH), Math.abs(INITIAL_CASH - minVal));
 
-    // Pick step size based on actual deviation
+    // Compute range-specific return
+    const startVal = values[0] || INITIAL_CASH;
+    const endVal = values[values.length - 1] || INITIAL_CASH;
+    const rr = startVal > 0 ? ((endVal - startVal) / startVal) * 100 : 0;
+
     let step, padding;
     if (maxDev < 100) {
       step = 50; padding = 200;
@@ -72,22 +102,58 @@ export default function EquityCurve({ equityCurve, totalValue, totalReturn }) {
       step = 10000; padding = Math.ceil(maxDev / 10000) * 10000;
     }
 
-    const yMin = 100000 - Math.max(padding, Math.ceil(maxDev / step + 1) * step);
-    const yMax = 100000 + Math.max(padding, Math.ceil(maxDev / step + 1) * step);
+    const yMin = INITIAL_CASH - Math.max(padding, Math.ceil(maxDev / step + 1) * step);
+    const yMax = INITIAL_CASH + Math.max(padding, Math.ceil(maxDev / step + 1) * step);
+
+    // Gradient fill — green above $100k, red below
+    const gradientFill = (ctx) => {
+      const chart = ctx.chart;
+      const { top, bottom } = chart.chartArea || {};
+      if (!top) return color;
+      const yScale = chart.scales.y;
+      const baselinePixel = yScale.getPixelForValue(INITIAL_CASH);
+      const grad = chart.ctx.createLinearGradient(0, top, 0, bottom);
+      const baseRatio = Math.max(0, Math.min(1, (baselinePixel - top) / (bottom - top)));
+      grad.addColorStop(0, "rgba(63,185,80,0.25)");
+      grad.addColorStop(Math.max(0, baseRatio - 0.01), "rgba(63,185,80,0.05)");
+      grad.addColorStop(baseRatio, "rgba(0,0,0,0)");
+      grad.addColorStop(Math.min(1, baseRatio + 0.01), "rgba(255,123,114,0.05)");
+      grad.addColorStop(1, "rgba(255,123,114,0.25)");
+      return grad;
+    };
+
+    // Baseline dataset — dashed $100k line
+    const baselineData = new Array(values.length).fill(INITIAL_CASH);
 
     const data = {
       labels: points.map((p) => formatLabel(p.time)),
-      datasets: [{
-        data: values,
-        borderColor: color,
-        backgroundColor: "transparent",
-        fill: false,
-        tension: 0.3,
-        pointRadius: points.length > 30 ? 0 : 2,
-        pointHoverRadius: 4,
-        pointBackgroundColor: color,
-        borderWidth: 2.5,
-      }],
+      datasets: [
+        {
+          label: "Portfolio",
+          data: values,
+          borderColor: color,
+          backgroundColor: gradientFill,
+          fill: true,
+          tension: 0.3,
+          pointRadius: points.length > 40 ? 0 : points.length > 20 ? 1.5 : 3,
+          pointHoverRadius: 5,
+          pointBackgroundColor: color,
+          pointHoverBackgroundColor: "#e6edf3",
+          pointHoverBorderColor: color,
+          pointHoverBorderWidth: 2,
+          borderWidth: 2.5,
+        },
+        {
+          label: "Baseline",
+          data: baselineData,
+          borderColor: "rgba(139,148,158,0.3)",
+          borderDash: [6, 4],
+          borderWidth: 1,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          fill: false,
+        },
+      ],
     };
 
     const opts = {
@@ -102,12 +168,20 @@ export default function EquityCurve({ equityCurve, totalValue, totalReturn }) {
           bodyColor: "#e6edf3",
           borderColor: "#30363d",
           borderWidth: 1,
+          padding: 12,
+          displayColors: false,
+          filter: (item) => item.datasetIndex === 0,
           callbacks: {
+            title: (items) => items[0]?.label || "",
             label: (ctx) => {
               const val = ctx.parsed.y;
-              const diff = val - 100000;
+              const diff = val - INITIAL_CASH;
               const ds = diff >= 0 ? "+" : "";
-              return `$${val.toLocaleString(undefined, { minimumFractionDigits: 2 })} (${ds}$${diff.toLocaleString(undefined, { minimumFractionDigits: 2 })})`;
+              const pct = ((diff / INITIAL_CASH) * 100).toFixed(2);
+              return [
+                `Value: $${val.toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+                `P&L: ${ds}$${Math.abs(diff).toLocaleString(undefined, { minimumFractionDigits: 2 })} (${ds}${pct}%)`,
+              ];
             },
           },
         },
@@ -119,7 +193,7 @@ export default function EquityCurve({ equityCurve, totalValue, totalReturn }) {
       scales: {
         x: {
           ticks: { color: "#8b949e", font: { size: 10 }, maxTicksLimit: 8 },
-          grid: { color: "rgba(48,54,61,0.12)" },
+          grid: { color: "rgba(48,54,61,0.08)" },
         },
         y: {
           min: yMin,
@@ -134,20 +208,41 @@ export default function EquityCurve({ equityCurve, totalValue, totalReturn }) {
             },
           },
           grid: {
-            color: (ctx) => ctx.tick.value === 100000 ? "rgba(139,148,158,0.4)" : "rgba(48,54,61,0.12)",
-            lineWidth: (ctx) => ctx.tick.value === 100000 ? 2 : 1,
+            color: (ctx) => ctx.tick.value === INITIAL_CASH ? "rgba(139,148,158,0.35)" : "rgba(48,54,61,0.08)",
+            lineWidth: (ctx) => ctx.tick.value === INITIAL_CASH ? 1.5 : 1,
           },
         },
       },
     };
 
-    return { chartData: data, options: opts };
+    return {
+      chartData: data,
+      options: opts,
+      highWatermark: maxVal,
+      lowWatermark: minVal,
+      rangeReturn: rr,
+    };
   }, [equityCurve, color, range]);
+
+  const resetZoom = () => {
+    if (chartRef.current) chartRef.current.resetZoom();
+  };
+
+  const rangeColor = rangeReturn >= 0 ? "#3fb950" : "#ff7b72";
+  const rangeSign = rangeReturn >= 0 ? "+" : "";
 
   return (
     <div className="equity-curve-card">
       <div className="equity-curve-header">
-        <h3>Equity Curve</h3>
+        <div className="equity-curve-title-row">
+          <h3>Equity Curve</h3>
+          <button className="equity-reset-zoom" onClick={resetZoom} type="button" title="Reset zoom">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"/>
+              <path d="M3 3v5h5"/>
+            </svg>
+          </button>
+        </div>
         <div className="equity-range-bar">
           {RANGES.map((r) => (
             <button key={r} className={`equity-range-btn ${range === r ? "active" : ""}`} onClick={() => setRange(r)} type="button">{r}</button>
@@ -162,8 +257,23 @@ export default function EquityCurve({ equityCurve, totalValue, totalReturn }) {
           </span>
         </div>
       </div>
-      <div style={{ height: 300 }}>
-        <Line data={chartData} options={options} />
+
+      <div className="equity-watermarks">
+        <span className="equity-wm equity-wm-high">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#3fb950" strokeWidth="2.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+          High: ${highWatermark.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        </span>
+        <span className="equity-wm equity-wm-low">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#ff7b72" strokeWidth="2.5"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+          Low: ${lowWatermark.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        </span>
+        <span className="equity-wm" style={{ color: rangeColor }}>
+          {range} Return: {rangeSign}{rangeReturn.toFixed(2)}%
+        </span>
+      </div>
+
+      <div style={{ height: 320 }}>
+        <Line ref={chartRef} data={chartData} options={options} />
       </div>
     </div>
   );
