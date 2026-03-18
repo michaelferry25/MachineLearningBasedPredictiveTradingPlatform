@@ -1,7 +1,42 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import "./AuthPanel.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+
+/* ── Password strength calculator ── */
+function getPasswordStrength(pw) {
+  let score = 0;
+  if (pw.length >= 8) score++;
+  if (pw.length >= 12) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[a-z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  if (score <= 2) return { label: "Weak", color: "#ff7b72", pct: 25 };
+  if (score <= 3) return { label: "Fair", color: "#f0883e", pct: 50 };
+  if (score <= 4) return { label: "Good", color: "#58a6ff", pct: 75 };
+  return { label: "Strong", color: "#3fb950", pct: 100 };
+}
+
+/* ── Password requirement checklist ── */
+function PasswordChecks({ password }) {
+  const checks = [
+    { label: "8+ characters", met: password.length >= 8 },
+    { label: "Uppercase", met: /[A-Z]/.test(password) },
+    { label: "Lowercase", met: /[a-z]/.test(password) },
+    { label: "Number", met: /[0-9]/.test(password) },
+    { label: "Special char", met: /[^A-Za-z0-9]/.test(password) },
+  ];
+  return (
+    <div className="pw-checks">
+      {checks.map((c, i) => (
+        <span key={i} className={`pw-check ${c.met ? "met" : ""}`}>
+          {c.met ? "\u2713" : "\u2022"} {c.label}
+        </span>
+      ))}
+    </div>
+  );
+}
 
 /* ── Animated mini chart SVG ── */
 function MiniChart() {
@@ -111,6 +146,12 @@ export default function AuthPanel({ onAuthSuccess }) {
   const [mode, setMode] = useState("login");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [emailChecking, setEmailChecking] = useState(false);
+  const [emailAvailable, setEmailAvailable] = useState(null);
+  const emailTimer = useRef(null);
 
   const [form, setForm] = useState({
     email: "",
@@ -119,15 +160,50 @@ export default function AuthPanel({ onAuthSuccess }) {
     displayName: "",
   });
 
+  /* Live email availability check on signup */
+  const checkEmailAvailability = useCallback(async (email) => {
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setEmailAvailable(null);
+      return;
+    }
+    setEmailChecking(true);
+    try {
+      const res = await fetch(`${API_URL}/api/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password: "CheckOnly1!", displayName: "check" }),
+      });
+      if (res.status === 409) {
+        setEmailAvailable(false);
+      } else {
+        setEmailAvailable(true);
+      }
+    } catch {
+      setEmailAvailable(null);
+    } finally {
+      setEmailChecking(false);
+    }
+  }, []);
+
   const handleChange = (event) => {
     const { name, value } = event.target;
     setForm((prev) => ({ ...prev, [name]: value }));
     setError("");
+
+    if (name === "email" && mode === "signup") {
+      setEmailAvailable(null);
+      clearTimeout(emailTimer.current);
+      emailTimer.current = setTimeout(() => checkEmailAvailability(value), 800);
+    }
   };
 
   const switchMode = (m) => {
     setMode(m);
     setError("");
+    setEmailAvailable(null);
+    setTermsAccepted(false);
+    setShowPassword(false);
+    setShowConfirm(false);
   };
 
   const handleSubmit = async (event) => {
@@ -139,13 +215,50 @@ export default function AuthPanel({ onAuthSuccess }) {
       return;
     }
 
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
     if (mode === "signup") {
       if (!form.displayName.trim()) {
         setError("Please enter a display name.");
         return;
       }
+      if (form.displayName.trim().length < 2) {
+        setError("Display name must be at least 2 characters.");
+        return;
+      }
+      if (form.password.length < 8) {
+        setError("Password must be at least 8 characters.");
+        return;
+      }
+      if (!/[A-Z]/.test(form.password)) {
+        setError("Password needs at least one uppercase letter.");
+        return;
+      }
+      if (!/[a-z]/.test(form.password)) {
+        setError("Password needs at least one lowercase letter.");
+        return;
+      }
+      if (!/[0-9]/.test(form.password)) {
+        setError("Password needs at least one number.");
+        return;
+      }
+      if (!/[^A-Za-z0-9]/.test(form.password)) {
+        setError("Password needs at least one special character (e.g. !@#$%).");
+        return;
+      }
       if (form.password !== form.confirmPassword) {
         setError("Passwords do not match.");
+        return;
+      }
+      if (emailAvailable === false) {
+        setError("This email is already registered. Try signing in.");
+        return;
+      }
+      if (!termsAccepted) {
+        setError("You must accept the Terms & Conditions to continue.");
         return;
       }
     }
@@ -172,7 +285,11 @@ export default function AuthPanel({ onAuthSuccess }) {
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.message || data.error || "Unable to authenticate.");
+        if (res.status === 409) {
+          setError("This email is already registered. Try signing in.");
+        } else {
+          setError(data.message || data.error || "Unable to authenticate.");
+        }
         setLoading(false);
         return;
       }
@@ -184,6 +301,8 @@ export default function AuthPanel({ onAuthSuccess }) {
       setLoading(false);
     }
   };
+
+  const pwStrength = mode === "signup" && form.password ? getPasswordStrength(form.password) : null;
 
   return (
     <div className="auth-page">
@@ -334,7 +453,21 @@ export default function AuthPanel({ onAuthSuccess }) {
                     onChange={handleChange}
                     autoComplete="email"
                   />
+                  {mode === "signup" && form.email && (
+                    <span className="input-status">
+                      {emailChecking && <span className="email-spinner" />}
+                      {!emailChecking && emailAvailable === true && (
+                        <span className="email-ok" title="Available">{"\u2713"}</span>
+                      )}
+                      {!emailChecking && emailAvailable === false && (
+                        <span className="email-taken" title="Already registered">{"\u2717"}</span>
+                      )}
+                    </span>
+                  )}
                 </div>
+                {mode === "signup" && emailAvailable === false && (
+                  <span className="field-hint error">This email is already registered.</span>
+                )}
               </div>
 
               <div className="auth-field">
@@ -343,14 +476,37 @@ export default function AuthPanel({ onAuthSuccess }) {
                   <svg className="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                   <input
                     id="password"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     name="password"
-                    placeholder="••••••••"
+                    placeholder={mode === "signup" ? "Min 8 chars, upper, lower, number, symbol" : "••••••••"}
                     value={form.password}
                     onChange={handleChange}
                     autoComplete={mode === "login" ? "current-password" : "new-password"}
                   />
+                  <button
+                    type="button"
+                    className="pw-toggle-btn"
+                    onClick={() => setShowPassword((v) => !v)}
+                    tabIndex={-1}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? "HIDE" : "SHOW"}
+                  </button>
                 </div>
+                {mode === "signup" && form.password && (
+                  <>
+                    <div className="pw-strength-bar">
+                      <div
+                        className="pw-strength-fill"
+                        style={{ width: `${pwStrength.pct}%`, background: pwStrength.color }}
+                      />
+                    </div>
+                    <span className="pw-strength-label" style={{ color: pwStrength.color }}>
+                      {pwStrength.label}
+                    </span>
+                    <PasswordChecks password={form.password} />
+                  </>
+                )}
               </div>
 
               {mode === "signup" && (
@@ -360,15 +516,49 @@ export default function AuthPanel({ onAuthSuccess }) {
                     <svg className="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                     <input
                       id="confirmPassword"
-                      type="password"
+                      type={showConfirm ? "text" : "password"}
                       name="confirmPassword"
                       placeholder="Re-enter password"
                       value={form.confirmPassword}
                       onChange={handleChange}
                       autoComplete="new-password"
                     />
+                    <button
+                      type="button"
+                      className="pw-toggle-btn"
+                      onClick={() => setShowConfirm((v) => !v)}
+                      tabIndex={-1}
+                    >
+                      {showConfirm ? "HIDE" : "SHOW"}
+                    </button>
                   </div>
+                  {form.confirmPassword && form.password !== form.confirmPassword && (
+                    <span className="field-hint error">Passwords don't match</span>
+                  )}
+                  {form.confirmPassword && form.password === form.confirmPassword && form.confirmPassword.length > 0 && (
+                    <span className="field-hint success">Passwords match</span>
+                  )}
                 </div>
+              )}
+
+              {mode === "signup" && (
+                <label className="auth-terms">
+                  <input
+                    type="checkbox"
+                    checked={termsAccepted}
+                    onChange={(e) => setTermsAccepted(e.target.checked)}
+                  />
+                  <span>
+                    I agree to the{" "}
+                    <button type="button" className="terms-link" onClick={() => alert("Terms & Conditions: This is an academic project platform for paper trading simulation. No real money is involved. Your data is stored securely and never shared with third parties.")}>
+                      Terms & Conditions
+                    </button>{" "}
+                    and{" "}
+                    <button type="button" className="terms-link" onClick={() => alert("Privacy Policy: We collect only your email and display name. Passwords are hashed with BCrypt. Data is encrypted at rest and in transit via HTTPS.")}>
+                      Privacy Policy
+                    </button>
+                  </span>
+                </label>
               )}
 
               {error && (
@@ -378,7 +568,11 @@ export default function AuthPanel({ onAuthSuccess }) {
                 </div>
               )}
 
-              <button type="submit" className="auth-submit" disabled={loading}>
+              <button
+                type="submit"
+                className="auth-submit"
+                disabled={loading || (mode === "signup" && !termsAccepted)}
+              >
                 {loading ? (
                   <span className="btn-loading">
                     <span className="btn-spinner" />
