@@ -2522,24 +2522,6 @@ body {
   margin-top: 10px;
 }
 
-/* About */
-.about-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 20px;
-}
-
-.about-card {
-  background: rgba(22, 27, 34, 0.85);
-  border: 1px solid rgba(48, 54, 61, 0.7);
-  border-radius: 16px;
-  padding: 20px;
-}
-
-.about-card p {
-  color: #8b949e;
-  margin-top: 10px;
-}
 
 @media (max-width: 900px) {
   .nav-links {
