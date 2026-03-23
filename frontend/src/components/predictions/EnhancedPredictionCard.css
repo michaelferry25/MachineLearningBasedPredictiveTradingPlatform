@@ -109,7 +109,7 @@
 }
 
 .accuracy-chart-container {
-  height: 200px;
+  height: clamp(140px, 20vw + 40px, 200px);
   position: relative;
 }
 
@@ -185,10 +185,10 @@
 }
 
 .signal-badge-large {
-  padding: 14px 44px;
+  padding: clamp(10px, 1.5vw, 14px) clamp(20px, 5vw, 44px);
   border-radius: 14px;
   font-weight: 800;
-  font-size: 1.3rem;
+  font-size: clamp(0.95rem, 2vw + 0.3rem, 1.3rem);
   letter-spacing: 1.5px;
   text-transform: uppercase;
   position: relative;
@@ -265,7 +265,7 @@
   border-radius: 10px;
   padding: 16px 24px;
   flex: 1;
-  max-width: 220px;
+  max-width: min(220px, 45%);
 }
 
 .summary-arrow {
@@ -282,7 +282,7 @@
 
 .predicted-price,
 .current-price {
-  font-size: 1.8rem;
+  font-size: clamp(1.2rem, 3vw + 0.3rem, 1.8rem);
   font-weight: 800;
   color: #e6edf3;
   margin-bottom: 4px;
@@ -415,7 +415,7 @@
 
 .trade-levels-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(min(120px, 100%), 1fr));
   gap: 12px;
 }
 
@@ -791,10 +791,6 @@
 
   .summary-arrow {
     transform: rotate(90deg);
-  }
-
-  .trade-levels-grid {
-    grid-template-columns: 1fr;
   }
 
   .indicators-grid {

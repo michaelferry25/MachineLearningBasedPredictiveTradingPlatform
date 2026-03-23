@@ -14,7 +14,7 @@
 }
 
 .screener-header h2 {
-  font-size: 1.8rem;
+  font-size: clamp(1.3rem, 3vw + 0.3rem, 1.8rem);
   font-weight: 800;
   color: #e6edf3;
   margin: 4px 0 6px 0;
@@ -41,8 +41,8 @@
 
 .screener-stats-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+  gap: clamp(10px, 2vw, 16px);
   margin-bottom: 20px;
 }
 
@@ -70,7 +70,7 @@
 }
 
 .stat-value {
-  font-size: 1.6rem;
+  font-size: clamp(1.1rem, 2.5vw + 0.3rem, 1.6rem);
   font-weight: 700;
   color: #e6edf3;
 }
@@ -126,11 +126,11 @@
 .screener-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.88rem;
+  font-size: clamp(0.72rem, 1.2vw + 0.3rem, 0.88rem);
 }
 
 .screener-table th {
-  padding: 14px 16px;
+  padding: clamp(8px, 1.5vw, 14px) clamp(8px, 1.5vw, 16px);
   text-align: left;
   color: #8b949e;
   font-weight: 600;
@@ -152,7 +152,7 @@
 }
 
 .screener-table td {
-  padding: 14px 16px;
+  padding: clamp(8px, 1.5vw, 14px) clamp(8px, 1.5vw, 16px);
   color: #e6edf3;
   border-bottom: 1px solid rgba(48, 54, 61, 0.3);
   font-weight: 500;
@@ -285,30 +285,11 @@
 
 /* ===== Responsive ===== */
 
-@media (max-width: 1100px) {
-  .screener-stats-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
 @media (max-width: 768px) {
-  .screener-stats-grid {
-    grid-template-columns: 1fr;
-  }
-
   .screener-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
-  }
-
-  .screener-table {
-    font-size: 0.8rem;
-  }
-
-  .screener-table th,
-  .screener-table td {
-    padding: 10px 10px;
   }
 }
 
@@ -317,31 +298,9 @@
     padding: 16px 12px;
   }
 
-  .screener-header h2 {
-    font-size: 1.3rem;
-  }
-
-  .screener-subtitle {
-    font-size: 0.82rem;
-  }
-
-  .screener-stats-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-
   .screener-stat-card {
     padding: 14px;
     border-radius: 12px;
-  }
-
-  .screener-stat-card .stat-value {
-    font-size: 1.1rem;
-  }
-
-  .filter-bar {
-    gap: 6px;
-    flex-wrap: wrap;
   }
 
   .filter-btn {
@@ -356,14 +315,8 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  .screener-table {
-    font-size: 0.72rem;
-    min-width: 600px;
-  }
-
   .screener-table th,
   .screener-table td {
-    padding: 10px 8px;
     white-space: nowrap;
   }
 }

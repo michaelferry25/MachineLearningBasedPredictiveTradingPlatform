@@ -96,7 +96,7 @@
 .sentiment-hero {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: clamp(12px, 3vw, 24px);
   background: rgba(13, 17, 23, 0.5);
   border-radius: 12px;
   padding: 20px;
@@ -104,8 +104,8 @@
 }
 
 .hero-score-ring {
-  width: 90px;
-  height: 90px;
+  width: clamp(65px, 10vw + 20px, 90px);
+  height: clamp(65px, 10vw + 20px, 90px);
   border-radius: 50%;
   border: 3px solid;
   display: flex;
@@ -117,7 +117,7 @@
 }
 
 .hero-score {
-  font-size: 1.5rem;
+  font-size: clamp(1.1rem, 2vw + 0.3rem, 1.5rem);
   font-weight: 800;
   line-height: 1.1;
 }
@@ -294,7 +294,7 @@
 }
 
 .source-score {
-  font-size: 1.4rem;
+  font-size: clamp(1rem, 2vw + 0.3rem, 1.4rem);
   font-weight: 800;
   margin-bottom: 10px;
 }
@@ -592,14 +592,6 @@
     font-size: 0.95rem;
   }
 
-  .hero-score-ring {
-    width: 70px;
-    height: 70px;
-  }
-
-  .hero-score {
-    font-size: 1.2rem;
-  }
 
   .hero-badge {
     font-size: 0.72rem;
@@ -610,9 +602,6 @@
     padding: 12px;
   }
 
-  .source-score {
-    font-size: 1.1rem;
-  }
 
   .sentiment-tab {
     padding: 6px 8px;

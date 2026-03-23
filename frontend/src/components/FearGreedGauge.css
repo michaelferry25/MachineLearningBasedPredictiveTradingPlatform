@@ -57,7 +57,7 @@
 }
 
 .fg-score-number {
-  font-size: 1.8rem;
+  font-size: clamp(1.3rem, 3vw + 0.3rem, 1.8rem);
   font-weight: 800;
   letter-spacing: -1px;
   line-height: 1;

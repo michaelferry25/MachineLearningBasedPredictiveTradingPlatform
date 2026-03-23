@@ -1,7 +1,7 @@
 .learn-shell {
   max-width: 900px;
   margin: 0 auto;
-  padding: 2rem 1.5rem 4rem;
+  padding: clamp(1rem, 3vw, 2rem) clamp(0.75rem, 3vw, 1.5rem) clamp(2rem, 5vw, 4rem);
 }
 
 .learn-loading {
@@ -16,12 +16,12 @@
   background: linear-gradient(135deg, rgba(74, 222, 128, 0.15), rgba(96, 165, 250, 0.15));
   border: 1px solid rgba(74, 222, 128, 0.3);
   border-radius: 16px;
-  padding: 2rem 2.5rem;
+  padding: clamp(1rem, 3vw, 2rem) clamp(1rem, 4vw, 2.5rem);
   text-align: center;
   margin-bottom: 2rem;
 }
 .learn-welcome-banner h2 {
-  font-size: 1.6rem;
+  font-size: clamp(1.15rem, 2.5vw + 0.3rem, 1.6rem);
   margin: 0 0 0.5rem;
   color: #fff;
 }
@@ -33,9 +33,9 @@
 /* Progress Dashboard */
 .learn-progress-dashboard {
   display: grid;
-  grid-template-columns: auto 1fr auto auto;
+  grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr));
   align-items: center;
-  gap: 1.5rem;
+  gap: clamp(0.75rem, 2vw, 1.5rem);
   background: var(--card-bg, #1e293b);
   border: 1px solid var(--border-color, #334155);
   border-radius: 16px;
@@ -314,7 +314,7 @@
 
 .lesson-comparison {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
   gap: 1rem;
   margin: 1rem 0;
 }
@@ -513,25 +513,12 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-  .learn-progress-dashboard {
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-  }
   .progress-xp-bar {
     grid-column: 1 / -1;
-  }
-  .lesson-comparison {
-    grid-template-columns: 1fr;
-  }
-  .learn-shell {
-    padding: 1rem 1rem 3rem;
   }
 }
 
 @media (max-width: 480px) {
-  .learn-progress-dashboard {
-    grid-template-columns: 1fr;
-  }
   .progress-stats {
     justify-content: center;
   }

@@ -39,8 +39,8 @@
 
 .portfolio-summary-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr));
+  gap: clamp(8px, 1.5vw, 12px);
 }
 
 .portfolio-metric-card {
@@ -98,7 +98,7 @@
 }
 
 .portfolio-metric-card strong {
-  font-size: 1.35rem;
+  font-size: clamp(1.05rem, 2vw + 0.3rem, 1.35rem);
   color: #e6edf3;
   font-weight: 800;
   letter-spacing: -0.3px;
@@ -286,12 +286,12 @@
 
 .portfolio-charts-row {
   display: grid;
-  grid-template-columns: 1fr 2fr;
+  grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
   gap: 16px;
 }
 
 .portfolio-chart-container {
-  height: 260px;
+  height: clamp(180px, 25vw + 50px, 260px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -336,7 +336,7 @@
 
 .holdings-row {
   display: grid;
-  grid-template-columns: 80px 70px 90px 90px 110px 1fr;
+  grid-template-columns: minmax(55px, 80px) minmax(40px, 70px) minmax(60px, 90px) minmax(60px, 90px) minmax(72px, 110px) 1fr;
   gap: 10px;
   padding: 11px 16px;
   border-radius: 10px;
@@ -484,31 +484,10 @@
 
 /* ===== Responsive ===== */
 
-@media (max-width: 1100px) {
-  .portfolio-summary-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
 @media (max-width: 900px) {
   .portfolio-header {
     flex-direction: column;
     align-items: flex-start;
-  }
-
-  .portfolio-summary-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .portfolio-charts-row {
-    grid-template-columns: 1fr;
-  }
-
-  .holdings-row {
-    grid-template-columns: 70px 55px 75px 75px 90px 1fr;
-    font-size: 0.78rem;
-    gap: 6px;
-    padding: 8px 10px;
   }
 
   .equity-curve-header {
@@ -523,17 +502,6 @@
   }
 }
 
-@media (max-width: 600px) {
-  .portfolio-summary-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .holdings-row {
-    grid-template-columns: 60px 45px 65px 65px 80px 1fr;
-    font-size: 0.72rem;
-  }
-}
-
 @media (max-width: 428px) {
   .portfolio-page {
     gap: 14px;
@@ -545,7 +513,7 @@
   }
 
   .portfolio-metric-card strong {
-    font-size: 1.15rem;
+    font-size: clamp(0.95rem, 2vw, 1.15rem);
   }
 
   .portfolio-metric-card span {
@@ -595,11 +563,9 @@
   }
 
   .holdings-row {
-    grid-template-columns: 55px 40px 60px 60px 72px 90px;
     font-size: 0.68rem;
     gap: 4px;
     padding: 8px 10px;
-    min-width: 380px;
   }
 
   .holdings-row.header-row {
