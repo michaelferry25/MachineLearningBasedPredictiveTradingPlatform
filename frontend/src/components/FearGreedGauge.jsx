@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './FearGreedGauge.css';
 
-const API_URL = import.meta.env.VITE_ML_API_URL ?? import.meta.env.VITE_API_URL ?? 'http://localhost:5001';
+const API_URL = import.meta.env.VITE_ML_API_URL || "/ml";
 
 const FearGreedGauge = () => {
   const [data, setData] = useState(null);

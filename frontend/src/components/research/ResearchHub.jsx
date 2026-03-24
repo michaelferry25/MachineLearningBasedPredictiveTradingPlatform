@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-const API = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
+const API = import.meta.env.VITE_API_URL || "";
 const SENTIMENT_SYMBOLS = ["AAPL", "MSFT", "TSLA", "NVDA"];
 
 function normalizeSignal(raw) {

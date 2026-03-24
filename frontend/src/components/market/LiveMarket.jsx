@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import CandleChart from "../charts/CandleChart";
 import TradingViewWidget from "../trading/TradingViewWidget";
 
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 const timeframes = [
   { label: "1 minute", interval: "1min", outputsize: 300, labelRange: "Last 5 hours" },

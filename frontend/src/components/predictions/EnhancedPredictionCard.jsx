@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import "./EnhancedPredictionCard.css";
 import PredictionAccuracyChart from "./PredictionAccuracyChart";
 
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
+const API_URL = import.meta.env.VITE_API_URL || "";
 const ET_ZONE = "America/New_York";
 
 const formatEtDateTime = (value) => {

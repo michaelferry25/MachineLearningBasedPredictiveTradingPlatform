@@ -15,7 +15,7 @@ import {
 
 ChartJS.register(LineElement, BarElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend, Filler, ArcElement);
 
-const API = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
+const API = import.meta.env.VITE_API_URL || "";
 
 function normalizeSignal(raw) {
   const map = { "STRONG BUY": "Strong Buy", "BUY": "Buy", "HOLD": "Hold", "SELL": "Sell", "STRONG SELL": "Strong Sell" };

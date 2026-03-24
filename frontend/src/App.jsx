@@ -43,7 +43,7 @@ import AboutSection from "./components/pages/AboutSection";
 import SecuritySection from "./components/pages/SecuritySection";
 import LearnPage from "./components/pages/LearnPage";
 
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
+const API_URL = import.meta.env.VITE_API_URL || "";
 const TOKEN_KEY = "marketmind_token";
 const USER_KEY = "marketmind_user";
 const SETTINGS_KEY = "marketmind_settings";

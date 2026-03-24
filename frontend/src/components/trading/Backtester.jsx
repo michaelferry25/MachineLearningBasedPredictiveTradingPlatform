@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Line } from "react-chartjs-2";
 import "./Backtester.css";
 
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 export default function Backtester() {
   const [symbol, setSymbol] = useState("");
