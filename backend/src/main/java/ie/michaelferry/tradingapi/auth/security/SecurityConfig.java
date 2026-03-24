@@ -67,12 +67,12 @@ public class SecurityConfig {
                 .filter(value -> !value.isEmpty())
                 .collect(Collectors.toList());
 
-        // allowedOriginPatterns works with allowCredentials(true) and is more flexible
-        // Supports exact matches and patterns like http://localhost:*
         List<String> patterns = new ArrayList<>(origins);
         patterns.add("http://localhost:*");
         patterns.add("http://127.0.0.1:*");
         patterns.add("http://192.168.*.*:*");
+        patterns.add("http://20.251.162.144");
+        patterns.add("http://20.251.162.144:*");
         configuration.setAllowedOriginPatterns(patterns);
 
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
