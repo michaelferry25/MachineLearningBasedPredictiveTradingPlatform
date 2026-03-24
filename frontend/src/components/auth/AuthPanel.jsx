@@ -79,28 +79,57 @@ function MiniChart() {
   );
 }
 
-/* ── Scrolling market tape ── */
+/* ── Scrolling market tape - live data ── */
+const TAPE_SYMBOLS = ["AAPL", "NVDA", "TSLA", "MSFT", "AMZN", "GOOG", "META", "JPM"];
+
 function MarketTape() {
-  const tapeData = [
-    { sym: "AAPL", price: "178.32", pct: "+1.82%" },
-    { sym: "NVDA", price: "924.15", pct: "+3.21%" },
-    { sym: "TSLA", price: "172.80", pct: "-0.94%" },
-    { sym: "MSFT", price: "421.55", pct: "+0.63%" },
-    { sym: "AMZN", price: "186.42", pct: "+1.15%" },
-    { sym: "GOOG", price: "155.72", pct: "+0.88%" },
-    { sym: "META", price: "503.28", pct: "+2.14%" },
-    { sym: "JPM", price: "198.45", pct: "+0.52%" },
-  ];
-  const doubled = [...tapeData, ...tapeData];
+  const [quotes, setQuotes] = useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchTape() {
+      try {
+        const results = await Promise.allSettled(
+          TAPE_SYMBOLS.map(async (sym) => {
+            const res = await fetch(`${API_URL}/api/price/${sym}`);
+            if (!res.ok) return null;
+            const data = await res.json();
+            return {
+              sym,
+              price: data.price ?? 0,
+              pct: data.changePercent ?? 0,
+            };
+          })
+        );
+        if (cancelled) return;
+        const live = results
+          .filter((r) => r.status === "fulfilled" && r.value && r.value.price > 0)
+          .map((r) => r.value);
+        if (live.length) setQuotes(live);
+      } catch {
+        /* keep existing quotes */
+      }
+    }
+
+    fetchTape();
+    const interval = setInterval(fetchTape, 30000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, []);
+
+  if (!quotes.length) return null;
+  const doubled = [...quotes, ...quotes];
 
   return (
     <div className="market-tape-wrap">
       <div className="market-tape">
         {doubled.map((item, i) => (
-          <span key={i} className={`tape-item ${item.pct.startsWith("-") ? "neg" : "pos"}`}>
+          <span key={i} className={`tape-item ${item.pct >= 0 ? "pos" : "neg"}`}>
             <span className="tape-sym">{item.sym}</span>
-            <span className="tape-price">{item.price}</span>
-            <span className="tape-pct">{item.pct}</span>
+            <span className="tape-price">{item.price.toFixed(2)}</span>
+            <span className="tape-pct">
+              {item.pct >= 0 ? "+" : ""}{item.pct.toFixed(2)}%
+            </span>
           </span>
         ))}
       </div>
