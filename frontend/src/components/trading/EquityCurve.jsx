@@ -41,7 +41,7 @@ const crosshairPlugin = {
 };
 ChartJS.register(crosshairPlugin);
 
-export default function EquityCurve({ equityCurve, totalValue, totalReturn }) {
+export default function EquityCurve({ equityCurve, totalValue, totalReturn, isLive }) {
   const [range, setRange] = useState("ALL");
   const chartRef = useRef(null);
   const isPositive = (totalReturn || 0) >= 0;
@@ -235,7 +235,7 @@ export default function EquityCurve({ equityCurve, totalValue, totalReturn }) {
     <div className="equity-curve-card">
       <div className="equity-curve-header">
         <div className="equity-curve-title-row">
-          <h3>Equity Curve</h3>
+          <h3>Equity Curve {isLive && <span className="equity-live-badge"><span className="equity-live-dot" />Live</span>}</h3>
           <button className="equity-reset-zoom" onClick={resetZoom} type="button" title="Reset zoom">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"/>

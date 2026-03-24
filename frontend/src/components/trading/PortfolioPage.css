@@ -35,6 +35,81 @@
   font-size: 0.85rem;
 }
 
+/* ===== Live Indicator ===== */
+
+.portfolio-live-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: rgba(13, 17, 23, 0.6);
+  border: 1px solid rgba(48, 54, 61, 0.4);
+  border-radius: 20px;
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3fb950;
+  animation: livePulse 2s ease-in-out infinite;
+}
+
+.live-dot.refreshing {
+  background: #58a6ff;
+  animation: livePulse 0.5s ease-in-out infinite;
+}
+
+@keyframes livePulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(63, 185, 80, 0.4); }
+  50% { opacity: 0.6; box-shadow: 0 0 0 4px rgba(63, 185, 80, 0); }
+}
+
+.live-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #8b949e;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== Equity Live Badge ===== */
+
+.equity-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #3fb950;
+  background: rgba(63, 185, 80, 0.1);
+  padding: 2px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(63, 185, 80, 0.2);
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.equity-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #3fb950;
+  animation: livePulse 2s ease-in-out infinite;
+}
+
+/* ===== Holdings Day Change ===== */
+
+.holdings-day-change {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  margin-top: 1px;
+}
+
+.holdings-live-price {
+  font-variant-numeric: tabular-nums;
+}
+
 /* ===== Metric Cards ===== */
 
 .portfolio-summary-grid {
