@@ -197,15 +197,12 @@ export default function AuthPanel({ onAuthSuccess }) {
     }
     setEmailChecking(true);
     try {
-      const res = await fetch(`${API_URL}/api/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password: "CheckOnly1!", displayName: "check" }),
-      });
-      if (res.status === 409) {
-        setEmailAvailable(false);
+      const res = await fetch(`${API_URL}/api/auth/check-email?email=${encodeURIComponent(email)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setEmailAvailable(data.available);
       } else {
-        setEmailAvailable(true);
+        setEmailAvailable(null);
       }
     } catch {
       setEmailAvailable(null);

@@ -111,6 +111,10 @@ public class AuthService {
         return new AuthResponse(token, "Bearer", jwtService.getExpirationSeconds(), UserResponse.from(user));
     }
 
+    public boolean isEmailAvailable(String email) {
+        return !userRepository.existsByEmail(normalizeEmail(email));
+    }
+
     private String normalizeEmail(String email) {
         if (email == null) {
             return "";
