@@ -6,6 +6,7 @@ import pandas as pd
 import requests as http_requests
 import yfinance as yf
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
+from sklearn.model_selection import GridSearchCV, TimeSeriesSplit
 from sklearn.preprocessing import StandardScaler
 from xgboost import XGBRegressor
 
@@ -332,7 +333,7 @@ class EnhancedStockPredictor:
 
         return train_end, val_end
 
-    def train_models(self, X, y, current_close=None):
+    def train_models(self, X, y, current_close=None, optimize=False):
         if len(X) < self.MIN_SAMPLES:
             raise ValueError(
                 f"Insufficient training samples: {len(X)}. Need at least {self.MIN_SAMPLES} rows."
@@ -351,9 +352,31 @@ class EnhancedStockPredictor:
         X_val_scaled = self.scaler.transform(X_val)
         X_test_scaled = self.scaler.transform(X_test)
 
-        self.rf_model.fit(X_train_scaled, y_train)
-        self.gb_model.fit(X_train_scaled, y_train)
-        self.xgb_model.fit(X_train_scaled, y_train)
+        if optimize:
+            logger.info(f"[{self.symbol}] Running GridSearchCV with TimeSeriesSplit to auto-tune models...")
+            # TimeSeriesSplit prevents data leakage by ensuring we only train on past data to predict future data
+            tscv = TimeSeriesSplit(n_splits=3)
+            
+            # Tune Random Forest dynamically
+            rf_grid = {'n_estimators': [100, 300], 'max_depth': [5, 8]}
+            rf_search = GridSearchCV(self.rf_model, rf_grid, cv=tscv, scoring='neg_mean_absolute_error', n_jobs=-1)
+            rf_search.fit(X_train_scaled, y_train)
+            self.rf_model = rf_search.best_estimator_
+            
+            # Tune XGBoost dynamically
+            xgb_grid = {'n_estimators': [100, 300], 'learning_rate': [0.01, 0.05], 'max_depth': [3, 5]}
+            xgb_search = GridSearchCV(self.xgb_model, xgb_grid, cv=tscv, scoring='neg_mean_absolute_error')
+            xgb_search.fit(X_train_scaled, y_train)
+            self.xgb_model = xgb_search.best_estimator_
+            
+            # Train GB normally to save compute time, or you can add a grid for it too
+            self.gb_model.fit(X_train_scaled, y_train)
+            
+            logger.info(f"[{self.symbol}] Optimization complete. RF params: {rf_search.best_params_} | XGB params: {xgb_search.best_params_}")
+        else:
+            self.rf_model.fit(X_train_scaled, y_train)
+            self.gb_model.fit(X_train_scaled, y_train)
+            self.xgb_model.fit(X_train_scaled, y_train)
 
         rf_val = self.rf_model.predict(X_val_scaled)
         gb_val = self.gb_model.predict(X_val_scaled)
@@ -619,6 +642,24 @@ class EnhancedStockPredictor:
         if adx > 25 and close_vs_sma200 < 0:
             return "bearish_trend"
         return "range_bound"
+
+    def continuous_learning_update(self, sentiment_snapshot=None):
+        """
+        Continuous Learning / MLOps Pipeline:
+        Fetches the latest market data, appends it to the rolling historical window, 
+        and auto-tunes hyperparameters to adapt to the latest market regime.
+        """
+        logger.info(f"[{self.symbol}] Starting Continuous Learning Update...")
+        df = self.fetch_data(period="5y")
+        
+        if sentiment_snapshot is not None:
+            self.sentiment_snapshot = sentiment_snapshot
+            
+        df_tech = self.calculate_technical_indicators(df, self.sentiment_snapshot)
+        X, y, current_close, _, _, _, _ = self.prepare_features(df_tech)
+        
+        metrics = self.train_models(X, y, current_close, optimize=True)
+        return metrics
 
     def _run_pipeline(self, df, sentiment_snapshot=None):
         if sentiment_snapshot is not None:
