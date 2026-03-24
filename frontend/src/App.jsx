@@ -478,6 +478,11 @@ export default function App() {
     <div className="dashboard-unified">
       <div className="dashboard-grid">
         
+        <div className="dashboard-welcome">
+          <h2>Welcome to your <span>Trading Dashboard</span></h2>
+          <p>Search for a stock, pick from the popular tickers below, or check your watchlist to get started. Select any stock to view live prices, AI predictions, charts, and trading tools.</p>
+        </div>
+
         {/* Left/Top controls: Search, Popular, Watchlist - no column wrapper */}
           <div className="search-section">
             <h3>Search Stock</h3>

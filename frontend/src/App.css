@@ -3697,6 +3697,36 @@ body.theme-light .nav-btn:hover {
   box-sizing: border-box;
 }
 
+.dashboard-welcome {
+  flex: 1 1 100%;
+  background: rgba(14, 18, 26, 0.6);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  padding: 18px 22px;
+  border: 1px solid rgba(48, 54, 61, 0.4);
+}
+
+.dashboard-welcome h2 {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #e6edf3;
+  margin: 0 0 4px 0;
+}
+
+.dashboard-welcome h2 span {
+  background: linear-gradient(135deg, #58a6ff, #3fb950);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dashboard-welcome p {
+  font-size: 0.85rem;
+  color: rgba(230, 237, 243, 0.55);
+  margin: 0;
+  line-height: 1.4;
+}
+
 .dashboard-grid {
   display: flex;
   flex-wrap: wrap;
@@ -4231,8 +4261,24 @@ body.theme-light .nav-btn:hover {
     flex-direction: column;
   }
 
+  .dashboard-grid {
+    gap: 8px;
+  }
+
+  .search-section,
+  .popular-section,
+  .watchlist-section {
+    flex: 1 1 100%;
+    min-width: 0;
+    width: 100%;
+  }
+
   .stock-grid {
-    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .dashboard-welcome {
+    flex: 1 1 100%;
   }
 }
 .navbar-modern {
