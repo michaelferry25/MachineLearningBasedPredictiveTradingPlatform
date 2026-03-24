@@ -12,7 +12,7 @@ import "./PortfolioPage.css";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
 
 const COLORS = [
   "#58a6ff", "#3fb950", "#f0883e", "#ff7b72",

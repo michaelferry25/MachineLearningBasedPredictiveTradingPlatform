@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import MarketStatus from './MarketStatus';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
 
 const SKILL_STYLES = {
   Beginner: { color: "#4ade80", title: "Beginner Trader", className: "skill-beginner" },

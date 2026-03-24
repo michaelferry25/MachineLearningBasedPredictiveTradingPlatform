@@ -3,7 +3,7 @@ import { showToast } from "../layout/Toast";
 import Confetti from "../layout/Confetti";
 import TradeReceipt from "./TradeReceipt";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
 
 export default function TradingPanel({ symbol, currentPrice, onTradeComplete, authToken, heldQuantity = 0 }) {
   const [mode, setMode] = useState("shares"); // "shares" | "dollars"

@@ -12,7 +12,7 @@ import "./PortfolioOptimizer.css";
 
 ChartJS.register(LinearScale, PointElement, Tooltip, Legend, ArcElement);
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
 
 const POPULAR = ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "TSLA", "META", "NFLX", "JPM", "V"];
 const COLORS = ["#58a6ff", "#3fb950", "#f0883e", "#ff7b72", "#a371f7", "#56d364", "#ffa657", "#d2a8ff", "#79c0ff", "#f778ba"];
