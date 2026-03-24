@@ -9,14 +9,31 @@ services:
       - "8080:8080"
     env_file: .env
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:h2:file:/data/authdb;AUTO_SERVER=TRUE
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/marketmind
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
       - APP_ML_SERVICE_URL=http://ml-service:5001
       - APP_CORS_ALLOWED_ORIGINS=http://localhost,http://localhost:3000,http://frontend
-    volumes:
-      - db-data:/data
     depends_on:
       ml-service:
         condition: service_healthy
+      postgres:
+        condition: service_started
+    restart: unless-stopped
+
+  # --- PostgreSQL Database ---
+  postgres:
+    image: postgres:15-alpine
+    container_name: marketmind-db
+    environment:
+      POSTGRES_DB: marketmind
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
     restart: unless-stopped
 
   # --- Python ML Service ---

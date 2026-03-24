@@ -46,8 +46,7 @@ public class PredictionLog {
     @Column(length = 24)
     private String predictionSource;
 
-    @Lob
-    @Column(columnDefinition = "CLOB")
+    @Column(columnDefinition = "TEXT")
     private String payloadJson;
 
     @Column(nullable = false)

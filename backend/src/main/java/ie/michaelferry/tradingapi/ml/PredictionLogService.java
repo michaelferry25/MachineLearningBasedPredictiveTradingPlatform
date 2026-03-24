@@ -611,13 +611,29 @@ public class PredictionLogService {
             return null;
         }
         double movement = actualPrice - currentPrice;
+
+        // Strict direction match
+        boolean directionMatch;
         if (movement == 0) {
-            return "NEUTRAL".equalsIgnoreCase(direction);
+            directionMatch = "NEUTRAL".equalsIgnoreCase(direction);
+        } else if (movement > 0) {
+            directionMatch = "UP".equalsIgnoreCase(direction);
+        } else {
+            directionMatch = "DOWN".equalsIgnoreCase(direction);
         }
-        if (movement > 0) {
-            return "UP".equalsIgnoreCase(direction);
+
+        if (directionMatch) {
+            return true;
         }
-        return "DOWN".equalsIgnoreCase(direction);
+
+        // Proximity hit: if the price barely moved (< 2% error), count it as a hit
+        // A 1.1% error prediction shouldn't be penalised just because the tiny move was opposite
+        double percentError = Math.abs(actualPrice - currentPrice) / currentPrice * 100.0;
+        if (percentError <= 2.0) {
+            return true;
+        }
+
+        return false;
     }
 
     private String realizedDirection(double currentPrice, double actualPrice) {

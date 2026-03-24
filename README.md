@@ -19,6 +19,7 @@
 **MarketMind** is a full-stack predictive trading platform that gives retail investors access to institutional-grade market analysis tools. It combines real-time stock data, machine learning price predictions, FinBERT-powered financial sentiment analysis, paper trading, and a gamified learning module — all in a responsive web application.
 
 - **ML-powered predictions** — ensemble of Random Forest, Gradient Boosting, and XGBoost models predicting 5-day forward returns using 29 technical indicators and macro signals
+- **Continuous Learning & GridSearch** — Models auto-tune hyperparameters via GridSearchCV and continuously learn from new daily market data to adapt to regime changes
 - **FinBERT sentiment analysis** — NLP analysis of financial news (NewsAPI) and Reddit discussions (6 subreddits) using the ProsusAI/finbert transformer model, with TextBlob fallback
 - **Real-time market data** — live prices via Finnhub API, historical and candlestick charts via Yahoo Finance, market session tracking
 - **Paper trading engine** — simulated trading with $100,000 virtual funds, portfolio tracking, equity curves, P&L analysis, and trade receipts
@@ -49,7 +50,7 @@ Retail investors lack access to the sophisticated analysis tools available to in
 | **Frontend** | React 19, Vite 7, Chart.js 4.5, Lightweight Charts | Dashboard, charts, trading UI, learning module, auth |
 | **Backend API** | Spring Boot 3.2, Java 17, Spring Security, JPA/Hibernate | REST API, JWT auth, portfolio management, prediction logging |
 | **ML Service** | Python 3.11, Flask, scikit-learn, XGBoost, PyTorch | Ensemble predictions, FinBERT sentiment, background scheduler |
-| **Database** | H2 (file-based) with Hibernate ORM | Users, portfolios, trades, predictions, learning progress |
+| **Database** | PostgreSQL 15 with Hibernate ORM | Users, portfolios, trades, predictions, learning progress |
 | **External APIs** | Finnhub, Yahoo Finance, NewsAPI, Reddit | Live prices, historical data, news and social sentiment |
 
 ```
@@ -67,7 +68,7 @@ Retail investors lack access to the sophisticated analysis tools available to in
 │  :8080   │ │  :5001       │
 │          │ │              │
 │  JWT Auth│ │  RF + GBR +  │
-│  JPA/H2  │ │  XGBoost     │
+│  Postgres│ │  XGBoost     │
 │  Trading │ │  FinBERT NLP │
 └────┬─────┘ └──────┬───────┘
      │               │
@@ -137,14 +138,14 @@ The prediction engine uses a **return-based ensemble** approach rather than dire
    - **Macro (4):** VIX level, VIX 5-day change, SPY vs SMA 50, SPY 5-day return
    - **Other (1):** 52-week high/low percentages
 
-2. **Ensemble Models** trained on 5 years of historical data with 70/15/15 train/validation/test split:
+2. **Hyperparameter Optimized Models (GridSearchCV)** trained on 5 years of historical data:
    - Random Forest (300 estimators, max_depth=8)
    - Gradient Boosting (250 estimators, max_depth=4, learning_rate=0.02)
    - XGBoost (300 estimators, max_depth=5, learning_rate=0.02, L1/L2 regularisation)
 
-3. **Dynamic Weighting** — models weighted by inverse validation MAE so more accurate models contribute more to the final prediction
+3. **Continuous Online Learning** — Models automatically retrain and append new daily market data to their historical base, allowing them to adapt to live market regime shifts over time
 
-4. **Sentiment Fusion** — FinBERT sentiment scores integrated with a controlled max 2% return contribution, with blend weight (0–40%) determined by confidence and source agreement
+4. **Dynamic Weighting & Sentiment Fusion** — Models weighted by inverse validation MAE. FinBERT sentiment scores integrated with a controlled max 2% return contribution.
 
 5. **Confidence Calibration** — calibrated between 35–94% based on signal-to-noise ratio, model disagreement, and historical accuracy
 
