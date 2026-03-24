@@ -238,6 +238,23 @@ public class MLController {
         }
     }
 
+    @PostMapping("/api/ml/backtest")
+    public ResponseEntity<Map> runBacktest(@RequestBody Map<String, Object> request) {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(request, headers);
+            String url = mlServiceUrl + "/backtest";
+            ResponseEntity<Map> response = restTemplate.exchange(
+                url, HttpMethod.POST, entity, Map.class
+            );
+            return ResponseEntity.status(response.getStatusCode()).body(response.getBody());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(errorResponse("Backtest service unavailable", e));
+        }
+    }
+
     @GetMapping("/api/ml/health")
     public Map<String, Object> checkMLService() {
         try {

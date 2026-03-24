@@ -19,6 +19,7 @@ import StockScreener from "./components/market/StockScreener";
 import TradingPanel from "./components/trading/TradingPanel";
 import PortfolioPage from "./components/trading/PortfolioPage";
 import PortfolioOptimizer from "./components/trading/PortfolioOptimizer";
+import Backtester from "./components/trading/Backtester";
 
 // Charts
 import HistoricalChart from "./components/charts/HistoricalChart";
@@ -688,6 +689,12 @@ export default function App() {
         return (
           <section className="section-wrapper" id="optimizer">
             <PortfolioOptimizer authToken={authToken} onRefresh={fetchPortfolio} />
+          </section>
+        );
+      case "/backtester":
+        return (
+          <section className="section-wrapper" id="backtester">
+            <Backtester />
           </section>
         );
       case "/settings":

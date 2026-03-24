@@ -29,7 +29,8 @@ const NAV_GROUPS = [
     label: "Portfolio",
     items: [
       { label: "Portfolio", href: "#/portfolio", desc: "Holdings, equity curve & trade history" },
-      { label: "Optimiser", href: "#/optimizer", desc: "Markowitz efficient frontier analysis" }
+      { label: "Optimiser", href: "#/optimizer", desc: "Markowitz efficient frontier analysis" },
+      { label: "Backtester", href: "#/backtester", desc: "Walk-forward ML strategy simulation" }
     ]
   },
   { label: "Learn", href: "#/learn" }

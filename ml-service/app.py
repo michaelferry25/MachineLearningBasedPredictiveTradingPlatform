@@ -473,6 +473,34 @@ def optimize_portfolio_endpoint():
         return jsonify({'error': f'Optimization failed: {str(e)}'}), 500
 
 
+@app.route('/backtest', methods=['POST'])
+def backtest_endpoint():
+    """
+    Walk-forward backtesting engine.
+
+    Trains the ML model on historical data and simulates a trading strategy
+    on the unseen test period to evaluate real predictive performance.
+    """
+    try:
+        from backtester import run_backtest
+
+        data = request.get_json()
+        symbol = data.get('symbol', 'AAPL').upper().strip()
+        initial_capital = float(data.get('initial_capital', 100000))
+
+        if initial_capital < 1000:
+            return jsonify({'error': 'Minimum initial capital is $1,000'}), 400
+
+        result = run_backtest(symbol, initial_capital=initial_capital)
+        return jsonify(result)
+
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        logger.error(f"Backtest failed for {data.get('symbol', '?')}: {e}")
+        return jsonify({'error': f'Backtest failed: {str(e)}'}), 500
+
+
 @app.route('/cache/clear', methods=['POST'])
 def clear_cache():
     _cache.clear()
