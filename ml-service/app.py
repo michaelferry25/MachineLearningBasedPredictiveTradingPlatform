@@ -255,6 +255,186 @@ def get_sentiment(symbol):
         return jsonify({'error': str(e), 'symbol': symbol.upper()}), 500
 
 
+@app.route('/predict/<symbol>/live-confidence', methods=['GET'])
+def live_confidence(symbol):
+    """
+    Dynamic confidence that evolves throughout the trading day.
+
+    The idea: a prediction made at market close has a base confidence. As the
+    NEXT trading day unfolds, confidence adjusts based on how reality is
+    tracking the forecast:
+
+    - Time factor: closer to close = less uncertainty = confidence rises
+    - Direction alignment: price moving toward prediction = confidence boost
+    - Price proximity: current price near predicted = confidence boost
+    - Intraday volatility: low vol day = more predictable = confidence boost
+
+    This gives users a LIVE, evolving confidence score they can watch.
+    """
+    import yfinance as yf
+    from datetime import timezone
+    import pytz
+
+    try:
+        sym = symbol.upper()
+        et = pytz.timezone('US/Eastern')
+        now_et = datetime.now(et)
+
+        # Get the base prediction from cache
+        entry = _cache.get(sym)
+        if not entry or not entry.get('data'):
+            return jsonify({'error': 'No prediction available', 'symbol': sym}), 404
+
+        pred_data = entry['data']
+        base_confidence = float(pred_data.get('confidence', 50))
+        predicted_price = float(pred_data.get('prediction', 0))
+        original_price = float(pred_data.get('current_price', 0))
+        predicted_direction = pred_data.get('direction', 'NEUTRAL')
+
+        if predicted_price <= 0 or original_price <= 0:
+            return jsonify({'error': 'Invalid prediction data', 'symbol': sym}), 400
+
+        # Fetch current intraday price
+        try:
+            ticker = yf.Ticker(sym)
+            fast = ticker.fast_info
+            current_price = float(fast.get('last_price', 0) or fast.get('lastPrice', 0))
+            if current_price <= 0:
+                hist = ticker.history(period="1d", interval="1m")
+                if not hist.empty:
+                    current_price = float(hist["Close"].iloc[-1])
+        except Exception:
+            current_price = original_price
+
+        if current_price <= 0:
+            current_price = original_price
+
+        # === Factor 1: Time progression (0 to +12%) ===
+        # Market hours: 9:30 AM - 4:00 PM ET = 390 minutes
+        market_open = now_et.replace(hour=9, minute=30, second=0, microsecond=0)
+        market_close = now_et.replace(hour=16, minute=0, second=0, microsecond=0)
+
+        is_market_hours = market_open <= now_et <= market_close and now_et.weekday() < 5
+
+        if is_market_hours:
+            elapsed = (now_et - market_open).total_seconds() / 60.0
+            total = 390.0
+            time_progress = min(elapsed / total, 1.0)
+            # Exponential curve: confidence accelerates toward close
+            time_factor = 12.0 * (time_progress ** 1.5)
+        else:
+            # Outside market hours: no time boost
+            time_factor = 0.0
+            time_progress = 0.0
+
+        # === Factor 2: Direction alignment (-5% to +8%) ===
+        price_move = (current_price - original_price) / original_price
+        predicted_move = (predicted_price - original_price) / original_price
+
+        if abs(predicted_move) > 0.001:
+            # How much of the predicted move has been realized in the right direction?
+            if predicted_move > 0 and price_move > 0:
+                alignment = min(price_move / predicted_move, 2.0)
+                direction_factor = 8.0 * min(alignment, 1.0)
+            elif predicted_move < 0 and price_move < 0:
+                alignment = min(abs(price_move) / abs(predicted_move), 2.0)
+                direction_factor = 8.0 * min(alignment, 1.0)
+            elif abs(price_move) < 0.002:
+                direction_factor = 0.0
+                alignment = 0.0
+            else:
+                # Moving opposite to prediction
+                alignment = -min(abs(price_move) / abs(predicted_move), 1.0)
+                direction_factor = -5.0 * min(abs(alignment), 1.0)
+        else:
+            alignment = 0.0
+            direction_factor = 0.0
+
+        # === Factor 3: Price proximity to target (0 to +6%) ===
+        distance_pct = abs(current_price - predicted_price) / predicted_price
+        if distance_pct < 0.005:
+            proximity_factor = 6.0
+        elif distance_pct < 0.01:
+            proximity_factor = 4.0
+        elif distance_pct < 0.02:
+            proximity_factor = 2.0
+        elif distance_pct < 0.03:
+            proximity_factor = 1.0
+        else:
+            proximity_factor = 0.0
+
+        # === Factor 4: Intraday volatility (0 to +4%) ===
+        try:
+            intraday = ticker.history(period="1d", interval="5m")
+            if len(intraday) > 10:
+                intraday_returns = intraday["Close"].pct_change().dropna()
+                intraday_vol = float(intraday_returns.std())
+                if intraday_vol < 0.003:
+                    vol_factor = 4.0
+                elif intraday_vol < 0.006:
+                    vol_factor = 2.0
+                elif intraday_vol < 0.01:
+                    vol_factor = 0.0
+                else:
+                    vol_factor = -2.0
+            else:
+                vol_factor = 0.0
+                intraday_vol = 0.0
+        except Exception:
+            vol_factor = 0.0
+            intraday_vol = 0.0
+
+        # === Compute dynamic confidence ===
+        total_adjustment = time_factor + direction_factor + proximity_factor + vol_factor
+        dynamic_confidence = max(25.0, min(96.0, base_confidence + total_adjustment))
+
+        # Build beginner-friendly explanation
+        explanations = []
+        if time_factor > 2:
+            explanations.append(f"Closer to market close (+{time_factor:.1f}%)")
+        if direction_factor > 2:
+            explanations.append(f"Price moving in predicted direction (+{direction_factor:.1f}%)")
+        elif direction_factor < -2:
+            explanations.append(f"Price moving against prediction ({direction_factor:.1f}%)")
+        if proximity_factor > 2:
+            explanations.append(f"Current price near target (+{proximity_factor:.1f}%)")
+        if vol_factor > 1:
+            explanations.append(f"Low volatility today (+{vol_factor:.1f}%)")
+        elif vol_factor < -1:
+            explanations.append(f"High volatility today ({vol_factor:.1f}%)")
+
+        trend_word = "rising" if total_adjustment > 1.5 else "falling" if total_adjustment < -1.5 else "steady"
+
+        return jsonify({
+            'symbol': sym,
+            'base_confidence': round(base_confidence, 2),
+            'dynamic_confidence': round(dynamic_confidence, 2),
+            'confidence_change': round(total_adjustment, 2),
+            'confidence_trend': trend_word,
+            'current_price': round(current_price, 2),
+            'predicted_price': round(predicted_price, 2),
+            'original_price': round(original_price, 2),
+            'direction': predicted_direction,
+            'is_market_hours': is_market_hours,
+            'market_progress_percent': round(time_progress * 100, 1),
+            'factors': {
+                'time': round(time_factor, 2),
+                'direction_alignment': round(direction_factor, 2),
+                'price_proximity': round(proximity_factor, 2),
+                'volatility': round(vol_factor, 2),
+            },
+            'explanation': explanations,
+            'summary': (
+                f"Confidence is {trend_word} at {dynamic_confidence:.1f}% "
+                f"({'+' if total_adjustment >= 0 else ''}{total_adjustment:.1f}% from base). "
+                + (explanations[0] + "." if explanations else "No significant changes yet.")
+            ),
+        })
+
+    except Exception as e:
+        return jsonify({'error': str(e), 'symbol': symbol.upper()}), 500
+
+
 @app.route('/cache/clear', methods=['POST'])
 def clear_cache():
     _cache.clear()

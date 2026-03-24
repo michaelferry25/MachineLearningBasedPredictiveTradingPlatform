@@ -95,6 +95,16 @@ public class MLController {
         }
     }
 
+    @GetMapping("/api/ml/predict/{symbol}/live-confidence")
+    public Map<String, Object> getLiveConfidence(@PathVariable String symbol) {
+        try {
+            String url = mlServiceUrl + "/predict/" + symbol.toUpperCase() + "/live-confidence";
+            return restTemplate.getForObject(url, Map.class);
+        } catch (Exception e) {
+            return errorResponse("Live confidence unavailable", e);
+        }
+    }
+
     @GetMapping("/api/ml/scan")
     public Map<String, Object> scanMarket() {
         try {
