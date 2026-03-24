@@ -258,30 +258,29 @@ const LESSONS = [
   {
     id: "technical-indicators",
     module: 2,
-    title: "Technical Indicators 101",
+    title: "Reading Market Trends (Simplified)",
     xp: 50,
     content: (
       <>
-        <p>Technical indicators are math-based tools that help you understand price trends. Don't worry -you don't need to do the math. Here's what they tell you:</p>
-        <h4>RSI (Relative Strength Index)</h4>
-        <p>A number from 0 to 100 that measures if a stock is overbought or oversold.</p>
+        <p>Our AI uses complex math to read charts, but you only need to understand the basic concepts. Think of market trends like driving a car:</p>
+        <h4>Momentum (Speed)</h4>
+        <p>Is the stock speeding up or slowing down?</p>
         <ul>
-          <li><strong>Above 70</strong> -Overbought. The stock might be "too expensive" and could drop.</li>
-          <li><strong>Below 30</strong> -Oversold. The stock might be "too cheap" and could bounce back.</li>
-          <li><strong>Around 50</strong> -Neutral territory.</li>
+          <li><strong>Running Hot (Overbought)</strong> - The price has gone up too fast, too quickly. It might need to pull back and "cool off".</li>
+          <li><strong>Running Cold (Oversold)</strong> - The stock has been sold off heavily and might be cheaper than it should be.</li>
         </ul>
-        <h4>Moving Averages</h4>
-        <p>A smoothed-out line of the average price over time. It helps you see the overall trend without the daily noise.</p>
+        <h4>Moving Averages (The Roadmap)</h4>
+        <p>A smoothed-out line of the average price over time. It removes the daily "noise" so you can see the true direction.</p>
         <ul>
-          <li><strong>50-day MA</strong> -Short-term trend. If the price is above this line, the short-term trend is up.</li>
-          <li><strong>200-day MA</strong> -Long-term trend. If the price is above this, the overall direction is positive.</li>
+          <li><strong>Short-term trend</strong> - What the stock has been doing over the last few weeks.</li>
+          <li><strong>Long-term trend</strong> - What the stock has been doing over the last year. If the price is above this line, the overall direction is healthy.</li>
         </ul>
-        <div className="lesson-tip">You can see these indicators on the Dashboard chart -toggle "Advanced View" to see RSI and moving averages overlaid on the price chart.</div>
+        <div className="lesson-tip">You don't need to do the math! Our AI reads these trends automatically and turns them into a simple Confidence Score on your Dashboard.</div>
       </>
     ),
     quiz: [
-      { q: "A stock has an RSI of 25. What does this suggest?", options: ["It's overbought and may fall", "It's in neutral territory", "It's oversold and may bounce back", "RSI doesn't go below 30"], answer: 2 },
-      { q: "The price crosses above the 200-day moving average. Traders typically see this as:", options: ["A bearish signal", "A bullish long-term signal", "Completely irrelevant", "A sign to sell immediately"], answer: 1 }
+      { q: "A stock is described as 'Running Hot' (Overbought). What does this suggest?", options: ["It will definitely keep going up", "It has gone up very fast and might cool off soon", "The company is bankrupt", "It is heavily oversold"], answer: 1 },
+      { q: "Why do we look at 'Moving Averages' instead of just the daily price?", options: ["To make trading look complicated", "To smooth out daily noise and see the true trend", "Because it predicts the exact future price", "To track trading volume"], answer: 1 }
     ]
   },
   {
@@ -321,31 +320,32 @@ const LESSONS = [
     xp: 100,
     content: (
       <>
-        <p>MarketMind uses a type of AI called an <strong>LSTM neural network</strong> (Long Short-Term Memory). Here's the simple version:</p>
-        <h4>What is a neural network?</h4>
-        <p>It's software that learns patterns from data, similar to how your brain learns from experience. Show it thousands of examples, and it starts recognizing patterns.</p>
-        <h4>Why LSTM?</h4>
-        <p>LSTM is special because it has <strong>memory</strong>. It remembers what happened yesterday, last week, and last month -which is perfect for stock prices, where past trends influence future movements.</p>
-        <h4>The training process</h4>
-        <ol>
-          <li>We feed it years of historical price data for a stock</li>
-          <li>The AI looks for patterns: "Every time X happened, Y followed"</li>
-          <li>It tests its predictions against real outcomes and adjusts</li>
-          <li>After thousands of rounds, it gets better at spotting trends</li>
-        </ol>
-        <h4>What it uses</h4>
+        <p>MarketMind doesn't rely on a single AI -it uses an <strong>ensemble</strong> of multiple models that work together, like a panel of expert analysts each with a different specialty.</p>
+        <h4>The ensemble approach</h4>
+        <p>Imagine you're deciding whether to buy a stock. Instead of asking one friend, you ask three experts:</p>
         <ul>
-          <li>Historical prices (open, close, high, low)</li>
-          <li>Trading volume</li>
-          <li>Technical indicators (RSI, MACD, moving averages)</li>
-          <li>Price momentum and trend patterns</li>
+          <li><strong>Random Forest</strong> -Thinks in decision trees. "If volume is high AND the price broke above its 20-day average, historically prices rose 70% of the time." It builds hundreds of these trees and takes a vote.</li>
+          <li><strong>Gradient Boosting (XGBoost)</strong> -A perfectionist. It learns from mistakes, focusing extra attention on the cases the other models got wrong. Think of a student who studies their wrong answers hardest.</li>
+          <li><strong>Ridge Regression</strong> -The steady, conservative analyst. It finds the simplest mathematical relationship between all the data points, acting as a sanity check on the others.</li>
         </ul>
-        <div className="lesson-tip">No AI can predict the market with 100% accuracy. Our model is a tool to help inform your decisions -not a crystal ball.</div>
+        <h4>How they work together</h4>
+        <p>Each model makes its own prediction, and MarketMind blends them into one final answer -weighted by how well each has performed recently. If XGBoost has been nailing it lately, it gets more say. If Random Forest has been off, its vote counts less.</p>
+        <h4>What they analyze (29 features!)</h4>
+        <ul>
+          <li>Historical prices (open, close, high, low) and trading volume</li>
+          <li>Moving averages (5-day, 20-day, 50-day) to spot trends</li>
+          <li>Momentum indicators -is the stock speeding up or slowing down?</li>
+          <li>Volatility patterns -how wildly has it been swinging?</li>
+          <li>News and social media sentiment (via FinBERT AI)</li>
+        </ul>
+        <h4>Continuous learning</h4>
+        <p>Our models don't stay static. They retrain on recent data so they adapt to changing market conditions. A strategy that worked in a calm market adjusts when volatility spikes.</p>
+        <div className="lesson-tip">No AI can predict the market with 100% accuracy. Our ensemble approach reduces the chance of one bad model leading you astray -but it's still a tool, not a crystal ball.</div>
       </>
     ),
     quiz: [
-      { q: "Why is LSTM better suited for stock prediction than a basic neural network?", options: ["It runs on faster hardware", "It can remember patterns across time", "It only needs one day of data", "It was built specifically for finance"], answer: 1 },
-      { q: "Our AI was trained on 5 years of AAPL data. What is this process called?", options: ["Backtesting", "Supervised training", "Sentiment analysis", "Technical analysis"], answer: 1 }
+      { q: "Why does MarketMind use multiple AI models instead of just one?", options: ["It looks more impressive", "Different models catch different patterns, reducing errors", "One model is always wrong", "It's required by law"], answer: 1 },
+      { q: "XGBoost focuses extra attention on cases other models got wrong. This is called:", options: ["Random guessing", "Overfitting", "Learning from mistakes (boosting)", "Sentiment analysis"], answer: 2 }
     ]
   },
   {
@@ -464,7 +464,7 @@ const MODULE_EXAMS = {
     title: "Module 2 Exam: Understanding Data",
     passingScore: 4,
     questions: [
-      { q: "A stock has RSI 75 and the AI shows a BUY signal. What should concern you?", options: ["The AI signal is wrong", "RSI suggests it may be overbought", "Nothing, always follow AI", "RSI 75 means oversold"], answer: 1 },
+      { q: "The AI shows a BUY signal, but the stock is 'Running Hot' (Overbought). What should you do?", options: ["The AI signal is definitely wrong", "Be cautious, as the stock may pull back to cool off", "Nothing, always follow the AI blindly", "Sell everything immediately"], answer: 1 },
       { q: "The AI gives 60% confidence on a SELL signal. How reliable is this?", options: ["Very reliable", "Barely better than random chance", "100% guaranteed to drop", "Confidence doesn't matter"], answer: 1 },
       { q: "News sentiment is 90% positive but the stock is falling. This could mean:", options: ["Sentiment data is always wrong", "The positive news is already priced in", "You should buy immediately", "The market is closed"], answer: 1 },
       { q: "Tesla stock moves 8% daily while Coca-Cola moves 1%. Tesla has:", options: ["Lower volatility", "Higher volatility", "The same risk level", "No volatility"], answer: 1 },
@@ -478,7 +478,7 @@ const MODULE_EXAMS = {
       { q: "LSTM networks are ideal for stock data because:", options: ["They process images well", "They handle time-series patterns", "They only need one data point", "They run without training"], answer: 1 },
       { q: "A strategy scores 95% in backtesting but 20% live. The most likely cause is:", options: ["The broker is cheating", "Overfitting to historical data", "The market changed overnight", "Bad internet connection"], answer: 1 },
       { q: "Everyone on social media says to buy a stock that already jumped 40%. A disciplined trader would:", options: ["Buy immediately before it goes higher", "Be cautious - this could be FOMO territory", "Short sell the stock", "Close their trading account"], answer: 1 },
-      { q: "AI says BUY, sentiment is positive, RSI shows oversold. How many signals align?", options: ["Just one", "Two out of three", "All three suggest buying", "None of them align"], answer: 2 },
+      { q: "AI says BUY, sentiment is positive, and the stock is oversold (cheap). How many signals align?", options: ["Just one", "Two out of three", "All three suggest buying", "None of them align"], answer: 2 },
       { q: "What separates a good backtest from a reliable real-world strategy?", options: ["Using more stocks in the test", "Testing across multiple time periods and conditions", "Running the test faster", "Only testing bullish markets"], answer: 1 }
     ]
   }

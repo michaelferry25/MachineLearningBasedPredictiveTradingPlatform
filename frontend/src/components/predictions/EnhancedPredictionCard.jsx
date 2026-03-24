@@ -92,41 +92,59 @@ const EnhancedPredictionCard = ({
   const [sentiment, setSentiment] = useState(null);
   const [displayConfidence, setDisplayConfidence] = useState(0);
   const [barWidth, setBarWidth] = useState(0);
+  const [liveConfidence, setLiveConfidence] = useState(null);
 
-  // Animate the confidence score to make it feel "live"
+  // Poll live confidence every 45 seconds
   useEffect(() => {
-    if (prediction && prediction.confidence) {
-      const target = Number(prediction.confidence);
-      
-      setDisplayConfidence(0);
-      setBarWidth(0);
+    if (!symbol) return;
+    let cancelled = false;
 
-      const wTimer = setTimeout(() => {
-        setBarWidth(target);
-      }, 50);
-
-      let current = 0;
-      const duration = 1200; // 1.2s animation
-      const steps = 40;
-      const stepTime = duration / steps;
-      const increment = target / steps;
-      
-      const timer = setInterval(() => {
-        current += increment;
-        if (current >= target) {
-          setDisplayConfidence(target);
-          clearInterval(timer);
-        } else {
-          setDisplayConfidence(current);
-        }
-      }, stepTime);
-      
-      return () => {
-        clearInterval(timer);
-        clearTimeout(wTimer);
-      };
+    async function fetchLive() {
+      try {
+        const res = await fetch(`${API_URL}/api/ml/predict/${symbol}/live-confidence`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled && !data.error) setLiveConfidence(data);
+      } catch {}
     }
-  }, [prediction]);
+
+    fetchLive();
+    const interval = setInterval(fetchLive, 45000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [symbol]);
+
+  // Use live confidence if available, otherwise base confidence
+  const effectiveConfidence = liveConfidence?.dynamic_confidence ?? (prediction?.confidence || 0);
+
+  // Animate the confidence score
+  useEffect(() => {
+    const target = Number(effectiveConfidence || 0);
+    if (!target) return;
+
+    setBarWidth(0);
+    const wTimer = setTimeout(() => setBarWidth(target), 50);
+
+    let current = displayConfidence || 0;
+    const duration = 800;
+    const steps = 30;
+    const stepTime = duration / steps;
+    const increment = (target - current) / steps;
+
+    const timer = setInterval(() => {
+      current += increment;
+      if ((increment > 0 && current >= target) || (increment < 0 && current <= target) || increment === 0) {
+        setDisplayConfidence(target);
+        clearInterval(timer);
+      } else {
+        setDisplayConfidence(current);
+      }
+    }, stepTime);
+
+    return () => {
+      clearInterval(timer);
+      clearTimeout(wTimer);
+    };
+  }, [effectiveConfidence]);
 
   useEffect(() => {
     setPrediction(externalPrediction || null);
@@ -390,7 +408,10 @@ const EnhancedPredictionCard = ({
 
       <div className="confidence-meter">
         <div className="confidence-top">
-          <span className="label">Live AI Confidence<span className="pulse-dot"></span></span>
+          <span className="label">
+            {liveConfidence ? 'Live AI Confidence' : 'AI Confidence'}
+            {liveConfidence && <span className="pulse-dot"></span>}
+          </span>
           <span className="confidence-value">{displayConfidence.toFixed(1)}%</span>
         </div>
         <div className="confidence-bar">
@@ -398,14 +419,45 @@ const EnhancedPredictionCard = ({
             className="confidence-fill animated-fill"
             style={{
               width: `${barWidth}%`,
-              background: pred.confidence >= 75 ? '#3fb950' : pred.confidence >= 60 ? '#f0883e' : '#f85149',
-              transition: 'width 1.2s cubic-bezier(0.4, 0, 0.2, 1)'
+              background: effectiveConfidence >= 75 ? '#3fb950' : effectiveConfidence >= 60 ? '#f0883e' : '#f85149',
+              transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
             }}
           ></div>
         </div>
-        <div className="confidence-subtitle">
-          {pred.confidence >= 75 ? '⚡ High conviction signal' : pred.confidence >= 60 ? '⚖️ Moderate conviction' : '⚠️ Low visibility (mixed signals)'}
-        </div>
+        {liveConfidence ? (
+          <div className="live-confidence-details">
+            <div className="confidence-trend-row">
+              <span className={`confidence-trend-badge ${liveConfidence.confidence_trend}`}>
+                {liveConfidence.confidence_trend === 'rising' ? '\u25B2' : liveConfidence.confidence_trend === 'falling' ? '\u25BC' : '\u25CF'}
+                {' '}{liveConfidence.confidence_trend}
+              </span>
+              <span className="confidence-delta" style={{
+                color: liveConfidence.confidence_change >= 0 ? '#3fb950' : '#f85149'
+              }}>
+                {liveConfidence.confidence_change >= 0 ? '+' : ''}{liveConfidence.confidence_change.toFixed(1)}% from base
+              </span>
+              {liveConfidence.is_market_hours && (
+                <span className="market-progress">
+                  Market {liveConfidence.market_progress_percent.toFixed(0)}% through
+                </span>
+              )}
+            </div>
+            {liveConfidence.explanation && liveConfidence.explanation.length > 0 && (
+              <div className="confidence-factors">
+                {liveConfidence.explanation.map((exp, i) => (
+                  <span key={i} className="factor-chip">{exp}</span>
+                ))}
+              </div>
+            )}
+            <div className="confidence-explainer">
+              Our AI confidence updates throughout the trading day as new data confirms or challenges the prediction. It typically rises as the market approaches close.
+            </div>
+          </div>
+        ) : (
+          <div className="confidence-subtitle">
+            {effectiveConfidence >= 75 ? 'High conviction signal' : effectiveConfidence >= 60 ? 'Moderate conviction' : 'Low visibility (mixed signals)'}
+          </div>
+        )}
       </div>
       {/* Sentiment Pulse - plain English */}
       {sentiment && (
