@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -16,7 +16,7 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, 
 const RANGES = ["1D", "1W", "1M", "ALL"];
 const INITIAL_CASH = 100000;
 
-/* Crosshair plugin — draws vertical + horizontal line on hover */
+/* Crosshair plugin */
 const crosshairPlugin = {
   id: "crosshair",
   afterDraw(chart) {
@@ -39,7 +39,44 @@ const crosshairPlugin = {
     ctx.restore();
   },
 };
-ChartJS.register(crosshairPlugin);
+
+/* Glow plugin for the last data point */
+const glowPlugin = {
+  id: "glowPoint",
+  afterDatasetsDraw(chart) {
+    const meta = chart.getDatasetMeta(0);
+    if (!meta || !meta.data.length) return;
+    const lastPoint = meta.data[meta.data.length - 1];
+    if (!lastPoint) return;
+    const ctx = chart.ctx;
+    const x = lastPoint.x;
+    const y = lastPoint.y;
+    const color = chart.data.datasets[0].borderColor;
+    const c = typeof color === "string" ? color : "#58a6ff";
+
+    // Outer glow
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x, y, 12, 0, Math.PI * 2);
+    ctx.fillStyle = c.replace(")", ", 0.15)").replace("rgb", "rgba");
+    ctx.fill();
+
+    // Inner glow
+    ctx.beginPath();
+    ctx.arc(x, y, 6, 0, Math.PI * 2);
+    ctx.fillStyle = c.replace(")", ", 0.3)").replace("rgb", "rgba");
+    ctx.fill();
+
+    // Center dot
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, Math.PI * 2);
+    ctx.fillStyle = c;
+    ctx.fill();
+    ctx.restore();
+  },
+};
+
+ChartJS.register(crosshairPlugin, glowPlugin);
 
 export default function EquityCurve({ equityCurve, totalValue, totalReturn, isLive }) {
   const [range, setRange] = useState("ALL");
@@ -64,11 +101,17 @@ export default function EquityCurve({ equityCurve, totalValue, totalReturn, isLi
 
     const points = [];
     if (filtered.length === 0) {
-      points.push({ time: cutoff > new Date(0) ? cutoff : new Date(now.getTime() - 86400000), value: INITIAL_CASH });
-      points.push({ time: now, value: INITIAL_CASH });
+      // No data in range: show baseline to current
+      points.push({ time: new Date(now.getTime() - 86400000), value: INITIAL_CASH });
+      points.push({ time: now, value: totalValue || INITIAL_CASH });
     } else {
+      // Start from baseline, then actual snapshots
       points.push({ time: new Date(new Date(filtered[0].timestamp).getTime() - 60000), value: INITIAL_CASH });
       filtered.forEach((pt) => points.push({ time: new Date(pt.timestamp), value: pt.value }));
+      // Append current live value as final "Now" point
+      if (totalValue && totalValue !== points[points.length - 1].value) {
+        points.push({ time: now, value: totalValue });
+      }
     }
 
     const formatLabel = (d) => {
@@ -80,32 +123,31 @@ export default function EquityCurve({ equityCurve, totalValue, totalReturn, isLi
     const values = points.map((p) => p.value);
     const minVal = Math.min(...values);
     const maxVal = Math.max(...values);
-    const maxDev = Math.max(Math.abs(maxVal - INITIAL_CASH), Math.abs(INITIAL_CASH - minVal));
+    const dataRange = maxVal - minVal;
 
-    // Compute range-specific return
+    // Range-specific return
     const startVal = values[0] || INITIAL_CASH;
     const endVal = values[values.length - 1] || INITIAL_CASH;
     const rr = startVal > 0 ? ((endVal - startVal) / startVal) * 100 : 0;
 
-    let step, padding;
-    if (maxDev < 100) {
-      step = 50; padding = 200;
-    } else if (maxDev < 500) {
-      step = 200; padding = 500;
-    } else if (maxDev < 2000) {
-      step = 500; padding = 1500;
-    } else if (maxDev < 5000) {
-      step = 1000; padding = 3000;
-    } else if (maxDev < 20000) {
-      step = 5000; padding = 10000;
-    } else {
-      step = 10000; padding = Math.ceil(maxDev / 10000) * 10000;
-    }
+    // Dynamic y-axis that zooms into data so even small changes fill the chart
+    // Use tight padding: just 40% of data range, minimum $15 so line is never truly flat
+    const spread = Math.max(15, dataRange * 0.4, Math.abs(maxVal - INITIAL_CASH) * 0.3);
+    const yMin = Math.min(minVal, INITIAL_CASH) - spread;
+    const yMax = Math.max(maxVal, INITIAL_CASH) + spread;
+    const visibleRange = yMax - yMin;
 
-    const yMin = INITIAL_CASH - Math.max(padding, Math.ceil(maxDev / step + 1) * step);
-    const yMax = INITIAL_CASH + Math.max(padding, Math.ceil(maxDev / step + 1) * step);
+    let step;
+    if (visibleRange < 40) step = 5;
+    else if (visibleRange < 100) step = 10;
+    else if (visibleRange < 250) step = 25;
+    else if (visibleRange < 600) step = 50;
+    else if (visibleRange < 2000) step = 200;
+    else if (visibleRange < 5000) step = 500;
+    else if (visibleRange < 20000) step = 2000;
+    else step = 5000;
 
-    // Gradient fill — green above $100k, red below
+    // Gradient fill
     const gradientFill = (ctx) => {
       const chart = ctx.chart;
       const { top, bottom } = chart.chartArea || {};
@@ -114,15 +156,34 @@ export default function EquityCurve({ equityCurve, totalValue, totalReturn, isLi
       const baselinePixel = yScale.getPixelForValue(INITIAL_CASH);
       const grad = chart.ctx.createLinearGradient(0, top, 0, bottom);
       const baseRatio = Math.max(0, Math.min(1, (baselinePixel - top) / (bottom - top)));
-      grad.addColorStop(0, "rgba(63,185,80,0.25)");
-      grad.addColorStop(Math.max(0, baseRatio - 0.01), "rgba(63,185,80,0.05)");
-      grad.addColorStop(baseRatio, "rgba(0,0,0,0)");
-      grad.addColorStop(Math.min(1, baseRatio + 0.01), "rgba(255,123,114,0.05)");
-      grad.addColorStop(1, "rgba(255,123,114,0.25)");
+
+      if (isPositive) {
+        grad.addColorStop(0, "rgba(63,185,80,0.35)");
+        grad.addColorStop(Math.max(0, baseRatio * 0.5), "rgba(63,185,80,0.20)");
+        grad.addColorStop(baseRatio, "rgba(63,185,80,0.03)");
+        grad.addColorStop(1, "rgba(0,0,0,0)");
+      } else {
+        grad.addColorStop(0, "rgba(0,0,0,0)");
+        grad.addColorStop(baseRatio, "rgba(255,123,114,0.03)");
+        grad.addColorStop(Math.min(1, baseRatio + (1 - baseRatio) * 0.5), "rgba(255,123,114,0.20)");
+        grad.addColorStop(1, "rgba(255,123,114,0.35)");
+      }
       return grad;
     };
 
-    // Baseline dataset — dashed $100k line
+    // Glow effect for the line
+    const lineGlow = (ctx) => {
+      const chart = ctx.chart;
+      const { top, bottom } = chart.chartArea || {};
+      if (!top) return color;
+      const c = isPositive ? "63,185,80" : "255,123,114";
+      const grad = chart.ctx.createLinearGradient(0, top, 0, bottom);
+      grad.addColorStop(0, `rgba(${c},0.9)`);
+      grad.addColorStop(1, `rgba(${c},0.6)`);
+      return grad;
+    };
+
+    // Baseline dataset
     const baselineData = new Array(values.length).fill(INITIAL_CASH);
 
     const data = {
@@ -131,22 +192,24 @@ export default function EquityCurve({ equityCurve, totalValue, totalReturn, isLi
         {
           label: "Portfolio",
           data: values,
-          borderColor: color,
+          borderColor: lineGlow,
           backgroundColor: gradientFill,
           fill: true,
-          tension: 0.3,
-          pointRadius: points.length > 40 ? 0 : points.length > 20 ? 1.5 : 3,
-          pointHoverRadius: 5,
+          tension: 0.35,
+          pointRadius: points.length > 40 ? 0 : points.length > 10 ? 2 : 4,
+          pointHoverRadius: 7,
           pointBackgroundColor: color,
           pointHoverBackgroundColor: "#e6edf3",
           pointHoverBorderColor: color,
-          pointHoverBorderWidth: 2,
-          borderWidth: 2.5,
+          pointHoverBorderWidth: 3,
+          borderWidth: 3,
+          borderCapStyle: "round",
+          borderJoinStyle: "round",
         },
         {
           label: "Baseline",
           data: baselineData,
-          borderColor: "rgba(139,148,158,0.3)",
+          borderColor: "rgba(139,148,158,0.25)",
           borderDash: [6, 4],
           borderWidth: 1,
           pointRadius: 0,
@@ -160,16 +223,18 @@ export default function EquityCurve({ equityCurve, totalValue, totalReturn, isLi
       responsive: true,
       maintainAspectRatio: false,
       interaction: { mode: "index", intersect: false },
+      animation: { duration: 800, easing: "easeOutQuart" },
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: "rgba(22,27,34,0.95)",
+          backgroundColor: "rgba(13,17,23,0.95)",
           titleColor: "#e6edf3",
           bodyColor: "#e6edf3",
-          borderColor: "#30363d",
+          borderColor: "rgba(88,166,255,0.3)",
           borderWidth: 1,
-          padding: 12,
+          padding: 14,
           displayColors: false,
+          cornerRadius: 10,
           filter: (item) => item.datasetIndex === 0,
           callbacks: {
             title: (items) => items[0]?.label || "",
@@ -193,7 +258,7 @@ export default function EquityCurve({ equityCurve, totalValue, totalReturn, isLi
       scales: {
         x: {
           ticks: { color: "#8b949e", font: { size: 10 }, maxTicksLimit: 8 },
-          grid: { color: "rgba(48,54,61,0.08)" },
+          grid: { color: "rgba(48,54,61,0.06)" },
         },
         y: {
           min: yMin,
@@ -203,12 +268,13 @@ export default function EquityCurve({ equityCurve, totalValue, totalReturn, isLi
             font: { size: 11 },
             stepSize: step,
             callback: (v) => {
+              if (step < 100) return `$${v.toLocaleString()}`;
               if (step < 1000) return `$${v.toLocaleString()}`;
               return `$${(v / 1000).toFixed(v % 1000 === 0 ? 0 : 1)}k`;
             },
           },
           grid: {
-            color: (ctx) => ctx.tick.value === INITIAL_CASH ? "rgba(139,148,158,0.35)" : "rgba(48,54,61,0.08)",
+            color: (ctx) => ctx.tick.value === INITIAL_CASH ? "rgba(139,148,158,0.3)" : "rgba(48,54,61,0.06)",
             lineWidth: (ctx) => ctx.tick.value === INITIAL_CASH ? 1.5 : 1,
           },
         },
@@ -222,7 +288,7 @@ export default function EquityCurve({ equityCurve, totalValue, totalReturn, isLi
       lowWatermark: minVal,
       rangeReturn: rr,
     };
-  }, [equityCurve, color, range]);
+  }, [equityCurve, color, range, totalValue, isPositive]);
 
   const resetZoom = () => {
     if (chartRef.current) chartRef.current.resetZoom();
@@ -272,7 +338,7 @@ export default function EquityCurve({ equityCurve, totalValue, totalReturn, isLi
         </span>
       </div>
 
-      <div style={{ height: 320 }}>
+      <div className="equity-chart-wrap">
         <Line ref={chartRef} data={chartData} options={options} />
       </div>
     </div>

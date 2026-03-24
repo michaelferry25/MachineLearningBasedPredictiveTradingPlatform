@@ -18,6 +18,7 @@ import StockScreener from "./components/market/StockScreener";
 // Trading
 import TradingPanel from "./components/trading/TradingPanel";
 import PortfolioPage from "./components/trading/PortfolioPage";
+import PortfolioOptimizer from "./components/trading/PortfolioOptimizer";
 
 // Charts
 import HistoricalChart from "./components/charts/HistoricalChart";
@@ -683,6 +684,12 @@ export default function App() {
         return <LiveMarket settings={settings} />;
       case "/portfolio":
         return <PortfolioPage portfolio={portfolio} onRefresh={fetchPortfolio} authToken={authToken} />;
+      case "/optimizer":
+        return (
+          <section className="section-wrapper" id="optimizer">
+            <PortfolioOptimizer authToken={authToken} onRefresh={fetchPortfolio} />
+          </section>
+        );
       case "/settings":
         return <SettingsPage settings={settings} onUpdate={updateSettings} onReset={resetSettings} authToken={authToken} />;
       case "/profile":

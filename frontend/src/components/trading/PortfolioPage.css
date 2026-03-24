@@ -357,6 +357,11 @@
   font-size: 0.88rem;
 }
 
+.equity-chart-wrap {
+  height: 380px;
+  padding-top: 4px;
+}
+
 /* ===== Charts Row ===== */
 
 .portfolio-charts-row {

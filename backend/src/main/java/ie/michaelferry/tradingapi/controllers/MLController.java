@@ -221,6 +221,23 @@ public class MLController {
         return predictionLogService.getMetrics();
     }
 
+    @PostMapping("/api/ml/optimize-portfolio")
+    public ResponseEntity<Map> optimizePortfolio(@RequestBody Map<String, Object> request) {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(request, headers);
+            String url = mlServiceUrl + "/optimize-portfolio";
+            ResponseEntity<Map> response = restTemplate.exchange(
+                url, HttpMethod.POST, entity, Map.class
+            );
+            return ResponseEntity.status(response.getStatusCode()).body(response.getBody());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(errorResponse("Portfolio optimization unavailable", e));
+        }
+    }
+
     @GetMapping("/api/ml/health")
     public Map<String, Object> checkMLService() {
         try {

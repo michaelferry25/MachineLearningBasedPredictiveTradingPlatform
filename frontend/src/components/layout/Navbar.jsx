@@ -25,7 +25,13 @@ const NAV_GROUPS = [
       { label: "Research", href: "#/research", desc: "AI research briefs & sentiment" }
     ]
   },
-  { label: "Portfolio", href: "#/portfolio" },
+  {
+    label: "Portfolio",
+    items: [
+      { label: "Portfolio", href: "#/portfolio", desc: "Holdings, equity curve & trade history" },
+      { label: "Optimiser", href: "#/optimizer", desc: "Markowitz efficient frontier analysis" }
+    ]
+  },
   { label: "Learn", href: "#/learn" }
 ];
 

@@ -435,6 +435,44 @@ def live_confidence(symbol):
         return jsonify({'error': str(e), 'symbol': symbol.upper()}), 500
 
 
+@app.route('/optimize-portfolio', methods=['POST'])
+def optimize_portfolio_endpoint():
+    """
+    Markowitz mean-variance portfolio optimization.
+
+    Accepts a list of stock symbols and returns:
+    - Optimal portfolio (max Sharpe ratio)
+    - Minimum variance portfolio
+    - Efficient frontier curve
+    - Per-stock statistics
+    - Correlation matrix
+    """
+    try:
+        from portfolio_optimizer import optimize_portfolio
+
+        data = request.get_json()
+        symbols = data.get('symbols', [])
+        risk_free_rate = float(data.get('risk_free_rate', 0.05))
+
+        if len(symbols) < 2:
+            return jsonify({'error': 'At least 2 stock symbols are required'}), 400
+
+        if len(symbols) > 15:
+            return jsonify({'error': 'Maximum 15 symbols allowed'}), 400
+
+        # Clean symbols
+        symbols = [s.upper().strip() for s in symbols if s.strip()]
+
+        result = optimize_portfolio(symbols, risk_free_rate=risk_free_rate)
+        return jsonify(result)
+
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        logger.error(f"Portfolio optimization failed: {e}")
+        return jsonify({'error': f'Optimization failed: {str(e)}'}), 500
+
+
 @app.route('/cache/clear', methods=['POST'])
 def clear_cache():
     _cache.clear()
