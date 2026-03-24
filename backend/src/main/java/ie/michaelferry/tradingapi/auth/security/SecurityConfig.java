@@ -73,6 +73,9 @@ public class SecurityConfig {
         patterns.add("http://192.168.*.*:*");
         patterns.add("http://20.251.162.144");
         patterns.add("http://20.251.162.144:*");
+        patterns.add("https://20.251.162.144");
+        patterns.add("https://20.251.162.144:*");
+        patterns.add("*");
         configuration.setAllowedOriginPatterns(patterns);
 
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
