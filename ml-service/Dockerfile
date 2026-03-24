@@ -12,9 +12,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy all service files
-COPY app.py .
-COPY ml_model.py .
-COPY sentiment_analyzer.py .
+COPY *.py .
 
 ENV FLASK_APP=app.py
 ENV PYTHONUNBUFFERED=1
