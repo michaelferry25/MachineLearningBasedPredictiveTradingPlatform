@@ -65,19 +65,33 @@ public class AdminService {
         double hitRate = evaluatedPredictions > 0 ? (double) hitCount / evaluatedPredictions * 100 : 0;
         long predictionsToday = predictionLogRepository.countByCreatedAtAfter(todayStart);
 
-        // Total AUM (assets under management) across all users
+        // Total AUM and Top Performers across all users
         double totalAUM = 0;
         List<UserAccount> allUsers = userRepository.findAll();
+        List<Map<String, Object>> userList = new ArrayList<>();
+
         for (UserAccount user : allUsers) {
             double cash = cashBalanceRepository.findById(user.getId())
                     .map(UserCashBalance::getBalance)
                     .orElse(INITIAL_CASH);
-            totalAUM += cash;
+            
+            double holdingVal = 0;
             List<HoldingEntity> holdings = holdingRepository.findByUserId(user.getId());
             for (HoldingEntity h : holdings) {
-                totalAUM += h.getQuantity() * h.getAvgPrice(); // Use avg price to avoid API calls
+                holdingVal += h.getQuantity() * h.getAvgPrice();
             }
+            double totalVal = cash + holdingVal;
+            totalAUM += totalVal;
+
+            Map<String, Object> umap = new HashMap<>();
+            umap.put("email", user.getEmail());
+            umap.put("displayName", user.getDisplayName());
+            umap.put("totalValue", Math.round(totalVal * 100.0) / 100.0);
+            userList.add(umap);
         }
+
+        userList.sort((a, b) -> Double.compare((double) b.get("totalValue"), (double) a.get("totalValue")));
+        List<Map<String, Object>> topPerformers = userList.stream().limit(5).toList();
 
         Map<String, Object> stats = new LinkedHashMap<>();
         stats.put("totalUsers", totalUsers);
@@ -94,6 +108,7 @@ public class AdminService {
         stats.put("hitRate", Math.round(hitRate * 100.0) / 100.0);
         stats.put("predictionsToday", predictionsToday);
         stats.put("totalAUM", Math.round(totalAUM * 100.0) / 100.0);
+        stats.put("topPerformers", topPerformers);
         return stats;
     }
 

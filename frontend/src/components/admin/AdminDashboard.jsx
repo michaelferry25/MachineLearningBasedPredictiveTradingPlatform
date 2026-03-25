@@ -182,6 +182,27 @@ export default function AdminDashboard({ authToken }) {
     setConfirmAction(null);
   };
 
+  const exportCSV = (data, filename) => {
+    if (!data || !data.length) return;
+    const header = Object.keys(data[0]).join(",");
+    const csv = [header, ...data.map(row => Object.values(row).map(v => `"${v}"`).join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${filename}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showAction(`Exported ${filename}.csv`);
+  };
+
+  const handlePruneLogs = async () => {
+    try {
+      const res = await apiFetch("/api/admin/system/prune-logs", { method: "POST" });
+      showAction(res.message || "Database optimized!");
+    } catch { showAction("Failed to prune logs", true); }
+  };
+
   // ── Render Tabs ──
 
   const renderOverview = () => {
@@ -208,6 +229,21 @@ export default function AdminDashboard({ authToken }) {
               <button className="admin-btn refresh" onClick={loadStats}>🔄 Refresh Stats</button>
             </div>
           </div>
+          
+          {stats.topPerformers?.length > 0 && (
+            <div className="overview-card">
+              <h3>🏆 Top Performers</h3>
+              <div className="top-performers-list">
+                {stats.topPerformers.map((p, i) => (
+                  <div key={i} className="performer-row">
+                    <span className="perf-rank">#{i+1}</span>
+                    <span className="perf-name">{p.displayName || p.email}</span>
+                    <span className="perf-val">{formatMoney(p.totalValue)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -227,7 +263,12 @@ export default function AdminDashboard({ authToken }) {
           <button className="admin-btn small" onClick={() => loadUsers(userSearch)}>Search</button>
           {userSearch && <button className="admin-btn small secondary" onClick={() => { setUserSearch(""); loadUsers(); }}>Clear</button>}
         </div>
-        <span className="result-count">{users.length} users</span>
+        <div className="admin-toolbar-actions">
+          <span className="result-count">{users.length} users</span>
+          {users.length > 0 && (
+            <button className="admin-btn small secondary" onClick={() => exportCSV(users, "marketmind_users")}>📥 Export CSV</button>
+          )}
+        </div>
       </div>
 
       <div className="admin-table-wrap">
@@ -351,7 +392,12 @@ export default function AdminDashboard({ authToken }) {
           <button className="admin-btn small" onClick={() => loadTrades(tradeFilter)}>Filter</button>
           {tradeFilter && <button className="admin-btn small secondary" onClick={() => { setTradeFilter(""); loadTrades(); }}>Clear</button>}
         </div>
-        <span className="result-count">{trades?.totalCount ?? 0} total trades</span>
+        <div className="admin-toolbar-actions">
+          <span className="result-count">{trades?.totalCount ?? 0} total trades</span>
+          {trades?.trades?.length > 0 && (
+             <button className="admin-btn small secondary" onClick={() => exportCSV(trades.trades, "marketmind_trades")}>📥 Export CSV</button>
+          )}
+        </div>
       </div>
 
       {tradeVolume.length > 0 && (
@@ -554,6 +600,7 @@ export default function AdminDashboard({ authToken }) {
 
         <div className="sys-actions">
           <button className="admin-btn refresh" onClick={loadSystemHealth}>🔄 Refresh Health Check</button>
+          <button className="admin-btn danger" style={{marginLeft: "10px"}} onClick={handlePruneLogs}>🧹 Prune Old Prediction Logs (Optimize DB)</button>
         </div>
       </div>
     );

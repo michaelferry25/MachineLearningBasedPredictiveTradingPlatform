@@ -77,7 +77,7 @@ export default function Navbar({ user, onLogout, variant = "app", currentRoute =
       })
         .then(r => r.ok ? r.json() : null)
         .then(data => { if (data) setLivePortfolio(data); })
-        .catch(() => {});
+        .catch(() => { });
     }
   }, [profileDropdownOpen, authToken, livePortfolio]);
 
@@ -151,7 +151,7 @@ export default function Navbar({ user, onLogout, variant = "app", currentRoute =
                     <button className={`nav-link nav-dropdown-trigger ${isGroupActive(group) ? "active" : ""}`}>
                       {group.label}
                       <svg className="nav-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none">
-                        <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     </button>
                     <div className="nav-dropdown-panel">
@@ -169,7 +169,7 @@ export default function Navbar({ user, onLogout, variant = "app", currentRoute =
                 <button className="nav-link nav-dropdown-trigger">
                   More
                   <svg className="nav-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none">
-                    <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </button>
                 <div className="nav-dropdown-panel">
@@ -204,7 +204,7 @@ export default function Navbar({ user, onLogout, variant = "app", currentRoute =
                     {user.displayName?.[0] || "T"}
                   </div>
                   <svg className={`nav-chevron profile-chevron ${profileDropdownOpen ? "flipped" : ""}`} width="10" height="6" viewBox="0 0 10 6" fill="none">
-                    <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </button>
 
@@ -227,9 +227,9 @@ export default function Navbar({ user, onLogout, variant = "app", currentRoute =
                           <span className="pdrop-id-value">{accountId}</span>
                           <button className="pdrop-copy-btn" onClick={copyAccountId} title="Copy UID">
                             {copiedId ? (
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3fb950" strokeWidth="2" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3fb950" strokeWidth="2" strokeLinecap="round"><path d="M20 6L9 17l-5-5" /></svg>
                             ) : (
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" /></svg>
                             )}
                           </button>
                         </div>
@@ -245,13 +245,13 @@ export default function Navbar({ user, onLogout, variant = "app", currentRoute =
                         <button className="pdrop-eye-btn" onClick={() => setAssetsVisible(!assetsVisible)} title={assetsVisible ? "Hide assets" : "Show assets"}>
                           {assetsVisible ? (
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                              <circle cx="12" cy="12" r="3"/>
+                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                              <circle cx="12" cy="12" r="3" />
                             </svg>
                           ) : (
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                              <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
-                              <line x1="1" y1="1" x2="23" y2="23"/>
+                              <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" />
+                              <line x1="1" y1="1" x2="23" y2="23" />
                             </svg>
                           )}
                         </button>
@@ -290,24 +290,24 @@ export default function Navbar({ user, onLogout, variant = "app", currentRoute =
                     {/* Nav links */}
                     <div className="pdrop-links">
                       <a href="#/profile" className="pdrop-link" onClick={() => setProfileDropdownOpen(false)}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
                         Account
                       </a>
                       <a href="#/portfolio" className="pdrop-link" onClick={() => setProfileDropdownOpen(false)}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" /></svg>
                         Portfolio
                       </a>
                       <a href="#/learn" className="pdrop-link" onClick={() => setProfileDropdownOpen(false)}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" /><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" /></svg>
                         Academy
                       </a>
                       <a href="#/settings" className="pdrop-link" onClick={() => setProfileDropdownOpen(false)}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" /></svg>
                         Settings
                       </a>
                       {user?.role === "ADMIN" && (
                         <a href="#/admin" className="pdrop-link pdrop-link-admin" onClick={() => setProfileDropdownOpen(false)}>
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
                           Admin Dashboard
                         </a>
                       )}
@@ -316,7 +316,7 @@ export default function Navbar({ user, onLogout, variant = "app", currentRoute =
                     <div className="pdrop-divider" />
 
                     <button className="pdrop-logout" onClick={() => { setProfileDropdownOpen(false); onLogout(); }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
                       Logout
                     </button>
                   </div>
@@ -358,7 +358,7 @@ export default function Navbar({ user, onLogout, variant = "app", currentRoute =
                   <button className={`mobile-menu-link mobile-menu-group-trigger ${isExpanded ? "expanded" : ""}`} onClick={() => toggleMobileSection(group.label)}>
                     {group.label}
                     <svg className={`mobile-chevron ${isExpanded ? "rotated" : ""}`} width="12" height="7" viewBox="0 0 12 7" fill="none">
-                      <path d="M1 1L6 6L11 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M1 1L6 6L11 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </button>
                   {isExpanded && (
@@ -378,7 +378,7 @@ export default function Navbar({ user, onLogout, variant = "app", currentRoute =
               <button className={`mobile-menu-link mobile-menu-group-trigger ${mobileExpanded === "More" ? "expanded" : ""}`} onClick={() => toggleMobileSection("More")}>
                 More
                 <svg className={`mobile-chevron ${mobileExpanded === "More" ? "rotated" : ""}`} width="12" height="7" viewBox="0 0 12 7" fill="none">
-                  <path d="M1 1L6 6L11 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M1 1L6 6L11 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
               {mobileExpanded === "More" && (

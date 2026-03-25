@@ -27,7 +27,7 @@
 .admin-title h1 {
   font-size: 1.6rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #58a6ff, #bc8cff);
+  background: linear-gradient(135deg, #ff4757, #f59e0b);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -78,9 +78,9 @@
 }
 
 .admin-tab.active {
-  background: rgba(88, 166, 255, 0.12);
-  color: #58a6ff;
-  box-shadow: 0 0 12px rgba(88, 166, 255, 0.1);
+  background: rgba(255, 71, 87, 0.12);
+  color: #ff4757;
+  box-shadow: 0 0 12px rgba(255, 71, 87, 0.15);
 }
 
 .tab-icon {
@@ -97,7 +97,7 @@
 
 .admin-loading-bar {
   height: 2px;
-  background: linear-gradient(90deg, transparent, #58a6ff, transparent);
+  background: linear-gradient(90deg, transparent, #ff4757, transparent);
   animation: loadSlide 1.2s ease infinite;
   margin-bottom: 16px;
   border-radius: 1px;
@@ -219,6 +219,46 @@
   font-size: 0.95rem;
   margin-bottom: 14px;
   color: #e6edf3;
+}
+
+/* ── Top Performers ── */
+.top-performers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.performer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+  border-left: 3px solid #f59e0b;
+  transition: background 0.2s;
+}
+
+.performer-row:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.perf-rank {
+  font-weight: 800;
+  color: #f59e0b;
+  width: 35px;
+}
+
+.perf-name {
+  flex: 1;
+  font-weight: 600;
+  color: #e6edf3;
+}
+
+.perf-val {
+  font-family: "SF Mono", "Fira Code", monospace;
+  color: #3fb950;
+  font-weight: 700;
 }
 
 .quick-actions {
