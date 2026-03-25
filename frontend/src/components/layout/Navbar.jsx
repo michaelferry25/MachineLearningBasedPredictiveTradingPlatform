@@ -305,6 +305,12 @@ export default function Navbar({ user, onLogout, variant = "app", currentRoute =
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
                         Settings
                       </a>
+                      {user?.role === "ADMIN" && (
+                        <a href="#/admin" className="pdrop-link pdrop-link-admin" onClick={() => setProfileDropdownOpen(false)}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                          Admin Dashboard
+                        </a>
+                      )}
                     </div>
 
                     <div className="pdrop-divider" />
@@ -389,6 +395,11 @@ export default function Navbar({ user, onLogout, variant = "app", currentRoute =
 
           {user && (
             <div className="mobile-menu-footer">
+              {user?.role === "ADMIN" && (
+                <a href="#/admin" className="mobile-admin-link" onClick={() => setMobileMenuOpen(false)}>
+                  🛡️ Admin Dashboard
+                </a>
+              )}
               <a href="#/profile" className="mobile-profile-card" onClick={() => setMobileMenuOpen(false)}>
                 <div className={`user-avatar ${skill.className}`} style={{ borderColor: skill.color }}>
                   {user.displayName?.[0] || "T"}

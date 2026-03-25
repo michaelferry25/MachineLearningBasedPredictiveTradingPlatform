@@ -43,6 +43,9 @@ import AboutSection from "./components/pages/AboutSection";
 import SecuritySection from "./components/pages/SecuritySection";
 import LearnPage from "./components/pages/LearnPage";
 
+// Admin
+import AdminDashboard from "./components/admin/AdminDashboard";
+
 const API_URL = import.meta.env.VITE_API_URL || "";
 const TOKEN_KEY = "marketmind_token";
 const USER_KEY = "marketmind_user";
@@ -707,6 +710,12 @@ export default function App() {
         return <SecuritySection />;
       case "/about":
         return <AboutSection />;
+      case "/admin":
+        if (auth?.user?.role === "ADMIN") {
+          return <AdminDashboard authToken={authToken} />;
+        }
+        window.location.hash = "#/overview";
+        return null;
       case "/overview":
       default:
         return (

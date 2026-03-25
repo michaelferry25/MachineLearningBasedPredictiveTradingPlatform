@@ -4765,6 +4765,43 @@ body.theme-light .nav-btn:hover {
   opacity: 0.8;
 }
 
+.pdrop-link-admin {
+  color: #bc8cff;
+  border-top: 1px solid rgba(48, 54, 61, 0.3);
+  margin-top: 2px;
+  padding-top: 12px;
+}
+
+.pdrop-link-admin:hover {
+  background: rgba(188, 140, 255, 0.08);
+  color: #d4b5ff;
+}
+
+.pdrop-link-admin svg {
+  opacity: 0.7;
+  stroke: #bc8cff;
+}
+
+.mobile-admin-link {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: rgba(188, 140, 255, 0.08);
+  border: 1px solid rgba(188, 140, 255, 0.15);
+  color: #bc8cff;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.88rem;
+  text-align: center;
+  margin-bottom: 12px;
+  transition: background 0.15s;
+}
+
+.mobile-admin-link:hover {
+  background: rgba(188, 140, 255, 0.15);
+}
+
 .pdrop-logout {
   display: flex;
   align-items: center;
