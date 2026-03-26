@@ -46,6 +46,13 @@ import LearnPage from "./components/pages/LearnPage";
 // Admin
 import AdminDashboard from "./components/admin/AdminDashboard";
 
+// Legal
+import TermsOfService from "./components/legal/TermsOfService";
+import PrivacyPolicy from "./components/legal/PrivacyPolicy";
+import Disclaimer from "./components/legal/Disclaimer";
+import AcceptableUse from "./components/legal/AcceptableUse";
+import CookiePolicy from "./components/legal/CookiePolicy";
+
 const API_URL = import.meta.env.VITE_API_URL || "";
 const TOKEN_KEY = "marketmind_token";
 const USER_KEY = "marketmind_user";
@@ -710,6 +717,16 @@ export default function App() {
         return <SecuritySection />;
       case "/about":
         return <AboutSection />;
+      case "/terms":
+        return <TermsOfService />;
+      case "/privacy":
+        return <PrivacyPolicy />;
+      case "/disclaimer":
+        return <Disclaimer />;
+      case "/acceptable-use":
+        return <AcceptableUse />;
+      case "/cookie-policy":
+        return <CookiePolicy />;
       case "/admin":
         if (auth?.user?.role === "ADMIN") {
           return <AdminDashboard authToken={authToken} />;
@@ -735,11 +752,14 @@ export default function App() {
     );
   }
 
+  const LEGAL_ROUTES = ["/terms", "/privacy", "/disclaimer", "/acceptable-use", "/cookie-policy"];
+
   if (!auth) {
+    const isLegalPage = LEGAL_ROUTES.includes(route);
     return (
       <>
         <Navbar variant="auth" currentRoute={route} />
-        <AuthPanel onAuthSuccess={handleAuthSuccess} />
+        {isLegalPage ? renderPage() : <AuthPanel onAuthSuccess={handleAuthSuccess} />}
         <Footer />
       </>
     );

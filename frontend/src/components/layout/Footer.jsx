@@ -27,6 +27,15 @@ export default function Footer() {
           <a href="#/live">Live Markets</a>
           <a href="#/overview">Overview</a>
         </div>
+
+        <div className="footer-section">
+          <h4>Legal</h4>
+          <a href="#/terms">Terms of Service</a>
+          <a href="#/privacy">Privacy Policy</a>
+          <a href="#/disclaimer">Disclaimer</a>
+          <a href="#/acceptable-use">Acceptable Use</a>
+          <a href="#/cookie-policy">Cookie Policy</a>
+        </div>
       </div>
 
       <div className="footer-bottom">
