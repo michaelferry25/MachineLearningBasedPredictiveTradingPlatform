@@ -14,7 +14,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=postgres
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
       - APP_ML_SERVICE_URL=http://ml-service:5001
-      - APP_CORS_ALLOWED_ORIGINS=http://localhost,http://localhost:3000,http://frontend,http://20.251.162.144
+      - APP_CORS_ALLOWED_ORIGINS=http://localhost,http://localhost:3000,http://frontend,http://20.251.162.144,https://marketmind.cfd,https://www.marketmind.cfd
     depends_on:
       ml-service:
         condition: service_healthy
@@ -53,10 +53,23 @@ services:
     container_name: marketmind-frontend
     ports:
       - "80:80"
+      - "443:443"
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
     depends_on:
       - backend
       - ml-service
     restart: unless-stopped
+
+  # --- Certbot for Let's Encrypt ---
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
 volumes:
   db-data:
