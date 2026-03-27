@@ -200,7 +200,7 @@ Multi-source NLP-powered sentiment using **FinBERT** (ProsusAI/finbert):
 ### 1. Clone and configure
 
 ```bash
-git clone https://github.com/michaelferry25/MachineLearningBasedPredictiveTradingPlatform.git
+git clone https://github.com/your-username/MachineLearningBasedPredictiveTradingPlatform.git
 cd MachineLearningBasedPredictiveTradingPlatform
 cp .env.example .env
 ```
@@ -399,10 +399,8 @@ cd ml-service && python -m pytest
 
 ## Contact
 
-**Developer:** Michael Ferry
-**Institution:** Atlantic Technological University
-**Programme:** Software Development
-**Year:** 2025/2026
+**Developer:** MarketMind Team
+**Project Type:** Academic Final Year Project
 
 ---
 

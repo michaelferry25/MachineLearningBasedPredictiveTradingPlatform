@@ -296,6 +296,8 @@ export default function AuthPanel({ onAuthSuccess }) {
             email: form.email,
             password: form.password,
             displayName: form.displayName.trim(),
+            acceptedTerms: true,
+            termsVersion: "1.0",
           };
 
     setLoading(true);
@@ -576,13 +578,12 @@ export default function AuthPanel({ onAuthSuccess }) {
                   />
                   <span>
                     I agree to the{" "}
-                    <button type="button" className="terms-link" onClick={() => alert("Terms & Conditions: This is an academic project platform for paper trading simulation. No real money is involved. Your data is stored securely and never shared with third parties.")}>
-                      Terms & Conditions
-                    </button>{" "}
-                    and{" "}
-                    <button type="button" className="terms-link" onClick={() => alert("Privacy Policy: We collect only your email and display name. Passwords are hashed with BCrypt. Data is encrypted at rest and in transit via HTTPS.")}>
+                    <a href="#/terms" className="terms-link" target="_blank" rel="noopener noreferrer">
+                      Terms of Service
+                    </a>{", "}
+                    <a href="#/privacy" className="terms-link" target="_blank" rel="noopener noreferrer">
                       Privacy Policy
-                    </button>
+                    </a>{", and acknowledge this platform is strictly an academic simulation."}
                   </span>
                 </label>
               )}
