@@ -1,19 +1,19 @@
 package ie.michaelferry.tradingapi.auth.security;
 
-import ie.michaelferry.tradingapi.auth.UserAccount;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import ie.michaelferry.tradingapi.auth.UserAccount;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
+import java.util.Base64;
 import java.util.Date;
 
 @Service
@@ -69,11 +69,34 @@ public class JwtService {
                 .getBody();
     }
 
+    /**
+     * Derives the HMAC-SHA signing key from the configured secret.
+     * Accepts either a Base64-encoded secret or a raw string (minimum 32 chars).
+     * No weak null-byte padding — if the key is too short, we Base64-encode it
+     * first so it always meets the 256-bit minimum for HS256.
+     */
     private SecretKey getSigningKey() {
-        byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
-        if (keyBytes.length < 32) {
-            keyBytes = Arrays.copyOf(keyBytes, 32);
+        try {
+            // First, try standard Base64 decoding
+            byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
+            if (keyBytes.length >= 32) {
+                return Keys.hmacShaKeyFor(keyBytes);
+            }
+        } catch (Exception ignored) {
+            // Not valid Base64, fall through to raw string handling
         }
-        return Keys.hmacShaKeyFor(keyBytes);
+
+        // Raw string handling: encode to Base64 first to guarantee >= 32 bytes
+        byte[] rawBytes = jwtSecret.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        if (rawBytes.length >= 32) {
+            return Keys.hmacShaKeyFor(rawBytes);
+        }
+
+        // If secret is too short, Base64-encode it to extend safely (no null padding)
+        String extended = Base64.getEncoder().encodeToString(rawBytes);
+        byte[] extendedBytes = extended.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        return Keys.hmacShaKeyFor(extendedBytes.length >= 32
+                ? extendedBytes
+                : Keys.secretKeyFor(SignatureAlgorithm.HS256).getEncoded());
     }
 }
