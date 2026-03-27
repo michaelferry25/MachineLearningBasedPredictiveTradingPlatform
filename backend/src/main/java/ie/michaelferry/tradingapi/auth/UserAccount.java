@@ -34,6 +34,12 @@ public class UserAccount {
     @Column(columnDefinition = "TEXT")
     private String settingsJson;
 
+    @Column
+    private Instant termsAcceptedAt;
+
+    @Column(length = 20)
+    private String termsVersion;
+
     @PrePersist
     protected void onCreate() {
         Instant now = Instant.now();
@@ -108,5 +114,32 @@ public class UserAccount {
 
     public void setSettingsJson(String settingsJson) {
         this.settingsJson = settingsJson;
+    }
+
+    public Instant getTermsAcceptedAt() {
+        return termsAcceptedAt;
+    }
+
+    public void setTermsAcceptedAt(Instant termsAcceptedAt) {
+        this.termsAcceptedAt = termsAcceptedAt;
+    }
+
+    public String getTermsVersion() {
+        return termsVersion;
+    }
+
+    public void setTermsVersion(String termsVersion) {
+        this.termsVersion = termsVersion;
+    }
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean acceptedTerms = false;
+
+    public boolean isAcceptedTerms() {
+        return acceptedTerms;
+    }
+
+    public void setAcceptedTerms(boolean acceptedTerms) {
+        this.acceptedTerms = acceptedTerms;
     }
 }

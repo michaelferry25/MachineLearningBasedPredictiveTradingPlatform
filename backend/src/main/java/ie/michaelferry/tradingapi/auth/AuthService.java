@@ -45,6 +45,13 @@ public class AuthService {
         user.setDisplayName(request.displayName().trim());
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setRole(UserRole.USER);
+        
+        if (!Boolean.TRUE.equals(request.acceptedTerms())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You must legally accept the Terms of Service.");
+        }
+        user.setAcceptedTerms(true);
+        user.setTermsAcceptedAt(java.time.Instant.now());
+        user.setTermsVersion(request.termsVersion() != null ? request.termsVersion() : "1.0");
 
         UserAccount saved = userRepository.save(user);
         return buildAuthResponse(saved);

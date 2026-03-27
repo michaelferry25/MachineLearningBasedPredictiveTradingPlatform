@@ -10,7 +10,9 @@ public record UserResponse(
         String displayName,
         String role,
         Instant createdAt,
-        String settingsJson
+        String settingsJson,
+        Instant termsAcceptedAt,
+        String termsVersion
 ) {
     public static UserResponse from(UserAccount user) {
         return new UserResponse(
@@ -19,7 +21,9 @@ public record UserResponse(
                 user.getDisplayName(),
                 user.getRole().name(),
                 user.getCreatedAt(),
-                user.getSettingsJson()
+                user.getSettingsJson(),
+                user.getTermsAcceptedAt(),
+                user.getTermsVersion()
         );
     }
 }
