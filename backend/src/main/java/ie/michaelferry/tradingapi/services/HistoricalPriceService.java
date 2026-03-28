@@ -1,5 +1,7 @@
 package ie.michaelferry.tradingapi.services;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
@@ -12,6 +14,7 @@ import java.util.*;
 public class HistoricalPriceService {
 
     private final HttpClient client = HttpClient.newHttpClient();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public Map<String, Object> getHistoricalPrices(String symbol, String range) {
         try {
@@ -36,11 +39,33 @@ public class HistoricalPriceService {
 
     private Map<String, Object> parseYahooJson(String json, String symbol) {
         try {
-            // Extract timestamps
-            List<Long> timestamps = extractLongList(json, "\"timestamp\":[");
-            // Extract closing prices
-            List<Double> closes = extractDoubleList(json, "\"close\":[");
-            
+            JsonNode root = objectMapper.readTree(json);
+            JsonNode result = root.path("chart").path("result");
+
+            if (!result.isArray() || result.isEmpty()) {
+                return empty(symbol);
+            }
+
+            JsonNode first = result.get(0);
+            JsonNode timestampNode = first.path("timestamp");
+            JsonNode closeNode = first.path("indicators").path("quote").get(0).path("close");
+
+            if (timestampNode.isMissingNode() || closeNode.isMissingNode()) {
+                return empty(symbol);
+            }
+
+            List<Long> timestamps = new ArrayList<>();
+            for (JsonNode ts : timestampNode) {
+                timestamps.add(ts.asLong());
+            }
+
+            List<Double> closes = new ArrayList<>();
+            for (JsonNode c : closeNode) {
+                if (!c.isNull()) {
+                    closes.add(c.asDouble());
+                }
+            }
+
             if (timestamps.isEmpty() || closes.isEmpty()) {
                 return empty(symbol);
             }
@@ -54,35 +79,6 @@ public class HistoricalPriceService {
         } catch (Exception e) {
             return empty(symbol);
         }
-    }
-
-    private List<Long> extractLongList(String json, String key) {
-        int start = json.indexOf(key);
-        if (start == -1) return List.of();
-        start += key.length();
-        int end = json.indexOf("]", start);
-
-        String[] parts = json.substring(start, end).split(",");
-        List<Long> list = new ArrayList<>();
-        for (String p : parts) {
-            if (!p.isBlank()) list.add(Long.parseLong(p.trim()));
-        }
-        return list;
-    }
-
-    private List<Double> extractDoubleList(String json, String key) {
-        int start = json.indexOf(key);
-        if (start == -1) return List.of();
-        start += key.length();
-        int end = json.indexOf("]", start);
-
-        String[] parts = json.substring(start, end).split(",");
-        List<Double> list = new ArrayList<>();
-        for (String p : parts) {
-            if (!p.isBlank() && !p.trim().equals("null"))
-                list.add(Double.parseDouble(p.trim()));
-        }
-        return list;
     }
 
     private Map<String, Object> empty(String symbol) {
