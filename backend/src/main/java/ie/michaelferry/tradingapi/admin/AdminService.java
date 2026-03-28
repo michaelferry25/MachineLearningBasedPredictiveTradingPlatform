@@ -27,19 +27,22 @@ public class AdminService {
     private final PredictionLogRepository predictionLogRepository;
     private final UserCashBalanceRepository cashBalanceRepository;
     private final UserXPRepository userXPRepository;
+    private final ie.michaelferry.tradingapi.services.FinnhubClient finnhubClient;
 
     public AdminService(UserRepository userRepository,
                         TradeRepository tradeRepository,
                         HoldingRepository holdingRepository,
                         PredictionLogRepository predictionLogRepository,
                         UserCashBalanceRepository cashBalanceRepository,
-                        UserXPRepository userXPRepository) {
+                        UserXPRepository userXPRepository,
+                        ie.michaelferry.tradingapi.services.FinnhubClient finnhubClient) {
         this.userRepository = userRepository;
         this.tradeRepository = tradeRepository;
         this.holdingRepository = holdingRepository;
         this.predictionLogRepository = predictionLogRepository;
         this.cashBalanceRepository = cashBalanceRepository;
         this.userXPRepository = userXPRepository;
+        this.finnhubClient = finnhubClient;
     }
 
     // ─── Platform Stats ───
@@ -78,7 +81,9 @@ public class AdminService {
             double holdingVal = 0;
             List<HoldingEntity> holdings = holdingRepository.findByUserId(user.getId());
             for (HoldingEntity h : holdings) {
-                holdingVal += h.getQuantity() * h.getAvgPrice();
+                double livePrice = finnhubClient.fetchLivePrice(h.getSymbol());
+                double priceToUse = livePrice > 0 ? livePrice : h.getAvgPrice();
+                holdingVal += h.getQuantity() * priceToUse;
             }
             double totalVal = cash + holdingVal;
             totalAUM += totalVal;
