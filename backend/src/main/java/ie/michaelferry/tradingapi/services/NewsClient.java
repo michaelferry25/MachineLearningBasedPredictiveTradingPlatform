@@ -9,7 +9,11 @@ import java.util.Map;
 public class NewsClient {
 
     private final String apiKey = System.getenv("NEWS_API_KEY");
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
+
+    public NewsClient(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
 
     public Map<String, Object> fetchNews(String query) {
 

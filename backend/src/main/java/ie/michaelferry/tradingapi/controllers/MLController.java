@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 @RestController
 public class MLController {
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
     private final PredictionLogService predictionLogService;
 
     @Value("${app.ml.service-url}")
@@ -28,7 +28,8 @@ public class MLController {
     @Value("${app.ml.schedule-ms:3600000}")
     private long scheduleMs;
 
-    public MLController(PredictionLogService predictionLogService) {
+    public MLController(RestTemplate restTemplate, PredictionLogService predictionLogService) {
+        this.restTemplate = restTemplate;
         this.predictionLogService = predictionLogService;
     }
 

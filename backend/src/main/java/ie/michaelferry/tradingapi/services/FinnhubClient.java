@@ -8,10 +8,11 @@ import java.util.Map;
 @Component
 public class FinnhubClient {
 
-    private final RestTemplate rest = new RestTemplate();
+    private final RestTemplate rest;
     private final String apiKey;
 
-    public FinnhubClient() {
+    public FinnhubClient(RestTemplate restTemplate) {
+        this.rest = restTemplate;
         this.apiKey = System.getenv("FINNHUB_API_KEY");
     }
 

@@ -13,7 +13,7 @@ import java.util.Map;
 public class PredictionScheduler {
 
     private final PredictionLogService predictionLogService;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
 
     @Value("${app.ml.service-url:http://localhost:5001}")
     private String mlServiceUrl;
@@ -24,8 +24,9 @@ public class PredictionScheduler {
     @Value("${app.ml.horizon-hours:24}")
     private int horizonHours;
 
-    public PredictionScheduler(PredictionLogService predictionLogService) {
+    public PredictionScheduler(PredictionLogService predictionLogService, RestTemplate restTemplate) {
         this.predictionLogService = predictionLogService;
+        this.restTemplate = restTemplate;
     }
 
     @Scheduled(fixedRateString = "${app.ml.schedule-ms:3600000}")
