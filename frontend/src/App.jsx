@@ -1,3 +1,4 @@
+// This is the main app component that handles all the routing and its state
 import { useState, useEffect } from "react";
 import "./App.css";
 
@@ -54,6 +55,7 @@ import AcceptableUse from "./components/legal/AcceptableUse";
 import CookiePolicy from "./components/legal/CookiePolicy";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
+//This is just saving these strings here so we dont lose them
 const TOKEN_KEY = "marketmind_token";
 const USER_KEY = "marketmind_user";
 const SETTINGS_KEY = "marketmind_settings";
@@ -70,6 +72,7 @@ const DEFAULT_SETTINGS = {
   usageAnalytics: true
 };
 
+// This function figures out what bit of the app youre on by looking at the url hash
 const getRoute = () => {
   const raw = window.location.hash || "#/overview";
   const cleaned = raw.replace("#", "");
@@ -88,6 +91,7 @@ const POPULAR_STOCKS = [
 ];
 
 export default function App() {
+  // There is a lot of state here but we need it all for the dashboard and auth stuff
   const [auth, setAuth] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [route, setRoute] = useState(getRoute());
@@ -111,7 +115,7 @@ export default function App() {
 
   const authToken = auth?.token;
 
-  // Keyboard shortcuts (active on dashboard)
+  //This is setting up the keyboard shortcuts here so the user can just press a button to do things fast
   useEffect(() => {
     const handler = (e) => {
       // Ignore if typing in an input
@@ -131,16 +135,20 @@ export default function App() {
       // Only stock/trade shortcuts on dashboard
       if (currentRoute !== "/dashboard") return;
 
+      // This is for the keyboard shortcuts
       const num = parseInt(e.key);
       if (num >= 1 && num <= POPULAR_STOCKS.length) {
         handleStockSelect(POPULAR_STOCKS[num - 1].symbol);
         return;
       }
     };
+
+    // This is adding the event listener for the keyboard shortcuts
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
+  // This is for the router, it figures out what page to show the user based on the url hash
   useEffect(() => {
     const onHashChange = () => {
       const newRoute = getRoute();
@@ -155,17 +163,19 @@ export default function App() {
         }
       }
     };
+    //Adds the event listener for the router
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
 
+  // This is for the settings, it saves the settings to local storage
   useEffect(() => {
     const saved = localStorage.getItem(SETTINGS_KEY);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
         setSettings({ ...DEFAULT_SETTINGS, ...parsed });
-      } catch (error) {}
+      } catch (error) { }
     }
   }, []);
 
@@ -177,6 +187,7 @@ export default function App() {
     document.documentElement.style.colorScheme = settings.theme;
   }, [settings]);
 
+  // This checks if the user is logged in when the app starts up
   useEffect(() => {
     const token = localStorage.getItem(TOKEN_KEY);
     if (!token) {
@@ -184,23 +195,27 @@ export default function App() {
       return;
     }
 
+    // This is checking if the user is logged in
     fetch(`${API_URL}/api/auth/me`, {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(async (res) => {
-        if (!res.ok) throw new Error("Unauthorized");
+        if (!res.ok) throw new Error("Unauthorized"); //If the user is not logged in, it will throw an error
         const user = await res.json();
         localStorage.setItem(USER_KEY, JSON.stringify(user));
         setAuth({ token, user });
         loadSettingsFromBackend(token);
       })
+      //If the user is not logged in, it will remove the token and user from local storage
       .catch(() => {
         localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(USER_KEY);
       })
+      //This is to stop the loading screen
       .finally(() => setAuthLoading(false));
   }, []);
 
+  // This is for the learning progress
   useEffect(() => {
     if (!authToken) return;
     fetch(`${API_URL}/api/learning/progress`, {
@@ -210,9 +225,10 @@ export default function App() {
       .then(data => {
         if (data?.skillLevel) setUserSkillLevel(data.skillLevel);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [authToken]);
 
+  // This is loading the settings from the backend
   const loadSettingsFromBackend = (token) => {
     fetch(`${API_URL}/api/auth/settings`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -221,14 +237,15 @@ export default function App() {
       .then((data) => {
         if (data?.settings && data.settings !== "{}") {
           try {
-            const remote = typeof data.settings === "string" ? JSON.parse(data.settings) : data.settings;
+            const remote = typeof data.settings === "string" ? JSON.parse(data.settings) : data.settings; //This is checking if the settings are stored as a string or not
             setSettings((prev) => ({ ...prev, ...remote }));
-          } catch {}
+          } catch { }
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   };
 
+  // This is getting them logged in and saving their details
   const handleAuthSuccess = (payload) => {
     const token = payload.accessToken;
     const user = payload.user;
@@ -239,6 +256,7 @@ export default function App() {
     // Load user settings from backend
     if (token) loadSettingsFromBackend(token);
 
+    //This is checking if the user is a new signup
     const isNewSignup = payload.newUser || (!payload.user?.updatedAt);
     if (isNewSignup) {
       sessionStorage.setItem("marketmind_new_signup", "true");
@@ -248,6 +266,7 @@ export default function App() {
     }
   };
 
+  // Logs the user out
   const handleLogout = () => {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
@@ -255,20 +274,23 @@ export default function App() {
     window.location.hash = "#/auth";
   };
 
+  // Updates the user profile
   const handleProfileUpdate = (user) => {
     setAuth((prev) => (prev ? { ...prev, user } : prev));
     localStorage.setItem(USER_KEY, JSON.stringify(user));
   };
 
+  // Syncs the settings to the backend
   const syncSettingsToBackend = (newSettings) => {
     if (!authToken) return;
     fetch(`${API_URL}/api/auth/settings`, {
       method: "PUT",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
       body: JSON.stringify({ settings: newSettings })
-    }).catch(() => {});
+    }).catch(() => { });
   };
 
+  // Updates the settings
   const updateSettings = (patch) => {
     setSettings((prev) => {
       const next = { ...prev, ...patch };
@@ -277,11 +299,13 @@ export default function App() {
     });
   };
 
+  // Resets the settings to the default settings
   const resetSettings = () => {
     setSettings(DEFAULT_SETTINGS);
     syncSettingsToBackend(DEFAULT_SETTINGS);
   };
 
+  // This is fetching the current stock price from the backend API
   const fetchPrice = async (stockSymbol) => {
     const sym = stockSymbol || symbol;
     if (!sym.trim()) return;
@@ -300,6 +324,7 @@ export default function App() {
     setLoading(false);
   };
 
+  // Fetches the historical data for a stock
   const fetchHistorical = async (stockSymbol, range) => {
     const sym = stockSymbol || symbol;
     const r = range || chartRange;
@@ -314,15 +339,17 @@ export default function App() {
     }
   };
 
+  // Handles the range change
   const handleRangeChange = (range) => {
     setChartRange(range);
     if (symbol) fetchHistorical(symbol, range);
   };
 
+  //Handles the prediction fetch
   const fetchPrediction = async (stockSymbol, options = {}) => {
     const sym = stockSymbol || symbol;
     if (!sym.trim()) return;
-    const params = new URLSearchParams();
+    const params = new URLSearchParams(); //This is for the prediction parameters
     if (options.refresh) params.set("refresh", "true");
     if (options.source) params.set("source", options.source);
     const query = params.toString() ? `?${params.toString()}` : "";
@@ -339,6 +366,7 @@ export default function App() {
     }
   };
 
+  //Fetches the prediction comparison
   const fetchPredictionComparison = async (stockSymbol) => {
     const sym = stockSymbol || symbol;
     if (!sym.trim()) return;
@@ -355,6 +383,7 @@ export default function App() {
     }
   };
 
+  //Fetches the detailed prediction
   const fetchDetailedPrediction = async (stockSymbol) => {
     const sym = stockSymbol || symbol;
     if (!sym.trim()) return;
@@ -371,6 +400,7 @@ export default function App() {
     }
   };
 
+  //Handles the prediction refresh
   const handleRefreshPrediction = async () => {
     if (!symbol) return;
     await fetchPrediction(symbol, { refresh: true });
@@ -378,6 +408,7 @@ export default function App() {
     await fetchTrackRecord(symbol);
   };
 
+  //Gets the track record
   const fetchTrackRecord = async (stockSymbol) => {
     const sym = stockSymbol || symbol;
     if (!sym.trim()) return;
@@ -411,6 +442,7 @@ export default function App() {
     }
   };
 
+  //Gets the users portfolio
   const fetchPortfolio = async () => {
     if (!authToken) return;
     try {
@@ -428,6 +460,7 @@ export default function App() {
     }
   };
 
+  //Handles the stock selection
   const handleStockSelect = (stockSymbol) => {
     setShowAdvanced(false);
     setPrediction(null);
@@ -443,6 +476,7 @@ export default function App() {
     fetchTrackRecord(stockSymbol);
   };
 
+  //Handles the toggle advanced button
   const handleToggleAdvanced = () => {
     setShowAdvanced((prev) => {
       const next = !prev;
@@ -453,12 +487,14 @@ export default function App() {
     });
   };
 
+  //looks after searching for a stock
   const handleSearch = () => {
     if (searchInput.trim()) {
       handleStockSelect(searchInput.toUpperCase());
     }
   };
 
+  //Adds a stock to the watchlist
   const addToWatchlist = () => {
     if (newTicker.trim() && !watchlist.includes(newTicker.toUpperCase())) {
       setWatchlist([...watchlist, newTicker.toUpperCase()]);
@@ -466,16 +502,19 @@ export default function App() {
     }
   };
 
+  //Removes a stock from the watchlist
   const removeFromWatchlist = (ticker) => {
     setWatchlist(watchlist.filter(t => t !== ticker));
   };
 
+  //Fetches the portfolio when the user logs in
   useEffect(() => {
     if (authToken) {
       fetchPortfolio();
     }
   }, [authToken]);
 
+  // This keeps the predictions fresh every 5 minutes so we dont want them looking at old data
   useEffect(() => {
     if (!symbol) return;
     const timer = setInterval(() => {
@@ -486,201 +525,206 @@ export default function App() {
     return () => clearInterval(timer);
   }, [symbol]);
 
+  // This dashboard function is massive but it renders all the trading widgets and charts in one go
   const renderDashboard = () => (
     <div className="dashboard-unified">
       <div className="dashboard-grid">
-        
+
         <div className="dashboard-welcome">
           <h2>Welcome to your <span>Trading Dashboard</span></h2>
           <p>Search for a stock, pick from the popular tickers below, or check your watchlist to get started. Select any stock to view live prices, AI predictions, charts, and trading tools.</p>
         </div>
 
         {/* Left/Top controls: Search, Popular, Watchlist - no column wrapper */}
-          <div className="search-section">
-            <h3>Search Stock</h3>
-            <div className="symbol-input">
-              <input
-                type="text"
-                placeholder="Enter symbol (e.g., AAPL)"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value.toUpperCase())}
-                onKeyPress={(e) => e.key === "Enter" && handleSearch()}
-              />
-              <button className="btn small primary-btn" onClick={handleSearch}>
-                {loading ? "..." : "Go"}
+        <div className="search-section">
+          <h3>Search Stock</h3>
+          <div className="symbol-input">
+            <input
+              type="text"
+              placeholder="Enter symbol (e.g., AAPL)"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value.toUpperCase())}
+              onKeyPress={(e) => e.key === "Enter" && handleSearch()}
+            />
+            <button className="btn small primary-btn" onClick={handleSearch}>
+              {loading ? "..." : "Go"}
+            </button>
+          </div>
+        </div>
+
+        {/* This is the popular stocks section */}
+        <div className="popular-section">
+          <h3>Popular Stocks</h3>
+          <div className="stock-grid">
+            {POPULAR_STOCKS.map(stock => (
+              <button
+                key={stock.symbol}
+                className={`stock-btn ${symbol === stock.symbol ? 'active' : ''}`}
+                onClick={() => handleStockSelect(stock.symbol)}
+              >
+                <div className="stock-symbol">{stock.symbol}</div>
+                <div className="stock-name">{stock.name}</div>
               </button>
-            </div>
+            ))}
           </div>
+        </div>
 
-          <div className="popular-section">
-            <h3>Popular Stocks</h3>
-            <div className="stock-grid">
-              {POPULAR_STOCKS.map(stock => (
+        {/* This is the watchlist section */}
+        <div className="watchlist-section">
+          <h3>⭐ My Watchlist</h3>
+          <div className="watchlist-add">
+            <input
+              type="text"
+              placeholder="Add ticker..."
+              value={newTicker}
+              onChange={(e) => setNewTicker(e.target.value.toUpperCase())}
+              onKeyPress={(e) => e.key === "Enter" && addToWatchlist()}
+            />
+            <button className="btn small" onClick={addToWatchlist}>Add</button>
+          </div>
+          <div className="watchlist-items">
+            {watchlist.map(ticker => (
+              <div key={ticker} className="watchlist-item">
                 <button
-                  key={stock.symbol}
-                  className={`stock-btn ${symbol === stock.symbol ? 'active' : ''}`}
-                  onClick={() => handleStockSelect(stock.symbol)}
+                  className="watchlist-ticker"
+                  onClick={() => handleStockSelect(ticker)}
                 >
-                  <div className="stock-symbol">{stock.symbol}</div>
-                  <div className="stock-name">{stock.name}</div>
+                  {ticker}
                 </button>
-              ))}
-            </div>
+                <button
+                  className="watchlist-remove"
+                  onClick={() => removeFromWatchlist(ticker)}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
           </div>
-
-          <div className="watchlist-section">
-            <h3>⭐ My Watchlist</h3>
-            <div className="watchlist-add">
-              <input
-                type="text"
-                placeholder="Add ticker..."
-                value={newTicker}
-                onChange={(e) => setNewTicker(e.target.value.toUpperCase())}
-                onKeyPress={(e) => e.key === "Enter" && addToWatchlist()}
-              />
-              <button className="btn small" onClick={addToWatchlist}>Add</button>
-            </div>
-            <div className="watchlist-items">
-              {watchlist.map(ticker => (
-                <div key={ticker} className="watchlist-item">
-                  <button 
-                    className="watchlist-ticker"
-                    onClick={() => handleStockSelect(ticker)}
-                  >
-                    {ticker}
-                  </button>
-                  <button 
-                    className="watchlist-remove"
-                    onClick={() => removeFromWatchlist(ticker)}
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
+        </div>
         {/* End of controls */}
-          {symbol ? (
-            <>
-              <div className="stock-header">
-                <h2>{symbol}</h2>
-                {result && !result.error && (
-                  <div className="live-price">
-                    <span className="price">${result.price?.toFixed(2)}</span>
-                    <span className={`change ${(result.change ?? 0) >= 0 ? 'positive' : 'negative'}`}>
-                      {(result.change ?? 0) >= 0 ? '↑' : '↓'} {Math.abs(result.change ?? 0).toFixed(2)} ({(result.changePercent ?? 0).toFixed(2)}%)
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              <div className="chart-container">
-                <div className="chart-timeframe-bar">
-                  {[
-                    { key: '5d', label: '1W' },
-                    { key: '1mo', label: '1M' },
-                    { key: '3mo', label: '3M' },
-                    { key: '6mo', label: '6M' },
-                    { key: '1y', label: '1Y' },
-                  ].map(tf => (
-                    <button
-                      key={tf.key}
-                      className={`timeframe-btn ${chartRange === tf.key ? 'active' : ''}`}
-                      onClick={() => handleRangeChange(tf.key)}
-                    >
-                      {tf.label}
-                    </button>
-                  ))}
+        {symbol ? (
+          <>
+            <div className="stock-header">
+              <h2>{symbol}</h2>
+              {result && !result.error && (
+                <div className="live-price">
+                  <span className="price">${result.price?.toFixed(2)}</span>
+                  <span className={`change ${(result.change ?? 0) >= 0 ? 'positive' : 'negative'}`}>
+                    {(result.change ?? 0) >= 0 ? '↑' : '↓'} {Math.abs(result.change ?? 0).toFixed(2)} ({(result.changePercent ?? 0).toFixed(2)}%)
+                  </span>
                 </div>
-                {historical && historical.prices?.length > 0 ? (
-                  <HistoricalChart
-                    timestamps={historical.timestamps}
-                    prices={historical.prices}
-                    symbol={symbol}
-                    prediction={prediction}
-                    predictionComparison={predictionComparison}
-                    indicatorData={detailedPrediction?.indicator_timeseries}
-                    chartRange={chartRange}
-                    trackRecord={trackRecord}
-                  />
-                ) : (
-                  <div className="chart-loading">Loading chart...</div>
-                )}
-              </div>
-
-              <EnhancedPredictionCard
-                symbol={symbol}
-                prediction={prediction}
-                predictionComparison={predictionComparison}
-                showAdvanced={showAdvanced}
-                onToggleAdvanced={handleToggleAdvanced}
-                onRefreshPrediction={handleRefreshPrediction}
-              />
-
-              <NewsSentiment symbol={symbol} />
-
-              {showAdvanced && detailedPrediction && (
-                <MLInsightsTabs detailedPrediction={detailedPrediction} />
               )}
-
-              <PredictionHistory symbol={symbol} />
-            </>
-          ) : (
-            <div className="empty-state-main">
-              <div className="empty-icon">📊</div>
-              <h2>Select a Stock</h2>
-              <p>Choose from popular stocks or search for a symbol to get started</p>
             </div>
-          )}
+
+            <div className="chart-container">
+              <div className="chart-timeframe-bar"> {/*This is for the chart timeframe*/}
+                {[
+                  { key: '5d', label: '1W' },
+                  { key: '1mo', label: '1M' },
+                  { key: '3mo', label: '3M' },
+                  { key: '6mo', label: '6M' },
+                  { key: '1y', label: '1Y' },
+                ].map(tf => (
+                  <button
+                    key={tf.key}
+                    className={`timeframe-btn ${chartRange === tf.key ? 'active' : ''}`}
+                    onClick={() => handleRangeChange(tf.key)}
+                  >
+                    {tf.label}
+                  </button>
+                ))}
+              </div>
+              {historical && historical.prices?.length > 0 ? (
+                <HistoricalChart
+                  timestamps={historical.timestamps}
+                  prices={historical.prices}
+                  symbol={symbol}
+                  prediction={prediction}
+                  predictionComparison={predictionComparison}
+                  indicatorData={detailedPrediction?.indicator_timeseries}
+                  chartRange={chartRange}
+                  trackRecord={trackRecord}
+                />
+              ) : (
+                <div className="chart-loading">Loading chart...</div>
+              )}
+            </div>
+
+            {/*This is the prediction card*/}
+            <EnhancedPredictionCard
+              symbol={symbol}
+              prediction={prediction}
+              predictionComparison={predictionComparison}
+              showAdvanced={showAdvanced}
+              onToggleAdvanced={handleToggleAdvanced}
+              onRefreshPrediction={handleRefreshPrediction}
+            />
+
+            <NewsSentiment symbol={symbol} />
+
+            {showAdvanced && detailedPrediction && (
+              <MLInsightsTabs detailedPrediction={detailedPrediction} />
+            )}
+
+            <PredictionHistory symbol={symbol} />
+          </>
+        ) : (
+          <div className="empty-state-main">
+            <div className="empty-icon">📊</div>
+            <h2>Select a Stock</h2>
+            <p>Choose from popular stocks or search for a symbol to get started</p>
+          </div>
+        )}
         {/* End of main chart panel */}
 
         {/* Trading, Portfolio, Fear & Greed */}
-          <TradingPanel
-            symbol={symbol}
-            currentPrice={result?.price}
-            onTradeComplete={fetchPortfolio}
-            authToken={authToken}
-            heldQuantity={portfolio?.positions?.find(p => p.symbol === symbol)?.quantity || 0}
-          />
+        <TradingPanel
+          symbol={symbol}
+          currentPrice={result?.price}
+          onTradeComplete={fetchPortfolio}
+          authToken={authToken}
+          heldQuantity={portfolio?.positions?.find(p => p.symbol === symbol)?.quantity || 0}
+        />
 
-          {portfolio && (
-            <div className="portfolio-quick-card">
-              <div>
-                <span className="quick-label">Total value</span>
-                <strong className="quick-value">${portfolio.totalValue?.toFixed(2)}</strong>
-              </div>
-              <div>
-                <span className="quick-label">Assets value</span>
-                <strong className="quick-value">${portfolio.holdingsValue?.toFixed(2)}</strong>
-              </div>
-              <div>
-                <span className="quick-label">Cash balance</span>
-                <strong className="quick-value">${portfolio.cashBalance?.toFixed(2)}</strong>
-              </div>
-              <div>
-                <span className="quick-label">Open positions</span>
-                <strong className="quick-value">{portfolio.positions?.length || 0}</strong>
-              </div>
-              <button
-                className="btn secondary portfolio-link"
-                type="button"
-                onClick={() => (window.location.hash = "#/portfolio")}
-              >
-                View portfolio
-              </button>
+        {portfolio && (
+          <div className="portfolio-quick-card"> {/*This is the portfolio quick card*/}
+            <div>
+              <span className="quick-label">Total value</span>
+              <strong className="quick-value">${portfolio.totalValue?.toFixed(2)}</strong>
             </div>
-          )}
-
-          <FearGreedGauge />
-
-          <div className="keyboard-hint">
-            Press <kbd>1</kbd>-<kbd>8</kbd> to quick-select stocks or <kbd>?</kbd> for all shortcuts
+            <div>
+              <span className="quick-label">Assets value</span>
+              <strong className="quick-value">${portfolio.holdingsValue?.toFixed(2)}</strong>
+            </div>
+            <div>
+              <span className="quick-label">Cash balance</span>
+              <strong className="quick-value">${portfolio.cashBalance?.toFixed(2)}</strong>
+            </div>
+            <div>
+              <span className="quick-label">Open positions</span>
+              <strong className="quick-value">{portfolio.positions?.length || 0}</strong>
+            </div>
+            <button
+              className="btn secondary portfolio-link"
+              type="button"
+              onClick={() => (window.location.hash = "#/portfolio")}
+            >
+              View portfolio
+            </button>
           </div>
+        )}
+
+        <FearGreedGauge />
+        {/* This is the keyboard hint */}
+        <div className="keyboard-hint">
+          Press <kbd>1</kbd>-<kbd>8</kbd> to quick-select stocks or <kbd>?</kbd> for all shortcuts
+        </div>
 
       </div>
     </div>
   );
 
+  // This is the router, it figures out what page to show the user based on the url hash
   const renderPage = () => {
     switch (route) {
       case "/analytics":
@@ -752,6 +796,7 @@ export default function App() {
     );
   }
 
+  //Legal routes
   const LEGAL_ROUTES = ["/terms", "/privacy", "/disclaimer", "/acceptable-use", "/cookie-policy"];
 
   if (!auth) {
@@ -767,7 +812,7 @@ export default function App() {
 
   return (
     <>
-      <ToastContainer />
+      <ToastContainer /> {/*This is the toast container*/}
       {showShortcuts && (
         <div className="shortcuts-overlay" onClick={() => setShowShortcuts(false)}>
           <div className="shortcuts-modal" onClick={(e) => e.stopPropagation()}>

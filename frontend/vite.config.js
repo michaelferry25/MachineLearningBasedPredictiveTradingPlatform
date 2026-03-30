@@ -9,5 +9,10 @@ export default defineConfig({
       '/api': 'http://localhost:8080',
       '/ml': 'http://localhost:5001'
     }
+  },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: './src/setupTests.js'
   }
 })
