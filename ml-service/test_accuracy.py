@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from ml_model import EnhancedStockPredictor, get_detailed_prediction
 
 
-def test_stock_accuracy(symbol, verbose=True):
+def check_stock_accuracy(symbol, verbose=True):
     """
     Test prediction accuracy for a single stock using the model's
     built-in train/validation/test split (70/15/15).
@@ -227,7 +227,7 @@ def main():
 
     for symbol in test_symbols:
         # Current prediction
-        result = test_stock_accuracy(symbol)
+        result = check_stock_accuracy(symbol)
         if result:
             all_results.append(result)
 
