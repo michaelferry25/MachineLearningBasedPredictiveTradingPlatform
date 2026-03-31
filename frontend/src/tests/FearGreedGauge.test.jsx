@@ -44,7 +44,7 @@ describe('FearGreedGauge Component', () => {
     });
 
     expect(screen.getByText('75')).toBeInTheDocument();
-    expect(screen.getByText('Greed')).toBeInTheDocument();
+    expect(screen.getAllByText('Greed')).toHaveLength(2);
     expect(screen.getByText('What drives this?')).toBeInTheDocument();
   });
 
