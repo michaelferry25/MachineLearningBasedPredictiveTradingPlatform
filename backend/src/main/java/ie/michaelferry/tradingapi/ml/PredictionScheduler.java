@@ -1,5 +1,7 @@
 package ie.michaelferry.tradingapi.ml;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -9,8 +11,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Scheduled poller that periodically asks the Python ML service for fresh
+ * predictions and records them via {@link PredictionLogService}. Runs on
+ * two cadences (hourly + daily close) and also triggers evaluation of
+ * predictions whose horizon has elapsed.
+ */
 @Component
 public class PredictionScheduler {
+
+    private static final Logger log = LoggerFactory.getLogger(PredictionScheduler.class);
 
     private final PredictionLogService predictionLogService;
     private final RestTemplate restTemplate;
@@ -36,8 +46,8 @@ public class PredictionScheduler {
                 String url = mlServiceUrl + "/predict/" + symbol;
                 Map<String, Object> response = restTemplate.getForObject(url, Map.class);
                 predictionLogService.logPrediction(symbol, response, horizonHours, "scheduler_hourly");
-            } catch (Exception ignored) {
-                // ignore transient failures
+            } catch (Exception e) {
+                log.warn("Hourly prediction for {} failed: {}", symbol, e.getMessage());
             }
         }
     }
@@ -49,8 +59,8 @@ public class PredictionScheduler {
                 String url = mlServiceUrl + "/predict/" + symbol;
                 Map<String, Object> response = restTemplate.getForObject(url, Map.class);
                 predictionLogService.logPrediction(symbol, response, horizonHours, "scheduler_daily_close");
-            } catch (Exception ignored) {
-                // ignore transient failures
+            } catch (Exception e) {
+                log.warn("Daily-close prediction for {} failed: {}", symbol, e.getMessage());
             }
         }
     }

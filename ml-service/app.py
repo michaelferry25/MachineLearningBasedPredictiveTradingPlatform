@@ -6,7 +6,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from datetime import datetime
 from ml_model import EnhancedStockPredictor, get_prediction, get_detailed_prediction
-from sentiment_analyzer import SentimentAnalyzer
+from sentiment_analyzer import SentimentAnalyzer, get_health_state as get_sentiment_health
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -38,7 +38,13 @@ def _cached_prediction(symbol, sentiment_snapshot=None):
 
 
 def _cached_sentiment(symbol):
-    """Return cached sentiment if fresh, otherwise compute and cache."""
+    """Return cached sentiment if fresh, otherwise compute and cache.
+
+    A result with ``total_sources == 0`` is treated as a transient failure
+    (FinBERT not yet loaded, NEWS_API_KEY unset, etc.) and is NOT cached --
+    otherwise an empty snapshot is re-served for 30 minutes and the
+    downstream model silently operates on zero sentiment.
+    """
     now = time.time()
     entry = _sentiment_cache.get(symbol)
     if entry and (now - entry['ts']) < _SENTIMENT_CACHE_TTL:
@@ -46,10 +52,18 @@ def _cached_sentiment(symbol):
 
     try:
         result = _sentiment_analyzer.get_combined_sentiment(symbol)
-        _sentiment_cache[symbol] = {'data': result, 'ts': now}
+        combined = (result or {}).get('combined', {}) if isinstance(result, dict) else {}
+        total_sources = int(combined.get('total_sources', 0) or 0)
+        if total_sources > 0:
+            _sentiment_cache[symbol] = {'data': result, 'ts': now}
+        else:
+            logger.warning(
+                f"Sentiment for {symbol} returned total_sources=0; not caching so next "
+                f"request retries."
+            )
         return result
     except Exception as e:
-        logger.warning(f"Sentiment fetch failed for {symbol}: {e}")
+        logger.error(f"Sentiment fetch failed for {symbol}: {e}")
         return None
 
 
@@ -141,7 +155,20 @@ def _apply_sentiment_fusion(result, sentiment):
 
 @app.route('/health', methods=['GET'])
 def health():
-    return jsonify({'status': 'healthy', 'service': 'ml-prediction'})
+    sentiment_state = get_sentiment_health()
+    return jsonify({
+        'status': 'healthy',
+        'service': 'ml-prediction',
+        'sentiment': {
+            'finbert_loaded': sentiment_state.get('finbert_loaded', False),
+            'finbert_load_attempted': sentiment_state.get('finbert_load_attempted', False),
+            'finbert_last_error': sentiment_state.get('finbert_last_error'),
+            'news_api_configured': bool(os.getenv('NEWS_API_KEY', '')),
+            'news_last_status': sentiment_state.get('news_last_status'),
+            'news_last_error': sentiment_state.get('news_last_error'),
+            'sentiment_cache_size': len(_sentiment_cache),
+        },
+    })
 
 
 @app.route('/predict/<symbol>', methods=['GET'])

@@ -1,4 +1,5 @@
 import logging
+import os
 import warnings
 
 import numpy as np
@@ -14,7 +15,7 @@ warnings.filterwarnings("ignore")
 
 logger = logging.getLogger(__name__)
 
-BACKEND_URL = "http://localhost:8080"
+BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8080")
 
 
 class EnhancedStockPredictor:
@@ -116,16 +117,29 @@ class EnhancedStockPredictor:
             return float(fallback)
 
     def _extract_sentiment_features(self, sentiment_snapshot=None):
-        """Extract only 2 sentiment features: score and confidence (FinBERT-powered)."""
+        """Extract sentiment features: score, confidence (FinBERT-powered), and total_sources.
+
+        `total_sources` is surfaced so downstream consumers can distinguish a
+        genuine neutral signal (sources > 0, score ~= 0) from a failed sentiment
+        fetch (sources == 0, score defaulted to 0). Previously this field was
+        dropped here which caused the detailed-prediction endpoint to always
+        report `total_sources: 0` regardless of analyzer state.
+        """
         snapshot = sentiment_snapshot or self.sentiment_snapshot or {}
-        combined = snapshot.get("combined", snapshot if isinstance(snapshot, dict) else {})
+        if not isinstance(snapshot, dict):
+            snapshot = {}
+        combined = snapshot.get("combined", snapshot)
+        if not isinstance(combined, dict):
+            combined = {}
 
         score = np.clip(self._to_float(combined.get("score", 0.0)), -1.0, 1.0)
         confidence = np.clip(self._to_float(combined.get("confidence", 50.0)), 0.0, 100.0) / 100.0
+        total_sources = max(0, int(self._to_float(combined.get("total_sources", 0))))
 
         return {
             "sentiment_score": float(score),
             "sentiment_confidence": float(confidence),
+            "sentiment_total_sources": float(total_sources),
         }
 
     def _fetch_macro_data(self, df):

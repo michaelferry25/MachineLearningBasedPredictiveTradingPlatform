@@ -11,6 +11,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Pre-download FinBERT weights into the image so the first request on Azure
+# does not time out pulling weights from Hugging Face. If this step fails the
+# build fails, making the problem visible instead of silently falling back to
+# TextBlob at runtime.
+RUN python -c "from transformers import AutoTokenizer, AutoModelForSequenceClassification; \
+    AutoTokenizer.from_pretrained('ProsusAI/finbert'); \
+    AutoModelForSequenceClassification.from_pretrained('ProsusAI/finbert')"
+
 # Copy all service files
 COPY *.py .
 

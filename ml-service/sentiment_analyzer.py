@@ -11,6 +11,21 @@ logger = logging.getLogger(__name__)
 # ProsusAI/finbert: 89% accuracy on financial text (vs TextBlob ~70%)
 _finbert_pipeline = None
 
+# Module-level health tracking so /ml/health can surface sentiment state
+# without needing to instantiate the analyzer.
+HEALTH_STATE = {
+    "finbert_loaded": False,
+    "finbert_load_attempted": False,
+    "finbert_last_error": None,
+    "news_last_error": None,
+    "news_last_status": None,
+}
+
+
+def get_health_state():
+    """Return a shallow copy of current sentiment subsystem health."""
+    return dict(HEALTH_STATE)
+
 
 def _get_finbert():
     """Lazy-load FinBERT pipeline (cached after first call)."""
@@ -18,6 +33,7 @@ def _get_finbert():
     if _finbert_pipeline is not None:
         return _finbert_pipeline
 
+    HEALTH_STATE["finbert_load_attempted"] = True
     try:
         from transformers import pipeline as hf_pipeline
 
@@ -30,10 +46,16 @@ def _get_finbert():
             max_length=512,
             top_k=None,
         )
+        HEALTH_STATE["finbert_loaded"] = True
+        HEALTH_STATE["finbert_last_error"] = None
         logger.info("FinBERT loaded successfully.")
         return _finbert_pipeline
     except Exception as e:
-        logger.warning(f"FinBERT unavailable, falling back to TextBlob: {e}")
+        # ERROR (not WARNING) because silent TextBlob degradation misrepresents
+        # what the dissertation claims is running in production.
+        HEALTH_STATE["finbert_loaded"] = False
+        HEALTH_STATE["finbert_last_error"] = str(e)
+        logger.error(f"FinBERT unavailable, falling back to TextBlob: {e}")
         return None
 
 
@@ -64,7 +86,8 @@ def _finbert_polarity(texts):
     try:
         raw_outputs = pipe(texts, batch_size=16)
     except Exception as e:
-        logger.warning(f"FinBERT inference failed, falling back: {e}")
+        HEALTH_STATE["finbert_last_error"] = f"inference: {e}"
+        logger.error(f"FinBERT inference failed, falling back to TextBlob: {e}")
         from textblob import TextBlob
 
         results = []
@@ -105,10 +128,21 @@ class SentimentAnalyzer:
 
     def __init__(self):
         self.news_api_key = os.getenv('NEWS_API_KEY', '')
+        if not self.news_api_key:
+            HEALTH_STATE["news_last_error"] = "NEWS_API_KEY environment variable is not set"
+            logger.error(
+                "NEWS_API_KEY is not set; news sentiment will return neutral for all symbols. "
+                "Set NEWS_API_KEY in the ml-service environment."
+            )
 
     # ──────────────── News API ────────────────
 
     def get_news_sentiment(self, symbol):
+        if not self.news_api_key:
+            # Already logged in __init__; avoid log-spam per call but keep health fresh.
+            HEALTH_STATE["news_last_status"] = "no_api_key"
+            return self._default_news()
+
         try:
             url = 'https://newsapi.org/v2/everything'
             params = {
@@ -121,9 +155,22 @@ class SentimentAnalyzer:
             }
 
             response = requests.get(url, params=params, timeout=10)
+            HEALTH_STATE["news_last_status"] = response.status_code
 
             if response.status_code != 200:
+                # Log full reason so Azure logs surface quota/auth failures.
+                try:
+                    body = response.json()
+                    reason = body.get('code') or body.get('message') or response.text[:200]
+                except Exception:
+                    reason = response.text[:200]
+                HEALTH_STATE["news_last_error"] = f"HTTP {response.status_code}: {reason}"
+                logger.error(
+                    f"NewsAPI returned {response.status_code} for {symbol}: {reason}"
+                )
                 return self._default_news()
+
+            HEALTH_STATE["news_last_error"] = None
 
             articles = response.json().get('articles', [])
             if not articles:
