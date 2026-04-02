@@ -52,7 +52,10 @@ public class SecurityConfig {
                                 "/api/historical/**",
                                 "/api/news/**",
                                 "/api/ml/**",
-                                "/h2-console/**"
+                                "/h2-console/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**"
                         ).permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()

@@ -1,13 +1,19 @@
 package ie.michaelferry.tradingapi.controllers;
 
 import ie.michaelferry.tradingapi.services.TradingService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+/**
+ * Paper-trading endpoints — buy, sell, portfolio, cash balance, trade history,
+ * and watchlist management. All endpoints require an authenticated user.
+ */
 @RestController
+@Tag(name = "Trading", description = "Paper-trade buy/sell orders, portfolio, and watchlist")
 public class TradingController {
 
     private final TradingService tradingService;

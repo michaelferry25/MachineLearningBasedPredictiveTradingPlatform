@@ -6,6 +6,7 @@ import ie.michaelferry.tradingapi.auth.dto.LoginRequest;
 import ie.michaelferry.tradingapi.auth.dto.RegisterRequest;
 import ie.michaelferry.tradingapi.auth.dto.UpdateProfileRequest;
 import ie.michaelferry.tradingapi.auth.dto.UserResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,8 +17,13 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
 
+/**
+ * Authentication and user-profile endpoints (register, login, change password,
+ * profile updates). Issues JWT bearer tokens used by the rest of the API.
+ */
 @RestController
 @RequestMapping("/api/auth")
+@Tag(name = "Authentication", description = "Registration, login, and user profile management")
 public class AuthController {
 
     private final AuthService authService;

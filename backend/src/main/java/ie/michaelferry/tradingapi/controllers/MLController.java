@@ -2,6 +2,7 @@ package ie.michaelferry.tradingapi.controllers;
 
 import ie.michaelferry.tradingapi.ml.PredictionLog;
 import ie.michaelferry.tradingapi.ml.PredictionLogService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
@@ -10,7 +11,13 @@ import org.springframework.web.client.RestTemplate;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Thin proxy to the Python ML service. Exposes prediction, sentiment,
+ * backtesting, and portfolio-optimisation endpoints and records each
+ * prediction for later accuracy evaluation via {@link PredictionLogService}.
+ */
 @RestController
+@Tag(name = "ML Predictions", description = "Stock predictions, sentiment analysis, backtests, and portfolio optimisation")
 public class MLController {
 
     private final RestTemplate restTemplate;
