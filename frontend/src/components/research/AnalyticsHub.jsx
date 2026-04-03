@@ -35,20 +35,22 @@ export default function AnalyticsHub({ authToken }) {
   const [metrics, setMetrics] = useState(null);
   const [performance, setPerformance] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
+      setError(null);
       try {
         const promises = [
-          fetch(`${API}/api/ml/scan`).then(r => r.ok ? r.json() : null).catch(() => null),
-          fetch(`${API}/api/ml/metrics`).then(r => r.ok ? r.json() : null).catch(() => null),
+          fetch(`${API}/api/ml/scan`).then(r => r.ok ? r.json() : Promise.reject(new Error(`ml/scan ${r.status}`))),
+          fetch(`${API}/api/ml/metrics`).then(r => r.ok ? r.json() : Promise.reject(new Error(`ml/metrics ${r.status}`))),
         ];
         if (authToken) {
           promises.push(
             fetch(`${API}/api/trading/performance`, {
               headers: { Authorization: `Bearer ${authToken}` }
-            }).then(r => r.ok ? r.json() : null).catch(() => null)
+            }).then(r => r.ok ? r.json() : Promise.reject(new Error(`trading/performance ${r.status}`)))
           );
         } else {
           promises.push(Promise.resolve(null));
@@ -58,7 +60,17 @@ export default function AnalyticsHub({ authToken }) {
         if (scanRes.status === "fulfilled" && scanRes.value?.predictions) setScanData(scanRes.value.predictions);
         if (metricsRes.status === "fulfilled" && metricsRes.value && !metricsRes.value.error) setMetrics(metricsRes.value);
         if (perfRes.status === "fulfilled" && perfRes.value) setPerformance(perfRes.value);
-      } catch { /* silent */ }
+
+        const failures = [scanRes, metricsRes, perfRes].filter(r => r.status === "rejected");
+        if (failures.length === 3) {
+          setError("Couldn't load analytics data. Check your connection and try again.");
+        } else if (failures.length > 0) {
+          const reasons = failures.map(f => f.reason?.message || "unknown").join(", ");
+          setError(`Partial data load — some panels unavailable (${reasons}).`);
+        }
+      } catch (e) {
+        setError(`Failed to load analytics: ${e.message}`);
+      }
       setLoading(false);
     };
     fetchData();
@@ -173,7 +185,9 @@ export default function AnalyticsHub({ authToken }) {
         <div className="section-header">
           <span className="section-kicker">Analytics</span>
           <h2>Your AI Market Overview</h2>
-          <p>Unable to load analytics right now. Make sure the ML service is running and try again.</p>
+          <p role="alert">
+            {error || "Unable to load analytics right now. Make sure the ML service is running and try again."}
+          </p>
         </div>
       </section>
     );

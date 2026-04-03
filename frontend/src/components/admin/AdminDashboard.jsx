@@ -105,41 +105,47 @@ export default function AdminDashboard({ authToken }) {
   // ── Data loaders ──
 
   const loadStats = useCallback(async () => {
-    try { setStats(await apiFetch("/api/admin/stats")); } catch { /* */ }
+    try { setStats(await apiFetch("/api/admin/stats")); }
+    catch (e) { showAction(`Failed to load stats: ${e.message}`, true); }
   }, [apiFetch]);
 
   const loadUsers = useCallback(async (search) => {
     try {
       const q = search ? `?search=${encodeURIComponent(search)}` : "";
       setUsers(await apiFetch(`/api/admin/users${q}`));
-    } catch { /* */ }
+    } catch (e) { showAction(`Failed to load users: ${e.message}`, true); }
   }, [apiFetch]);
 
   const loadUserDetail = useCallback(async (id) => {
-    try { setSelectedUser(await apiFetch(`/api/admin/users/${id}`)); } catch { /* */ }
+    try { setSelectedUser(await apiFetch(`/api/admin/users/${id}`)); }
+    catch (e) { showAction(`Failed to load user: ${e.message}`, true); }
   }, [apiFetch]);
 
   const loadTrades = useCallback(async (symbol) => {
     try {
       const q = symbol ? `?symbol=${symbol.toUpperCase()}&limit=200` : "?limit=200";
       setTrades(await apiFetch(`/api/admin/trades${q}`));
-    } catch { /* */ }
+    } catch (e) { showAction(`Failed to load trades: ${e.message}`, true); }
   }, [apiFetch]);
 
   const loadTradeVolume = useCallback(async () => {
-    try { setTradeVolume(await apiFetch("/api/admin/trades/volume")); } catch { /* */ }
+    try { setTradeVolume(await apiFetch("/api/admin/trades/volume")); }
+    catch (e) { showAction(`Failed to load trade volume: ${e.message}`, true); }
   }, [apiFetch]);
 
   const loadPredStats = useCallback(async () => {
-    try { setPredStats(await apiFetch("/api/admin/predictions/stats")); } catch { /* */ }
+    try { setPredStats(await apiFetch("/api/admin/predictions/stats")); }
+    catch (e) { showAction(`Failed to load prediction stats: ${e.message}`, true); }
   }, [apiFetch]);
 
   const loadRecentPreds = useCallback(async () => {
-    try { setRecentPreds(await apiFetch("/api/admin/predictions/recent")); } catch { /* */ }
+    try { setRecentPreds(await apiFetch("/api/admin/predictions/recent")); }
+    catch (e) { showAction(`Failed to load recent predictions: ${e.message}`, true); }
   }, [apiFetch]);
 
   const loadSystemHealth = useCallback(async () => {
-    try { setSystemHealth(await apiFetch("/api/admin/system/health")); } catch { /* */ }
+    try { setSystemHealth(await apiFetch("/api/admin/system/health")); }
+    catch (e) { showAction(`Failed to load system health: ${e.message}`, true); }
   }, [apiFetch]);
 
   // ── Load on tab change ──

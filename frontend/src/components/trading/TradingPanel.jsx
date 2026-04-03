@@ -208,18 +208,34 @@ export default function TradingPanel({ symbol, currentPrice, onTradeComplete, au
       {!confirming ? (
         <div className="trade-buttons-group">
           <div className="trade-buttons">
-            <button className="btn buy-btn" onClick={() => initiateOrder("buy")} disabled={buttonsDisabled}>
-              {loading ? "Processing..." : "Buy"}
+            <button
+              type="button"
+              className="btn buy-btn"
+              onClick={() => initiateOrder("buy")}
+              disabled={buttonsDisabled}
+              aria-label={`Buy ${symbol || "stock"}`}
+              aria-busy={loading}
+            >
+              {loading ? "Processing…" : "Buy"}
             </button>
-            <button className="btn sell-btn" onClick={() => initiateOrder("sell")} disabled={buttonsDisabled}>
-              {loading ? "Processing..." : "Sell"}
+            <button
+              type="button"
+              className="btn sell-btn"
+              onClick={() => initiateOrder("sell")}
+              disabled={buttonsDisabled}
+              aria-label={`Sell ${symbol || "stock"}`}
+              aria-busy={loading}
+            >
+              {loading ? "Processing…" : "Sell"}
             </button>
           </div>
           {heldQuantity > 0 && (
             <button
+              type="button"
               className="btn sell-all-btn"
               onClick={handleSellAll}
               disabled={loading || cooldown || !currentPrice}
+              aria-label={`Sell all ${fmtQty(heldQuantity)} shares of ${symbol}`}
             >
               Sell All ({fmtQty(heldQuantity)} shares)
             </button>
@@ -231,10 +247,16 @@ export default function TradingPanel({ symbol, currentPrice, onTradeComplete, au
             {confirming === "buy" ? "Buy" : "Sell"} {fmtQty(resolvedQuantity)} share{resolvedQuantity !== 1 ? "s" : ""} of {symbol} at ${currentPrice.toFixed(2)} for ${totalValue}?
           </p>
           <div className="trade-confirm-buttons">
-            <button className={`btn ${confirming === "buy" ? "buy-btn" : "sell-btn"}`} onClick={confirmOrder}>
-              Confirm {confirming === "buy" ? "Buy" : "Sell"}
+            <button
+              type="button"
+              className={`btn ${confirming === "buy" ? "buy-btn" : "sell-btn"}`}
+              onClick={confirmOrder}
+              disabled={loading}
+              aria-busy={loading}
+            >
+              {loading ? "Processing…" : `Confirm ${confirming === "buy" ? "Buy" : "Sell"}`}
             </button>
-            <button className="btn trade-cancel-btn" onClick={cancelOrder}>
+            <button type="button" className="btn trade-cancel-btn" onClick={cancelOrder} disabled={loading}>
               Cancel
             </button>
           </div>

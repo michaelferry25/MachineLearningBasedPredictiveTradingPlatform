@@ -54,6 +54,45 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+/* Consistent keyboard-focus ring across buttons, links, and inputs */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[role="button"]:focus-visible,
+[role="menuitem"]:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid #58a6ff;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Chart skeleton loader */
+.chart-skeleton {
+  width: 100%;
+  min-height: 220px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.04) 100%);
+  background-size: 200% 100%;
+  animation: chart-skeleton-shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes chart-skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Mobile polish: toast + navbar under 480px */
+@media (max-width: 480px) {
+  .toast-container {
+    left: 8px;
+    right: 8px;
+    width: auto;
+    max-width: none;
+  }
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;

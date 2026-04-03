@@ -185,10 +185,16 @@ export default function Navbar({ user, onLogout, variant = "app", currentRoute =
           )}
 
           {showAppLinks && (
-            <button className={`mobile-menu-btn ${mobileMenuOpen ? "open" : ""}`} onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-              <span className="hamburger-line" />
-              <span className="hamburger-line" />
-              <span className="hamburger-line" />
+            <button
+              type="button"
+              className={`mobile-menu-btn ${mobileMenuOpen ? "open" : ""}`}
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+              aria-expanded={mobileMenuOpen}
+            >
+              <span className="hamburger-line" aria-hidden="true" />
+              <span className="hamburger-line" aria-hidden="true" />
+              <span className="hamburger-line" aria-hidden="true" />
             </button>
           )}
 
@@ -199,11 +205,18 @@ export default function Navbar({ user, onLogout, variant = "app", currentRoute =
           <div className="nav-actions">
             {user ? (
               <div className="nav-profile-wrap" ref={profileRef} onMouseEnter={handleProfileEnter} onMouseLeave={handleProfileLeave}>
-                <button className={`nav-profile-trigger ${skill.className}`} onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}>
-                  <div className="user-avatar" style={{ borderColor: skill.color }}>
+                <button
+                  type="button"
+                  className={`nav-profile-trigger ${skill.className}`}
+                  onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+                  aria-label="Open profile menu"
+                  aria-haspopup="menu"
+                  aria-expanded={profileDropdownOpen}
+                >
+                  <div className="user-avatar" style={{ borderColor: skill.color }} aria-hidden="true">
                     {user.displayName?.[0] || "T"}
                   </div>
-                  <svg className={`nav-chevron profile-chevron ${profileDropdownOpen ? "flipped" : ""}`} width="10" height="6" viewBox="0 0 10 6" fill="none">
+                  <svg className={`nav-chevron profile-chevron ${profileDropdownOpen ? "flipped" : ""}`} width="10" height="6" viewBox="0 0 10 6" fill="none" aria-hidden="true">
                     <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </button>

@@ -18,7 +18,7 @@ export default function ToastContainer() {
   };
 
   return (
-    <div className="toast-container">
+    <div className="toast-container" role="status" aria-live="polite" aria-atomic="true">
       {toasts.map((toast) => (
         <ToastItem key={toast.id} toast={toast} onRemove={removeToast} />
       ))}
@@ -39,12 +39,17 @@ function ToastItem({ toast, onRemove }) {
   }, [toast, onRemove]);
 
   return (
-    <div className={`toast toast-${toast.type} ${exiting ? "toast-exit" : "toast-enter"}`}>
-      <span className="toast-icon">
+    <div className={`toast toast-${toast.type} ${exiting ? "toast-exit" : "toast-enter"}`} role="alert">
+      <span className="toast-icon" aria-hidden="true">
         {toast.type === "success" ? "\u2713" : toast.type === "error" ? "\u2717" : "\u2139"}
       </span>
       <span className="toast-message">{toast.message}</span>
-      <button className="toast-close" onClick={() => { setExiting(true); setTimeout(() => onRemove(toast.id), 300); }}>
+      <button
+        className="toast-close"
+        type="button"
+        aria-label="Dismiss notification"
+        onClick={() => { setExiting(true); setTimeout(() => onRemove(toast.id), 300); }}
+      >
         &times;
       </button>
     </div>

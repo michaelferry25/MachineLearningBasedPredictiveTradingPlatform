@@ -43,6 +43,7 @@ import SettingsPage from "./components/pages/SettingsPage";
 import AboutSection from "./components/pages/AboutSection";
 import SecuritySection from "./components/pages/SecuritySection";
 import LearnPage from "./components/pages/LearnPage";
+import NotFoundPage from "./components/pages/NotFoundPage";
 
 // Admin
 import AdminDashboard from "./components/admin/AdminDashboard";
@@ -778,13 +779,16 @@ export default function App() {
         window.location.hash = "#/overview";
         return null;
       case "/overview":
-      default:
+      case "":
+      case "/":
         return (
           <div className="overview-page">
             <HeroSection />
             <AnalyticsHub authToken={authToken} />
           </div>
         );
+      default:
+        return <NotFoundPage route={route} />;
     }
   };
 

@@ -37,27 +37,36 @@ export default function ResearchHub({ authToken }) {
   const [scanData, setScanData] = useState(null);
   const [sentiments, setSentiments] = useState({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [expandedBrief, setExpandedBrief] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
+      setError(null);
       try {
-        const scanRes = await fetch(`${API}/api/ml/scan`).then(r => r.ok ? r.json() : null).catch(() => null);
+        const scanRes = await fetch(`${API}/api/ml/scan`)
+          .then(r => r.ok ? r.json() : Promise.reject(new Error(`ml/scan ${r.status}`)))
+          .catch(err => { setError(`Could not load predictions (${err.message}).`); return null; });
         if (scanRes?.predictions) setScanData(scanRes.predictions);
 
         const sentMap = {};
-        await Promise.allSettled(
+        const sentResults = await Promise.allSettled(
           SENTIMENT_SYMBOLS.map(async sym => {
-            try {
-              const res = await fetch(`${API}/api/ml/sentiment/${sym}`);
-              const data = await res.json();
-              if (!data.error) sentMap[sym] = data;
-            } catch { /* skip */ }
+            const res = await fetch(`${API}/api/ml/sentiment/${sym}`);
+            if (!res.ok) throw new Error(`${sym} ${res.status}`);
+            const data = await res.json();
+            if (!data.error) sentMap[sym] = data;
           })
         );
+        const sentFailures = sentResults.filter(r => r.status === "rejected").length;
+        if (sentFailures === SENTIMENT_SYMBOLS.length) {
+          setError(prev => prev || "Sentiment service unavailable.");
+        }
         setSentiments(sentMap);
-      } catch { /* silent */ }
+      } catch (e) {
+        setError(`Failed to load research data: ${e.message}`);
+      }
       setLoading(false);
     };
     fetchData();
@@ -283,7 +292,7 @@ export default function ResearchHub({ authToken }) {
         <div className="section-header">
           <span className="section-kicker">Research</span>
           <h2>AI Market Research Briefs</h2>
-          <p>Unable to load research data. Make sure the ML service is running and try again.</p>
+          <p role="alert">{error || "Unable to load research data. Make sure the ML service is running and try again."}</p>
         </div>
       </section>
     );
