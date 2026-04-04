@@ -124,7 +124,7 @@ class SentimentAnalyzer:
     """Multi-source NLP sentiment engine using FinBERT for financial text analysis."""
 
     SUBREDDITS = ['wallstreetbets', 'stocks', 'investing', 'StockMarket', 'options', 'Daytrading']
-    REDDIT_HEADERS = {'User-Agent': 'MarketMind/1.0 (Sentiment Research Bot)'}
+    REDDIT_USER_AGENT = 'MarketMind/1.0 (Sentiment Research Bot)'
 
     def __init__(self):
         self.news_api_key = os.getenv('NEWS_API_KEY', '')
@@ -134,6 +134,44 @@ class SentimentAnalyzer:
                 "NEWS_API_KEY is not set; news sentiment will return neutral for all symbols. "
                 "Set NEWS_API_KEY in the ml-service environment."
             )
+
+        # Reddit OAuth (required on datacenter IPs — public JSON endpoints are blocked)
+        self.reddit_client_id = os.getenv('REDDIT_CLIENT_ID', '')
+        self.reddit_client_secret = os.getenv('REDDIT_CLIENT_SECRET', '')
+        self.reddit_username = os.getenv('REDDIT_USERNAME', 'marketmind')
+        self._reddit_token = None
+        self._reddit_token_expires = 0
+        if not (self.reddit_client_id and self.reddit_client_secret):
+            logger.error(
+                "REDDIT_CLIENT_ID / REDDIT_CLIENT_SECRET not set; Reddit sentiment will return 0 posts. "
+                "Register a script app at https://www.reddit.com/prefs/apps."
+            )
+
+    def _get_reddit_token(self):
+        """Fetch + cache an OAuth token for Reddit (app-only client_credentials flow)."""
+        if not (self.reddit_client_id and self.reddit_client_secret):
+            return None
+        now = time.time()
+        if self._reddit_token and now < self._reddit_token_expires - 60:
+            return self._reddit_token
+        try:
+            resp = requests.post(
+                'https://www.reddit.com/api/v1/access_token',
+                auth=(self.reddit_client_id, self.reddit_client_secret),
+                data={'grant_type': 'client_credentials'},
+                headers={'User-Agent': f'{self.REDDIT_USER_AGENT} (by /u/{self.reddit_username})'},
+                timeout=10,
+            )
+            if resp.status_code != 200:
+                logger.error(f"Reddit OAuth token fetch failed: HTTP {resp.status_code} {resp.text[:200]}")
+                return None
+            body = resp.json()
+            self._reddit_token = body.get('access_token')
+            self._reddit_token_expires = now + int(body.get('expires_in', 3600))
+            return self._reddit_token
+        except Exception as e:
+            logger.error(f"Reddit OAuth token error: {e}")
+            return None
 
     # ──────────────── News API ────────────────
 
@@ -322,8 +360,8 @@ class SentimentAnalyzer:
         }
 
     def _fetch_subreddit(self, subreddit, symbol):
-        """Fetch posts mentioning symbol from a subreddit using Reddit's public JSON API."""
-        url = f"https://www.reddit.com/r/{subreddit}/search.json"
+        """Fetch posts mentioning symbol from a subreddit. Uses OAuth when credentials
+        are configured (required on datacenter IPs), otherwise public JSON (dev only)."""
         params = {
             'q': symbol,
             'restrict_sr': 'on',
@@ -332,13 +370,25 @@ class SentimentAnalyzer:
             'limit': 25,
         }
 
-        resp = requests.get(url, headers=self.REDDIT_HEADERS, params=params, timeout=5)
+        token = self._get_reddit_token()
+        if token:
+            url = f"https://oauth.reddit.com/r/{subreddit}/search"
+            headers = {
+                'Authorization': f'Bearer {token}',
+                'User-Agent': f'{self.REDDIT_USER_AGENT} (by /u/{self.reddit_username})',
+            }
+        else:
+            url = f"https://www.reddit.com/r/{subreddit}/search.json"
+            headers = {'User-Agent': self.REDDIT_USER_AGENT}
+
+        resp = requests.get(url, headers=headers, params=params, timeout=8)
 
         if resp.status_code == 429:
             time.sleep(2)
-            resp = requests.get(url, headers=self.REDDIT_HEADERS, params=params, timeout=5)
+            resp = requests.get(url, headers=headers, params=params, timeout=8)
 
         if resp.status_code != 200:
+            logger.error(f"Reddit r/{subreddit} fetch failed: HTTP {resp.status_code} {resp.text[:150]}")
             return []
 
         data = resp.json().get('data', {}).get('children', [])
