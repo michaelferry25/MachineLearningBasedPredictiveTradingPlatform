@@ -22,7 +22,8 @@ const NAV_GROUPS = [
     items: [
       { label: "AI Scanner", href: "#/screener", desc: "Screen stocks with AI signals" },
       { label: "Analytics", href: "#/analytics", desc: "Market overview & AI insights" },
-      { label: "Research", href: "#/research", desc: "AI research briefs & sentiment" }
+      { label: "Research", href: "#/research", desc: "AI research briefs & sentiment" },
+      { label: "Results", href: "#/results", desc: "Live model performance & track record" }
     ]
   },
   {

@@ -34,6 +34,7 @@ import MLInsightsTabs from "./components/predictions/MLInsightsTabs";
 import AnalyticsHub from "./components/research/AnalyticsHub";
 import ResearchHub from "./components/research/ResearchHub";
 import NewsSentiment from "./components/research/NewsSentiment";
+import ResultsHub from "./components/research/ResultsHub";
 
 // Infographics
 import FearGreedGauge from "./components/FearGreedGauge";
@@ -736,6 +737,8 @@ export default function App() {
         return renderDashboard();
       case "/research":
         return <ResearchHub authToken={authToken} />;
+      case "/results":
+        return <ResultsHub />;
       case "/live":
         return <LiveMarket settings={settings} />;
       case "/portfolio":

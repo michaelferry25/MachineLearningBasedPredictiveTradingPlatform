@@ -10,6 +10,9 @@
   [![Python](https://img.shields.io/badge/Python_3.11-3776AB?style=flat&logo=python&logoColor=white)](https://python.org/)
   [![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)](https://www.docker.com/)
   [![Chart.js](https://img.shields.io/badge/Chart.js-FF6384?style=flat&logo=chartdotjs&logoColor=white)](https://www.chartjs.org/)
+  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+
+  **Live demo:** [marketmind.cfd](https://marketmind.cfd) · **Results dashboard:** [marketmind.cfd/#/results](https://marketmind.cfd/#/results)
 </div>
 
 ---
@@ -24,6 +27,7 @@
 - **Real-time market data** — live prices via Finnhub API, historical and candlestick charts via Yahoo Finance, market session tracking
 - **Paper trading engine** — simulated trading with $100,000 virtual funds, portfolio tracking, equity curves, P&L analysis, and trade receipts
 - **Research & analytics** — stock screener, research hub, analytics hub with model comparison, Fear & Greed gauge, and prediction track records
+- **Results dashboard** — live, read-only Model Results page showing aggregate hit rate, MAPE, per-symbol reliability grades, ensemble model comparison, feature importance, and recent track records pulled directly from the production API
 - **Gamified learning** — 16 lessons across 3 modules (Market Basics, Data Whiz, Market Pro) with XP, streaks, and badge achievements
 - **Interactive dashboard** — React 19 UI with real-time updates, toast notifications, keyboard shortcuts, watchlists, and CSV export
 
@@ -174,6 +178,7 @@ Multi-source NLP-powered sentiment using **FinBERT** (ProsusAI/finbert):
 | Dashboard | `/dashboard` | Main trading interface with stock selection, charts, predictions, and trading panel |
 | Analytics | `/analytics` | Analytics hub with model comparison and global metrics |
 | Research | `/research` | Research dashboard for in-depth stock analysis |
+| **Results** | **`/results`** | **Live model performance: aggregate KPIs, per-symbol reliability grades, ensemble comparison, feature importance, track record** |
 | Screener | `/screener` | Stock screening and filtering tool |
 | Live Market | `/live` | Real-time market data view |
 | Portfolio | `/portfolio` | Portfolio page with holdings, equity curve, trade history, and performance |
