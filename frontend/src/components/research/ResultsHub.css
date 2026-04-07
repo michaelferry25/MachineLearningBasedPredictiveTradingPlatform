@@ -96,6 +96,99 @@
   border-color: rgba(88, 166, 255, 0.35);
 }
 
+.kpi-good {
+  background: linear-gradient(180deg, rgba(63, 185, 80, 0.12) 0%, rgba(22, 27, 34, 0.85) 100%);
+  border-color: rgba(63, 185, 80, 0.35);
+}
+
+.kpi-warn {
+  background: linear-gradient(180deg, rgba(248, 81, 73, 0.10) 0%, rgba(22, 27, 34, 0.85) 100%);
+  border-color: rgba(248, 81, 73, 0.35);
+}
+
+/* ── Talking points / viva readout ──────────────────────────── */
+
+.talking-points {
+  background: rgba(22, 27, 34, 0.6);
+  border: 1px solid rgba(48, 54, 61, 0.6);
+  border-left: 3px solid #58a6ff;
+  border-radius: 10px;
+  padding: 18px 22px 18px 22px;
+  margin-bottom: 20px;
+}
+
+.talking-points .results-section-title {
+  margin: 0 0 12px 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #58a6ff;
+}
+
+.talking-list {
+  margin: 0;
+  padding-left: 18px;
+  color: #c9d1d9;
+  font-size: 0.92rem;
+  line-height: 1.65;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.talking-list li strong { color: #e6edf3; font-weight: 700; }
+.tp-pos { color: #3fb950 !important; }
+.tp-neg { color: #f85149 !important; }
+
+/* ── Regime breakdown grid ──────────────────────────────────── */
+
+.regime-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.regime-cell {
+  background: rgba(13, 17, 23, 0.5);
+  border: 1px solid rgba(48, 54, 61, 0.6);
+  border-radius: 12px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.regime-up     { border-top: 3px solid rgba(63, 185, 80, 0.7); }
+.regime-down   { border-top: 3px solid rgba(248, 81, 73, 0.7); }
+.regime-spread { border-top: 3px solid rgba(88, 166, 255, 0.7); }
+
+.regime-label {
+  font-size: 0.75rem;
+  color: #8b949e;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.regime-value {
+  font-size: 1.9rem;
+  font-weight: 800;
+  color: #e6edf3;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.regime-sub {
+  font-size: 0.78rem;
+  color: rgba(139, 148, 158, 0.85);
+}
+
+@media (max-width: 640px) {
+  .regime-grid { grid-template-columns: 1fr; }
+  .regime-value { font-size: 1.6rem; }
+}
+
 .kpi-label {
   font-size: 0.78rem;
   color: #8b949e;
