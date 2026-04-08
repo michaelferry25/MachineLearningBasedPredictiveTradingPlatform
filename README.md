@@ -17,6 +17,29 @@
 
 ---
 
+## Contents
+
+- [Overview](#overview)
+- [Screenshots](#screenshots)
+- [Key Results](#key-results)
+- [Problem Statement](#problem-statement)
+- [Architecture](#architecture)
+- [Features](#features)
+- [Tracked Stocks](#tracked-stocks)
+- [ML Model Details](#ml-model-details)
+- [Sentiment Analysis](#sentiment-analysis)
+- [Pages & Navigation](#pages--navigation)
+- [Getting Started](#prerequisites)
+- [Docker Deployment](#docker-deployment)
+- [API Endpoints](#api-endpoints)
+- [Database Schema](#database-schema)
+- [Project Structure](#project-structure)
+- [Testing](#testing)
+- [License](#license)
+- [Author](#author)
+
+---
+
 ## Overview
 
 **MarketMind** is a full-stack predictive trading platform that gives retail investors access to institutional-grade market analysis tools. It combines real-time stock data, machine learning price predictions, FinBERT-powered financial sentiment analysis, paper trading, and a gamified learning module — all in a responsive web application.
@@ -30,6 +53,70 @@
 - **Results dashboard** — live, read-only Model Results page showing aggregate hit rate, MAPE, per-symbol reliability grades, ensemble model comparison, feature importance, and recent track records pulled directly from the production API
 - **Gamified learning** — 16 lessons across 3 modules (Market Basics, Data Whiz, Market Pro) with XP, streaks, and badge achievements
 - **Interactive dashboard** — React 19 UI with real-time updates, toast notifications, keyboard shortcuts, watchlists, and CSV export
+
+---
+
+## Screenshots
+
+> 🌐 **Live site:** [marketmind.cfd](https://marketmind.cfd) — all screenshots below captured from the production deployment.
+
+### Dashboard & Predictions
+![Dashboard](docs/screenshots/dashboard.png)
+*Main trading view — stock selector, live price chart, ensemble prediction card with calibrated confidence, and integrated paper-trading panel.*
+
+### Model Performance — honest benchmarking against naive baselines
+![Results Hero](docs/screenshots/results-hero.png)
+*Live Model Performance dashboard (`/results`) — headline KPIs including a **Skill Edge** metric that compares the ensemble against the best naive strategy (always-up / always-down) to isolate genuine predictive skill from market drift.*
+
+![Predicted vs Actual](docs/screenshots/results-predicted-vs-actual.png)
+*Predicted-vs-actual closing price over the full production history. Solid blue = realised price, dashed gold = model's 5-day forward forecast, with per-symbol selector pills.*
+
+![Model vs Naive](docs/screenshots/results-model-vs-naive.png)
+*Model vs Naive Baseline grouped bar chart — green bars are the MarketMind ensemble, grey bars are the best naive direction rule for each symbol. The gap is the model's out-of-sample skill edge.*
+
+![Regime Breakdown](docs/screenshots/results-regime.png)
+*Regime breakdown — hit rate split by whether the underlying stock actually rose or fell. Balanced performance on both up-days and down-days indicates the edge is not purely a bull-market artefact.*
+
+### Portfolio & Paper Trading
+![Portfolio](docs/screenshots/portfolio.png)
+*Paper-trading portfolio — interactive equity curve with gradient fill and crosshair tooltip, holdings table, realised-P&L trade history, and a CSV export.*
+
+### Sentiment Analysis
+![News Sentiment](docs/screenshots/sentiment.png)
+*FinBERT sentiment panel — news articles and Reddit posts with per-item scores and a source-agreement signal (news × Reddit).*
+
+### Research & Screener
+![Research Hub](docs/screenshots/research.png)
+*Research Hub — technical indicators (RSI, MACD, Bollinger, ADX), feature-importance breakdown, and model-comparison table.*
+
+![Stock Screener](docs/screenshots/screener.png)
+*Stock Screener — filter the tracked universe by signal, return, or confidence.*
+
+### Learning Module
+![Learn](docs/screenshots/learn.png)
+*Gamified learning — 16 lessons across 3 modules with XP, streaks, and badges for long-form user engagement.*
+
+---
+
+## Key Results
+
+Numbers below are computed **live** from the production API (`/api/ml/track-record/*`) and rendered on the [Results page](https://marketmind.cfd/#/results). They are regenerated every time the hourly scheduler fires and the daily-close evaluator grades open predictions.
+
+| Metric | Value | Context |
+|---|---|---|
+| **Direction accuracy (hit rate)** | see live | % of forecasts where the predicted up/down direction matched the realised close |
+| **Skill edge vs best naive baseline** | see live | Percentage-point gap between the ensemble and the best *always-up / always-down* rule — isolates model skill from market drift |
+| **MAPE on predicted price** | see live | Mean absolute percentage error |
+| **MAPE reduction vs persistence** | see live | How much lower the ensemble's MAPE is than a *"forward price equals current price"* baseline |
+| **Up-day vs Down-day hit rate** | see live | Regime-split accuracy — balanced values indicate the model isn't solely benefiting from a bullish window |
+| **Predictions evaluated** | see live | Cumulative evaluated forecasts since deployment, across all 8 tracked symbols |
+
+**Evaluation methodology.** Two naive baselines are reported alongside every headline number, following forecasting conventions from Hyndman & Athanasopoulos's *Forecasting: Principles and Practice* (2021):
+
+- **Directional baseline** — always predict the same direction (up *or* down), picking whichever scores higher on the symbol's window.
+- **Persistence baseline** — predict that the forward closing price equals the current price (i.e. zero expected return).
+
+A model that fails to beat both is indistinguishable from trivial rules; reporting them alongside the ensemble's numbers prevents the common trap of claiming impressive accuracy that's actually just the prevailing market regime showing through.
 
 ---
 
@@ -205,7 +292,7 @@ Multi-source NLP-powered sentiment using **FinBERT** (ProsusAI/finbert):
 ### 1. Clone and configure
 
 ```bash
-git clone https://github.com/your-username/MachineLearningBasedPredictiveTradingPlatform.git
+git clone https://github.com/MichaelFerry25/MachineLearningBasedPredictiveTradingPlatform.git
 cd MachineLearningBasedPredictiveTradingPlatform
 cp .env.example .env
 ```
@@ -402,10 +489,21 @@ cd ml-service && python -m pytest
 
 ---
 
-## Contact
+## License
 
-**Developer:** MarketMind Team
-**Project Type:** Academic Final Year Project
+Released under the [MIT License](./LICENSE) — free to use, modify, and redistribute with attribution. The license also carries a standard "as-is / no warranty" clause, which is deliberate: MarketMind is a demonstration platform, not a financial-advice product.
+
+---
+
+## Author
+
+**Michael Ferry** — BSc (Hons) Software Development, Atlantic Technological University (ATU)
+Final Year Project · 2025–2026
+
+- GitHub: [@MichaelFerry25](https://github.com/MichaelFerry25)
+- Live deployment: [marketmind.cfd](https://marketmind.cfd)
+
+Supervisor, institution, and academic context documented in the accompanying dissertation.
 
 ---
 

@@ -80,7 +80,7 @@ export default function AnalyticsHub({ authToken }) {
   const confidenceData = scanData ? {
     labels: scanData.map(p => p.symbol),
     datasets: [{
-      label: "AI Confidence %",
+      label: "Model Confidence %",
       data: scanData.map(p => Number(p.confidence) || 0),
       borderColor: "#58a6ff",
       backgroundColor: "rgba(88, 166, 255, 0.15)",
@@ -162,7 +162,7 @@ export default function AnalyticsHub({ authToken }) {
       <section className="section-wrapper section-alt" id="analytics">
         <div className="section-header">
           <span className="section-kicker">Analytics</span>
-          <h2>Your AI Market Overview</h2>
+          <h2>Your ML Market Overview</h2>
           <p>Analysing the market...</p>
         </div>
         <div className="analytics-grid">
@@ -184,7 +184,7 @@ export default function AnalyticsHub({ authToken }) {
       <section className="section-wrapper section-alt" id="analytics">
         <div className="section-header">
           <span className="section-kicker">Analytics</span>
-          <h2>Your AI Market Overview</h2>
+          <h2>Your ML Market Overview</h2>
           <p role="alert">
             {error || "Unable to load analytics right now. Make sure the ML service is running and try again."}
           </p>
@@ -198,14 +198,14 @@ export default function AnalyticsHub({ authToken }) {
       <div className="section-header">
         <span className="section-kicker">Analytics</span>
         <h2>Your AI Market Overview</h2>
-        <p>See what our AI thinks about the market right now — all explained in plain English.</p>
+        <p>Live output from the MarketMind ensemble across the tracked stocks — explained in plain English.</p>
       </div>
 
       <div className="analytics-grid">
         {/* Chart 1: Confidence */}
         <div className="analytics-card">
           <div className="card-header">
-            <h3>How Confident is the AI?</h3>
+            <h3>How Confident is the Model?</h3>
             <span className="card-chip">Live</span>
           </div>
           <div className="chart-canvas">
@@ -218,21 +218,21 @@ export default function AnalyticsHub({ authToken }) {
             }} />}
           </div>
           <p className="chart-explainer">
-            This shows how sure our AI is about each stock. Higher means more confident. Above 70% is considered strong.
+            This shows how sure the ensemble is about each stock. Higher means more confident. Above 70% is considered strong.
           </p>
         </div>
 
         {/* Chart 2: Predicted Change */}
         <div className="analytics-card">
           <div className="card-header">
-            <h3>What Does the AI Predict?</h3>
+            <h3>What Does the Model Predict?</h3>
             <span className="card-chip neutral">Next Day</span>
           </div>
           <div className="chart-canvas">
             {changeData && <Bar data={changeData} options={commonOptions} />}
           </div>
           <p className="chart-explainer">
-            Green bars mean the AI thinks the price will go up. Red means it expects a drop. Taller bars = bigger predicted move.
+            Green bars mean the model thinks the price will go up. Red means it expects a drop. Taller bars = bigger predicted move.
           </p>
         </div>
 
@@ -265,10 +265,10 @@ export default function AnalyticsHub({ authToken }) {
           <h4>{bullishCount} of {totalStocks}</h4>
           <span className={`metric-change ${bullishCount > totalStocks / 2 ? "positive" : bullishCount > totalStocks / 3 ? "neutral" : "negative"}`}>
             {bullishCount > totalStocks / 2
-              ? "The AI sees more stocks going up than down"
+              ? "The model sees more stocks going up than down"
               : bullishCount > 0
                 ? "Mixed signals — some stocks look positive"
-                : "The AI is mostly bearish right now"}
+                : "The model is mostly bearish right now"}
           </span>
         </div>
         <div className="metric-tile">
@@ -276,7 +276,7 @@ export default function AnalyticsHub({ authToken }) {
           <h4>{metrics?.hitRate != null ? `${metrics.hitRate}%` : "--"}</h4>
           <span className={`metric-change ${(metrics?.hitRate || 0) >= 60 ? "positive" : "neutral"}`}>
             {metrics?.evaluatedPredictions
-              ? `How often the AI has been right (${metrics.evaluatedPredictions} predictions tested)`
+              ? `How often the model has been right (${metrics.evaluatedPredictions} predictions tested)`
               : "Not enough predictions tested yet"}
           </span>
         </div>
@@ -285,7 +285,7 @@ export default function AnalyticsHub({ authToken }) {
           <h4>{avgConfidence}%</h4>
           <span className={`metric-change ${avgConfidence >= 70 ? "positive" : avgConfidence >= 55 ? "neutral" : "negative"}`}>
             {avgConfidence >= 70
-              ? "The AI is quite sure about its predictions overall"
+              ? "The model is quite sure about its predictions overall"
               : avgConfidence >= 55
                 ? "Moderate confidence — some uncertainty remains"
                 : "Low confidence — take predictions with a grain of salt"}

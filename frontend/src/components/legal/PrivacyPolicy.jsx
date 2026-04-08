@@ -40,7 +40,7 @@ export default function PrivacyPolicy() {
         <h2>1. Data Controller</h2>
         <p>MarketMind is an academic Final Year Project. For the purposes of applicable data protection legislation (including the EU General Data Protection Regulation 2016/679, "GDPR"), the data controller is:</p>
         <div className="legal-contact-card">
-          <p><strong>MarketMind Team</strong></p>
+          <p><strong>Michael Ferry</strong></p>
           <p>Email: <a href="mailto:support@marketmind.cfd">support@marketmind.cfd</a></p>
         </div>
       </section>

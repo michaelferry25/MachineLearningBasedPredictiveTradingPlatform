@@ -185,21 +185,22 @@ const LESSONS = [
   {
     id: "ai-predictions",
     module: 2,
-    title: "What Do AI Predictions Mean?",
+    title: "How the MarketMind Model Works",
     xp: 50,
     usesLiveData: "prediction",
     content: (liveData) => (
       <>
-        <p>MarketMind uses machine learning to analyze patterns in stock data and make predictions. But what do the numbers actually mean?</p>
+        <p>MarketMind forecasts short-horizon returns using a three-way ensemble of Random Forest, Gradient Boosting and XGBoost regressors. The ensemble reads 29 engineered features — technical indicators, price momentum, regime tags and FinBERT sentiment — and blends their outputs into a single prediction.</p>
         <ul>
-          <li><strong>Confidence Score</strong> -How sure the AI is about its prediction. 90% = very confident. 55% = barely more than a coin flip.</li>
-          <li><strong>Signal</strong> -BUY, SELL, or HOLD. This is the AI's recommendation based on the data.</li>
-          <li><strong>Predicted Change</strong> -How much the AI thinks the price will move (as a percentage).</li>
+          <li><strong>Confidence Score</strong> — bounded between 35% and 94%, calibrated against validation error. A high number does not mean certainty; it means the ensemble members agree and the recent error has been low.</li>
+          <li><strong>Signal</strong> — BUY, SELL or HOLD, derived from the predicted return and the confidence band.</li>
+          <li><strong>Predicted Change</strong> — the forecasted percentage move over the prediction horizon.</li>
+          <li><strong>Regime Tag</strong> — the model labels the current market as bullish, bearish, range-bound or high-volatility, which affects how aggressively the signal is weighted.</li>
         </ul>
         {liveData && (
           <div className="lesson-live-data">
             <h4>Live Prediction Example</h4>
-            <p>Here's what our AI currently thinks about AAPL:</p>
+            <p>Current ensemble output for AAPL:</p>
             <div className="live-example-card">
               <strong>AAPL</strong>
               <span>Confidence: {((liveData.confidence || 0) * 100).toFixed(0)}%</span>
@@ -208,12 +209,12 @@ const LESSONS = [
             </div>
           </div>
         )}
-        <div className="lesson-tip">AI predictions are tools, not guarantees. Always use them alongside your own research -the AI can spot patterns humans miss, but it can also be wrong.</div>
+        <div className="lesson-tip">Short-horizon equity forecasting is genuinely hard. Over a 150-day backtest the ensemble only matched roughly coin-flip directional accuracy, which is why confidence is bounded and why the <a href="#/results">Results page</a> shows performance against naive baselines — the model is transparent about what it can and cannot do.</div>
       </>
     ),
     quiz: [
-      { q: "An AI shows 92% confidence on a BUY signal. Which statement is correct?", options: ["The stock will definitely go up", "You should invest all your money", "The AI is highly confident but not certain", "A 92% confidence means 92% profit"], answer: 2 },
-      { q: "The AI says SELL but news reports are very positive. What should you do?", options: ["Always trust the AI over news", "Always trust news over the AI", "Consider both signals before deciding", "Ignore both and guess"], answer: 2 }
+      { q: "A confidence score of 92% on a BUY signal means:", options: ["The stock will definitely go up", "You should invest all your money", "The ensemble members agree and recent error has been low — but it is not certainty", "A 92% confidence means 92% profit"], answer: 2 },
+      { q: "Why is MarketMind's confidence score bounded between 35% and 94%?", options: ["Because the UI looks nicer that way", "To prevent the model from claiming certainty the evaluation data does not support", "Because the API rate-limits higher numbers", "Because all financial models must report between those values"], answer: 1 }
     ]
   },
   {
@@ -475,7 +476,7 @@ const MODULE_EXAMS = {
     title: "Module 3 Exam: Advanced Concepts",
     passingScore: 4,
     questions: [
-      { q: "LSTM networks are ideal for stock data because:", options: ["They process images well", "They handle time-series patterns", "They only need one data point", "They run without training"], answer: 1 },
+      { q: "Why does MarketMind forecast returns instead of raw prices?", options: ["Returns are easier to type", "Returns are stationary — tree-based regressors need stationary targets", "Prices contain too many decimals", "Returns are the same as prices"], answer: 1 },
       { q: "A strategy scores 95% in backtesting but 20% live. The most likely cause is:", options: ["The broker is cheating", "Overfitting to historical data", "The market changed overnight", "Bad internet connection"], answer: 1 },
       { q: "Everyone on social media says to buy a stock that already jumped 40%. A disciplined trader would:", options: ["Buy immediately before it goes higher", "Be cautious - this could be FOMO territory", "Short sell the stock", "Close their trading account"], answer: 1 },
       { q: "AI says BUY, sentiment is positive, and the stock is oversold (cheap). How many signals align?", options: ["Just one", "Two out of three", "All three suggest buying", "None of them align"], answer: 2 },

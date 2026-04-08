@@ -397,7 +397,7 @@ export default function HistoricalChart({
     });
 
     datasets.push({
-      label: "Hourly AI Path",
+      label: "Hourly ML Path",
       data: [...Array(prices.length - 1).fill(null), lastPrice, predictionPrice],
       borderColor: "#d946ef",
       backgroundColor: "transparent",

@@ -216,7 +216,7 @@ const EnhancedPredictionCard = ({
   if (!symbol) {
     return (
       <div className="enhanced-prediction-card">
-        <h3>AI Prediction</h3>
+        <h3>ML Prediction</h3>
         <div className="no-stock-message">Select a stock to see forecasts</div>
       </div>
     );
@@ -225,7 +225,7 @@ const EnhancedPredictionCard = ({
   if (loading && !prediction) {
     return (
       <div className="enhanced-prediction-card">
-        <h3>AI Prediction</h3>
+        <h3>ML Prediction</h3>
         <div className="loading-state">
           <div className="spinner"></div>
           <p>Loading forecast...</p>
@@ -237,7 +237,7 @@ const EnhancedPredictionCard = ({
   if (error) {
     return (
       <div className="enhanced-prediction-card">
-        <h3>AI Prediction</h3>
+        <h3>ML Prediction</h3>
         <div className="error-state">
           <p>{error}</p>
           <button onClick={fetchPrediction} className="retry-btn">Retry</button>
@@ -277,7 +277,7 @@ const EnhancedPredictionCard = ({
   if (!Number.isFinite(predictedPrice) || !Number.isFinite(currentPrice)) {
     return (
       <div className="enhanced-prediction-card">
-        <h3>AI Prediction</h3>
+        <h3>ML Prediction</h3>
         <div className="error-state">
           <p>Forecast data is unavailable.</p>
           <button onClick={fetchPrediction} className="retry-btn">Retry</button>
@@ -338,7 +338,7 @@ const EnhancedPredictionCard = ({
     <div className="enhanced-prediction-card">
       {/* Clean header: signal type + compact timestamp */}
       <div className="prediction-header">
-        <h3>AI Prediction - {symbol}</h3>
+        <h3>ML Prediction — {symbol}</h3>
         <div className="prediction-header-badges">
           {sourceKey === 'bootstrap' && (
             <div className="on-demand-badge">⚡ Live</div>
@@ -409,7 +409,7 @@ const EnhancedPredictionCard = ({
       <div className="confidence-meter">
         <div className="confidence-top">
           <span className="label">
-            {liveConfidence ? 'Live AI Confidence' : 'AI Confidence'}
+            {liveConfidence ? 'Live Model Confidence' : 'Model Confidence'}
             {liveConfidence && <span className="pulse-dot"></span>}
           </span>
           <span className="confidence-value">{displayConfidence.toFixed(1)}%</span>
@@ -450,7 +450,7 @@ const EnhancedPredictionCard = ({
               </div>
             )}
             <div className="confidence-explainer">
-              Our AI confidence updates throughout the trading day as new data confirms or challenges the prediction. It typically rises as the market approaches close.
+              Model confidence updates throughout the trading day as new data confirms or challenges the prediction. It typically rises as the market approaches close.
             </div>
           </div>
         ) : (

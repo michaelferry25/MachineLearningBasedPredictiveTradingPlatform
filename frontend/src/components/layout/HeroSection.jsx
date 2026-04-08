@@ -6,7 +6,7 @@ export default function HeroSection() {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
               <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor"/>
             </svg>
-            AI-Powered Trading
+            ML-Powered Trading
           </div>
   
           <h1 className="hero-title">MarketMind</h1>
@@ -39,7 +39,7 @@ export default function HeroSection() {
             </div>
             <div className="stat-divider"></div>
             <div className="stat-item">
-              <div className="stat-number">AI Powered</div>
+              <div className="stat-number">ML Powered</div>
               <div className="stat-label">Predictions</div>
             </div>
           </div>

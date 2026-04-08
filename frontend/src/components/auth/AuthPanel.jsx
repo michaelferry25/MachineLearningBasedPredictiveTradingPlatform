@@ -362,8 +362,8 @@ export default function AuthPanel({ onAuthSuccess }) {
             </h1>
 
             <p className="auth-tagline">
-              AI-powered predictions, real-time sentiment, and institutional-grade
-              analytics — unified in one platform.
+              ML-powered predictions, FinBERT sentiment analysis, and
+              serious trading analytics — unified in one platform.
             </p>
 
             <div className="auth-chart-section">
@@ -379,29 +379,29 @@ export default function AuthPanel({ onAuthSuccess }) {
 
             <div className="auth-proof-row">
               <div className="proof-item">
-                <span className="proof-number">6+</span>
-                <span className="proof-label">ML Models</span>
+                <span className="proof-number">3</span>
+                <span className="proof-label">Ensemble Models</span>
               </div>
               <div className="proof-divider" />
               <div className="proof-item">
-                <span className="proof-number">50+</span>
-                <span className="proof-label">Stocks Tracked</span>
+                <span className="proof-number">150</span>
+                <span className="proof-label">Day Backtest</span>
               </div>
               <div className="proof-divider" />
               <div className="proof-item">
-                <span className="proof-number">24/7</span>
-                <span className="proof-label">Monitoring</span>
+                <span className="proof-number">29</span>
+                <span className="proof-label">Features</span>
               </div>
             </div>
 
             <div className="auth-trust-row">
               <div className="trust-item">
-                <span className="trust-tag">AES-256</span>
-                <span className="trust-text">Encryption</span>
+                <span className="trust-tag">BCrypt</span>
+                <span className="trust-text">+ JWT Auth</span>
               </div>
               <div className="trust-item">
-                <span className="trust-tag">LSTM</span>
-                <span className="trust-text">Neural Networks</span>
+                <span className="trust-tag">XGBoost</span>
+                <span className="trust-text">+ FinBERT</span>
               </div>
               <div className="trust-item">
                 <span className="trust-tag">LIVE</span>

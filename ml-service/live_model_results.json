@@ -1,0 +1,152 @@
+{
+  "report_title": "MarketMind ML Model Performance Report",
+  "generated": "2026-04-20T20:48:00Z",
+  "model": "Return-Based RF/GB/XGB Ensemble + Regime + Integrated Sentiment",
+  "model_version": "v2_return_regime_sentiment",
+  "test_period": "150 trading days (~7 months backtest, Sep 2025 - Apr 2026)",
+  "source": "Live Azure server (https://marketmind.cfd/ml/predict/{symbol}/detailed)",
+
+  "per_stock_results": {
+    "AAPL": {
+      "current_price": 272.45,
+      "predicted_price": 266.75,
+      "signal": "HOLD",
+      "confidence": 35.0,
+      "regime": "range_bound",
+      "direction_accuracy_pct": 53.33,
+      "ensemble_mape_pct": 3.421,
+      "baseline_mape_pct": 2.605,
+      "mape_vs_baseline_pct": -31.34,
+      "per_model": {
+        "RandomForest":       { "mape": 3.585, "r2": -0.9214, "weight": 0.339 },
+        "GradientBoosting":   { "mape": 3.956, "r2": -1.2646, "weight": 0.325 },
+        "XGBoost":            { "mape": 2.940, "r2": -0.3446, "weight": 0.336 }
+      }
+    },
+    "MSFT": {
+      "current_price": 416.91,
+      "predicted_price": 407.42,
+      "signal": "HOLD",
+      "confidence": 51.55,
+      "regime": "bearish_trend",
+      "direction_accuracy_pct": 48.0,
+      "ensemble_mape_pct": 3.366,
+      "baseline_mape_pct": 2.98,
+      "mape_vs_baseline_pct": -12.95,
+      "per_model": {
+        "RandomForest":       { "mape": 3.500, "r2": -0.1431, "weight": 0.321 },
+        "GradientBoosting":   { "mape": 3.550, "r2": -0.2207, "weight": 0.304 },
+        "XGBoost":            { "mape": 3.243, "r2": -0.1147, "weight": 0.375 }
+      }
+    },
+    "TSLA": {
+      "current_price": 393.17,
+      "predicted_price": 379.52,
+      "signal": "HOLD",
+      "confidence": 36.14,
+      "regime": "high_volatility",
+      "direction_accuracy_pct": 52.0,
+      "ensemble_mape_pct": 6.236,
+      "baseline_mape_pct": 4.113,
+      "mape_vs_baseline_pct": -51.62,
+      "per_model": {
+        "RandomForest":       { "mape": 6.227, "r2": -1.1688, "weight": 0.335 },
+        "GradientBoosting":   { "mape": 6.500, "r2": -1.3651, "weight": 0.334 },
+        "XGBoost":            { "mape": 6.084, "r2": -1.0930, "weight": 0.331 }
+      }
+    },
+    "AMZN": {
+      "current_price": 248.53,
+      "predicted_price": 243.67,
+      "signal": "HOLD",
+      "confidence": 35.0,
+      "regime": "bullish_trend",
+      "direction_accuracy_pct": 50.67,
+      "ensemble_mape_pct": 4.689,
+      "baseline_mape_pct": 3.784,
+      "mape_vs_baseline_pct": -23.91,
+      "per_model": {
+        "RandomForest":       { "mape": 4.607, "r2": -0.2726, "weight": 0.343 },
+        "GradientBoosting":   { "mape": 4.809, "r2": -0.3738, "weight": 0.327 },
+        "XGBoost":            { "mape": 4.767, "r2": -0.3738, "weight": 0.330 }
+      }
+    },
+    "NVDA": {
+      "current_price": 201.71,
+      "predicted_price": 206.99,
+      "signal": "BUY",
+      "confidence": 53.03,
+      "regime": "bullish_trend",
+      "direction_accuracy_pct": 55.33,
+      "ensemble_mape_pct": 3.863,
+      "baseline_mape_pct": 3.534,
+      "mape_vs_baseline_pct": -9.30,
+      "per_model": {
+        "RandomForest":       { "mape": 3.753, "r2": -0.0038, "weight": 0.347 },
+        "GradientBoosting":   { "mape": 3.955, "r2": -0.1152, "weight": 0.329 },
+        "XGBoost":            { "mape": 3.995, "r2": -0.1526, "weight": 0.324 }
+      }
+    },
+    "META": {
+      "current_price": 671.31,
+      "predicted_price": 679.55,
+      "signal": "HOLD",
+      "confidence": 35.0,
+      "regime": "high_volatility",
+      "direction_accuracy_pct": 45.64,
+      "ensemble_mape_pct": 5.803,
+      "baseline_mape_pct": 4.177,
+      "mape_vs_baseline_pct": -38.92,
+      "per_model": {
+        "RandomForest":       { "mape": 5.493, "r2": -0.4993, "weight": 0.358 },
+        "GradientBoosting":   { "mape": 6.623, "r2": -1.0602, "weight": 0.296 },
+        "XGBoost":            { "mape": 5.522, "r2": -0.5451, "weight": 0.346 }
+      }
+    },
+    "NFLX": {
+      "current_price": 94.81,
+      "predicted_price": 97.0,
+      "signal": "HOLD",
+      "confidence": 35.0,
+      "regime": "bearish_trend",
+      "direction_accuracy_pct": 46.0,
+      "ensemble_mape_pct": 6.01,
+      "baseline_mape_pct": 4.067,
+      "mape_vs_baseline_pct": -47.77,
+      "per_model": {
+        "RandomForest":       { "mape": 5.607, "r2": -0.7716, "weight": 0.360 },
+        "GradientBoosting":   { "mape": 6.947, "r2": -1.4421, "weight": 0.289 },
+        "XGBoost":            { "mape": 5.912, "r2": -0.8862, "weight": 0.351 }
+      }
+    },
+    "GOOGL": {
+      "current_price": 337.54,
+      "predicted_price": 329.37,
+      "signal": "HOLD",
+      "confidence": 35.0,
+      "regime": "bullish_trend",
+      "direction_accuracy_pct": 44.67,
+      "ensemble_mape_pct": 4.819,
+      "baseline_mape_pct": 3.476,
+      "mape_vs_baseline_pct": -38.63,
+      "per_model": {
+        "RandomForest":       { "mape": 5.204, "r2": -1.1079, "weight": 0.330 },
+        "GradientBoosting":   { "mape": 5.432, "r2": -1.2067, "weight": 0.332 },
+        "XGBoost":            { "mape": 4.015, "r2": -0.3916, "weight": 0.338 }
+      }
+    }
+  },
+
+  "summary": {
+    "avg_direction_accuracy_pct": 49.54,
+    "avg_ensemble_mape_pct": 4.776,
+    "avg_baseline_mape_pct": 3.592,
+    "avg_mape_vs_baseline_pct": -31.56,
+    "best_direction_accuracy": { "symbol": "NVDA", "accuracy": 55.33 },
+    "worst_direction_accuracy": { "symbol": "GOOGL", "accuracy": 44.67 },
+    "best_mape": { "symbol": "MSFT", "mape": 3.366 },
+    "worst_mape": { "symbol": "TSLA", "mape": 6.236 },
+    "stocks_above_50pct_direction": ["AAPL", "TSLA", "AMZN", "NVDA"],
+    "stocks_below_50pct_direction": ["MSFT", "META", "NFLX", "GOOGL"]
+  }
+}

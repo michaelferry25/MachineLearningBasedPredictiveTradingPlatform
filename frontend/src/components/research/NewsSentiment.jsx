@@ -40,7 +40,7 @@ export default function NewsSentiment({ symbol }) {
     return (
       <div className="sentiment-dashboard">
         <div className="sentiment-dash-header">
-          <h3>AI Sentiment Intelligence</h3>
+          <h3>FinBERT Sentiment Intelligence</h3>
         </div>
         <div className="sentiment-empty">Select a stock to analyse market sentiment</div>
       </div>
@@ -51,7 +51,7 @@ export default function NewsSentiment({ symbol }) {
     return (
       <div className="sentiment-dashboard">
         <div className="sentiment-dash-header">
-          <h3>AI Sentiment Intelligence — {symbol}</h3>
+          <h3>FinBERT Sentiment Intelligence — {symbol}</h3>
         </div>
         <div className="sentiment-loading">
           <div className="sentiment-spinner" />
@@ -67,7 +67,7 @@ export default function NewsSentiment({ symbol }) {
       <div className="sentiment-dashboard">
         <div className="sentiment-dash-header">
           <div>
-            <h3>AI Sentiment Intelligence — {symbol}</h3>
+            <h3>FinBERT Sentiment Intelligence — {symbol}</h3>
           </div>
         </div>
         <div className="sentiment-error-state">
@@ -106,7 +106,7 @@ export default function NewsSentiment({ symbol }) {
     <div className="sentiment-dashboard">
       <div className="sentiment-dash-header">
         <div>
-          <h3>AI Sentiment Intelligence — {symbol}</h3>
+          <h3>FinBERT Sentiment Intelligence — {symbol}</h3>
           <span className="sentiment-subtitle">
             Multi-source NLP analysis across {combined.total_sources || 0} data points
           </span>

@@ -72,7 +72,7 @@ export default function ResearchHub({ authToken }) {
     fetchData();
   }, []);
 
-  // --- Brief 1: AI Stock Predictions ---
+  // --- Brief 1: ML Stock Predictions ---
   const buildPredictionBrief = () => {
     if (!scanData) return null;
     const bullish = scanData.filter(p => ["BUY", "STRONG BUY"].includes((p.signal || "").toUpperCase()));
@@ -87,12 +87,12 @@ export default function ResearchHub({ authToken }) {
     const confLevel = avgConf >= 70 ? "high" : avgConf >= 55 ? "moderate" : "low";
 
     return {
-      title: "AI Stock Predictions",
+      title: "ML Stock Predictions",
       icon: "chart-line",
       points: [
-        `${bullish.length} out of ${scanData.length} stocks look bullish (the AI thinks they'll go up)`,
+        `${bullish.length} out of ${scanData.length} stocks look bullish (the model thinks they'll go up)`,
         `${top.symbol} has the biggest predicted move: ${topChg >= 0 ? "+" : ""}${topChg.toFixed(2)}%`,
-        `Average AI confidence is ${avgConf}% — ${confLevel} conviction`
+        `Average model confidence is ${avgConf}% — ${confLevel} conviction`
       ]
     };
   };
@@ -159,7 +159,7 @@ export default function ResearchHub({ authToken }) {
 
   // --- Expanded content ---
   const renderExpanded = (title) => {
-    if (title === "AI Stock Predictions" && scanData) {
+    if (title === "ML Stock Predictions" && scanData) {
       return (
         <div className="brief-expanded">
           <table className="brief-expanded-table">
@@ -271,7 +271,7 @@ export default function ResearchHub({ authToken }) {
       <section className="section-wrapper" id="research">
         <div className="section-header">
           <span className="section-kicker">Research</span>
-          <h2>AI Market Research Briefs</h2>
+          <h2>ML Market Research Briefs</h2>
           <p>Analysing stocks, news, and social media...</p>
         </div>
         <div className="research-grid">
@@ -291,7 +291,7 @@ export default function ResearchHub({ authToken }) {
       <section className="section-wrapper" id="research">
         <div className="section-header">
           <span className="section-kicker">Research</span>
-          <h2>AI Market Research Briefs</h2>
+          <h2>ML Market Research Briefs</h2>
           <p role="alert">{error || "Unable to load research data. Make sure the ML service is running and try again."}</p>
         </div>
       </section>
@@ -302,8 +302,8 @@ export default function ResearchHub({ authToken }) {
     <section className="section-wrapper" id="research">
       <div className="section-header">
         <span className="section-kicker">Research</span>
-        <h2>AI Market Research Briefs</h2>
-        <p>Our AI analyses stocks, news, and social media — here's what it found, explained simply.</p>
+        <h2>ML Market Research Briefs</h2>
+        <p>The MarketMind ensemble analyses stocks, news and social media — here's what it found, explained simply.</p>
       </div>
 
       <div className="research-grid">

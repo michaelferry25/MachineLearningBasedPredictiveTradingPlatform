@@ -258,14 +258,8 @@ export default function App() {
     // Load user settings from backend
     if (token) loadSettingsFromBackend(token);
 
-    //This is checking if the user is a new signup
-    const isNewSignup = payload.newUser || (!payload.user?.updatedAt);
-    if (isNewSignup) {
-      sessionStorage.setItem("marketmind_new_signup", "true");
-      window.location.hash = "#/learn";
-    } else {
-      window.location.hash = "#/overview";
-    }
+    // Always land on the overview after login or signup
+    window.location.hash = "#/overview";
   };
 
   // Logs the user out
@@ -273,7 +267,7 @@ export default function App() {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     setAuth(null);
-    window.location.hash = "#/auth";
+    window.location.hash = "#/about";
   };
 
   // Updates the user profile
@@ -534,7 +528,7 @@ export default function App() {
 
         <div className="dashboard-welcome">
           <h2>Welcome to your <span>Trading Dashboard</span></h2>
-          <p>Search for a stock, pick from the popular tickers below, or check your watchlist to get started. Select any stock to view live prices, AI predictions, charts, and trading tools.</p>
+          <p>Search for a stock, pick from the popular tickers below, or check your watchlist to get started. Select any stock to view live prices, ML forecasts, charts, and trading tools.</p>
         </div>
 
         {/* Left/Top controls: Search, Popular, Watchlist - no column wrapper */}
@@ -805,13 +799,29 @@ export default function App() {
 
   //Legal routes
   const LEGAL_ROUTES = ["/terms", "/privacy", "/disclaimer", "/acceptable-use", "/cookie-policy"];
+  const AUTH_ROUTES = ["/auth", "/login", "/signup"];
+  const PUBLIC_ROUTES = ["/about", ...AUTH_ROUTES, ...LEGAL_ROUTES];
 
   if (!auth) {
-    const isLegalPage = LEGAL_ROUTES.includes(route);
+    // Anything that isn't an explicitly public unauth route lands on About first
+    const normalizedRoute = PUBLIC_ROUTES.includes(route) ? route : "/about";
+    if (normalizedRoute !== route) {
+      window.location.hash = "#/about";
+    }
+
+    let content;
+    if (AUTH_ROUTES.includes(normalizedRoute)) {
+      content = <AuthPanel onAuthSuccess={handleAuthSuccess} />;
+    } else if (LEGAL_ROUTES.includes(normalizedRoute)) {
+      content = renderPage();
+    } else {
+      content = <AboutSection />;
+    }
+
     return (
       <>
-        <Navbar variant="auth" currentRoute={route} />
-        {isLegalPage ? renderPage() : <AuthPanel onAuthSuccess={handleAuthSuccess} />}
+        <Navbar variant="auth" currentRoute={normalizedRoute} />
+        {content}
         <Footer />
       </>
     );
