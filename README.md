@@ -1,10 +1,12 @@
 <div align="center">
 
+  <img src="frontend/public/MarketMind.png" alt="MarketMind Logo" width="170" />
 
   # MarketMind
 
   **Machine learning powered predictive trading platform with real-time AI stock predictions**
 
+  [![CI](https://github.com/MichaelFerry25/MachineLearningBasedPredictiveTradingPlatform/actions/workflows/ci.yml/badge.svg)](https://github.com/MichaelFerry25/MachineLearningBasedPredictiveTradingPlatform/actions/workflows/ci.yml)
   [![React](https://img.shields.io/badge/React_19-20232A?style=flat&logo=react&logoColor=61DAFB)](https://react.dev/)
   [![Spring Boot](https://img.shields.io/badge/Spring_Boot_3.2-6DB33F?style=flat&logo=spring-boot&logoColor=white)](https://spring.io/projects/spring-boot)
   [![Python](https://img.shields.io/badge/Python_3.11-3776AB?style=flat&logo=python&logoColor=white)](https://python.org/)
@@ -12,7 +14,9 @@
   [![Chart.js](https://img.shields.io/badge/Chart.js-FF6384?style=flat&logo=chartdotjs&logoColor=white)](https://www.chartjs.org/)
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
-  **Live demo:** [marketmind.cfd](https://marketmind.cfd) · **Results dashboard:** [marketmind.cfd/#/results](https://marketmind.cfd/#/results)
+  **Live demo:** [marketmind.cfd](https://marketmind.cfd) · **Results dashboard:** [marketmind.cfd/#/results](https://marketmind.cfd/#/results) · **Screencast:** [YouTube (unlisted)](https://youtu.be/j162aCTeiIY)
+
+  *Final Year Project · B.Sc. (Hons) Software Development · Atlantic Technological University (ATU), Galway · 2025–2026*
 </div>
 
 ---
@@ -20,8 +24,8 @@
 ## Contents
 
 - [Overview](#overview)
-- [Screenshots](#screenshots)
 - [Key Results](#key-results)
+- [Screenshots](#screenshots)
 - [Problem Statement](#problem-statement)
 - [Architecture](#architecture)
 - [Features](#features)
@@ -29,7 +33,7 @@
 - [ML Model Details](#ml-model-details)
 - [Sentiment Analysis](#sentiment-analysis)
 - [Pages & Navigation](#pages--navigation)
-- [Getting Started](#prerequisites)
+- [Getting Started](#getting-started)
 - [Docker Deployment](#docker-deployment)
 - [API Endpoints](#api-endpoints)
 - [Database Schema](#database-schema)
@@ -46,13 +50,39 @@
 
 - **ML-powered predictions** — ensemble of Random Forest, Gradient Boosting, and XGBoost models predicting 5-day forward returns using 29 technical indicators and macro signals
 - **Continuous Learning & GridSearch** — Models auto-tune hyperparameters via GridSearchCV and continuously learn from new daily market data to adapt to regime changes
-- **FinBERT sentiment analysis** — NLP analysis of financial news (NewsAPI) and Reddit discussions (6 subreddits) using the ProsusAI/finbert transformer model, with TextBlob fallback
+- **FinBERT sentiment analysis** — the production sentiment pipeline uses the ProsusAI/finbert transformer model exclusively, scoring financial news (NewsAPI) and Reddit discussions (6 subreddits) in batch. FinBERT is meaningfully better suited to financial text than general-purpose sentiment libraries, which misclassify domain phrases like "cutting costs", "diluted shares" or "headwinds"
 - **Real-time market data** — live prices via Finnhub API, historical and candlestick charts via Yahoo Finance, market session tracking
 - **Paper trading engine** — simulated trading with $100,000 virtual funds, portfolio tracking, equity curves, P&L analysis, and trade receipts
 - **Research & analytics** — stock screener, research hub, analytics hub with model comparison, Fear & Greed gauge, and prediction track records
-- **Results dashboard** — live, read-only Model Results page showing aggregate hit rate, MAPE, per-symbol reliability grades, ensemble model comparison, feature importance, and recent track records pulled directly from the production API
+- **Results dashboard** — read-only Model Results page pinned to the canonical snapshot at [`ml-service/live_model_results.json`](./ml-service/live_model_results.json), showing aggregate hit rate, MAPE, per-symbol reliability grades, ensemble model comparison against naive baselines, and full track records
 - **Gamified learning** — 16 lessons across 3 modules (Market Basics, Data Whiz, Market Pro) with XP, streaks, and badge achievements
 - **Interactive dashboard** — React 19 UI with real-time updates, toast notifications, keyboard shortcuts, watchlists, and CSV export
+
+---
+
+## Key Results
+
+Headline metrics below are drawn from the canonical snapshot at [`ml-service/live_model_results.json`](./ml-service/live_model_results.json), evaluated over a 150 trading-day backtest (Sep 2025 – Apr 2026) across all 8 tracked symbols. The same numbers are rendered live on the [Results page](https://marketmind.cfd/#/results).
+
+| Metric | Value | Context |
+|---|---|---|
+| **Average direction accuracy** | **49.54%** | Across 8 symbols. NVDA best at 55.33%, GOOGL worst at 44.67%. 4 of 8 symbols clear 50%. |
+| **Ensemble MAPE** | **4.78%** | Mean absolute percentage error on predicted 5-day forward price. |
+| **Persistence-baseline MAPE** | **3.59%** | One-step persistence forecast (forward price = current price). |
+| **Δ vs persistence** | **−31.6%** | The persistence baseline beats the ensemble on magnitude error. A deliberate trade-off, documented in the project limitations. |
+| **Best symbol (direction)** | **NVDA, 55.33%** | Bullish-trend regime. |
+| **Worst symbol (direction)** | **GOOGL, 44.67%** | Confidence pinned near 35% floor. |
+| **Best symbol (MAPE)** | **MSFT, 3.37%** | Lowest magnitude error. |
+| **Worst symbol (MAPE)** | **TSLA, 6.24%** | High-volatility regime. |
+| **Backtest window** | **150 trading days** | Sep 2025 – Apr 2026 |
+| **Predictions evaluated** | **1,200** | 150 days × 8 symbols |
+
+**Evaluation methodology.** Two naive baselines are reported alongside every headline number, following the forecasting conventions in Hyndman & Athanasopoulos, *Forecasting: Principles and Practice* (3rd ed., 2021):
+
+- **Directional baseline** — always predict the same direction (up *or* down), picking whichever scores higher on the symbol's window.
+- **Persistence baseline** — predict that the forward closing price equals the current price (i.e. zero expected return).
+
+A model that fails to beat both is indistinguishable from trivial rules. Reporting them alongside the ensemble's numbers prevents the common trap of claiming impressive accuracy that is actually just the prevailing market regime showing through. The snapshot is tamper-evident: every figure on the Results page can be verified directly against [`ml-service/live_model_results.json`](./ml-service/live_model_results.json) in this repository.
 
 ---
 
@@ -62,61 +92,27 @@
 
 ### Dashboard & Predictions
 ![Dashboard](docs/screenshots/dashboard.png)
-*Main trading view — stock selector, live price chart, ensemble prediction card with calibrated confidence, and integrated paper-trading panel.*
+*Main dashboard view — NVDA selected, 1-month price chart with forecast targets, hit/miss markers, daily-close and hourly forecasts overlaid, track-record grade, and the ML prediction and FinBERT sentiment cards below.*
 
 ### Model Performance — honest benchmarking against naive baselines
-![Results Hero](docs/screenshots/results-hero.png)
-*Live Model Performance dashboard (`/results`) — headline KPIs including a **Skill Edge** metric that compares the ensemble against the best naive strategy (always-up / always-down) to isolate genuine predictive skill from market drift.*
-
-![Predicted vs Actual](docs/screenshots/results-predicted-vs-actual.png)
-*Predicted-vs-actual closing price over the full production history. Solid blue = realised price, dashed gold = model's 5-day forward forecast, with per-symbol selector pills.*
-
-![Model vs Naive](docs/screenshots/results-model-vs-naive.png)
-*Model vs Naive Baseline grouped bar chart — green bars are the MarketMind ensemble, grey bars are the best naive direction rule for each symbol. The gap is the model's out-of-sample skill edge.*
-
-![Regime Breakdown](docs/screenshots/results-regime.png)
-*Regime breakdown — hit rate split by whether the underlying stock actually rose or fell. Balanced performance on both up-days and down-days indicates the edge is not purely a bull-market artefact.*
+![Model Performance](docs/screenshots/results.png)
+*Results page (`/results`) — headline KPIs rendered from the canonical snapshot: 49.54% directional accuracy, 4.78% ensemble MAPE, 3.59% persistence-baseline MAPE, and a −31.56% delta. Per-symbol directional-accuracy bar chart below shows only 4 of 8 symbols clear the 50% coin-flip line.*
 
 ### Portfolio & Paper Trading
 ![Portfolio](docs/screenshots/portfolio.png)
-*Paper-trading portfolio — interactive equity curve with gradient fill and crosshair tooltip, holdings table, realised-P&L trade history, and a CSV export.*
+*Portfolio Command Centre — live equity curve with +7.10% return, $107,104 total value across 7 positions and 9 executed trades, holdings table with per-position P&L, asset allocation donut, and CSV export.*
 
 ### Sentiment Analysis
-![News Sentiment](docs/screenshots/sentiment.png)
-*FinBERT sentiment panel — news articles and Reddit posts with per-item scores and a source-agreement signal (news × Reddit).*
+![FinBERT Sentiment](docs/screenshots/sentiment.png)
+*FinBERT Sentiment Intelligence panel — NLP score, news vs Reddit source agreement, subreddit activity breakdown across 6 finance communities, and scored top signals from individual posts. Paired with the ML prediction card showing Hold / Next-Day Forecast / Live Model Confidence and the "Why this signal?" feature-importance explanation.*
 
-### Research & Screener
-![Research Hub](docs/screenshots/research.png)
-*Research Hub — technical indicators (RSI, MACD, Bollinger, ADX), feature-importance breakdown, and model-comparison table.*
-
-![Stock Screener](docs/screenshots/screener.png)
-*Stock Screener — filter the tracked universe by signal, return, or confidence.*
+### Live Markets
+![Live Markets](docs/screenshots/livemarkets.png)
+*Live Markets page — AAPL 30-minute candles with SMA 20 overlay and volume bars via Lightweight Charts, with a full TradingView chart embedded below for professional-grade technical analysis.*
 
 ### Learning Module
 ![Learn](docs/screenshots/learn.png)
-*Gamified learning — 16 lessons across 3 modules with XP, streaks, and badges for long-form user engagement.*
-
----
-
-## Key Results
-
-Numbers below are computed **live** from the production API (`/api/ml/track-record/*`) and rendered on the [Results page](https://marketmind.cfd/#/results). They are regenerated every time the hourly scheduler fires and the daily-close evaluator grades open predictions.
-
-| Metric | Value | Context |
-|---|---|---|
-| **Direction accuracy (hit rate)** | see live | % of forecasts where the predicted up/down direction matched the realised close |
-| **Skill edge vs best naive baseline** | see live | Percentage-point gap between the ensemble and the best *always-up / always-down* rule — isolates model skill from market drift |
-| **MAPE on predicted price** | see live | Mean absolute percentage error |
-| **MAPE reduction vs persistence** | see live | How much lower the ensemble's MAPE is than a *"forward price equals current price"* baseline |
-| **Up-day vs Down-day hit rate** | see live | Regime-split accuracy — balanced values indicate the model isn't solely benefiting from a bullish window |
-| **Predictions evaluated** | see live | Cumulative evaluated forecasts since deployment, across all 8 tracked symbols |
-
-**Evaluation methodology.** Two naive baselines are reported alongside every headline number, following forecasting conventions from Hyndman & Athanasopoulos's *Forecasting: Principles and Practice* (2021):
-
-- **Directional baseline** — always predict the same direction (up *or* down), picking whichever scores higher on the symbol's window.
-- **Persistence baseline** — predict that the forward closing price equals the current price (i.e. zero expected return).
-
-A model that fails to beat both is indistinguishable from trivial rules; reporting them alongside the ensemble's numbers prevents the common trap of claiming impressive accuracy that's actually just the prevailing market regime showing through.
+*MarketMind Academy — 16 lessons across 3 modules (Market Basics, Data Whiz, Market Pro) with XP progression, streak tracking, and badges. Users pass each module exam with 80%+ to advance through Beginner → Intermediate → Advanced → Pro.*
 
 ---
 
@@ -179,7 +175,7 @@ Retail investors lack access to the sophisticated analysis tools available to in
 |---|---|
 | **Real-Time Stock Tracking** | Live price updates for 8 tracked equities via Finnhub API |
 | **Ensemble ML Predictions** | Random Forest, Gradient Boosting, and XGBoost models with dynamic weighted averaging based on validation MAE |
-| **FinBERT Sentiment Analysis** | ProsusAI/finbert NLP model analysing news (NewsAPI) and Reddit (6 subreddits) with weighted source fusion |
+| **FinBERT Sentiment Analysis** | Production sentiment pipeline using the ProsusAI/finbert transformer exclusively. Scores news (NewsAPI) and Reddit (6 subreddits) in batches of 16 with weighted source fusion |
 | **Paper Trading** | Buy/sell simulation with $100k virtual portfolio, position averaging, and real-time P&L tracking |
 | **JWT Authentication** | Secure user accounts with registration, login, profile management, password change, and user settings |
 | **Equity Curve** | Interactive portfolio performance chart with gradient fill, crosshair tooltip, zoom/pan, and high/low watermarks |
@@ -199,6 +195,8 @@ Retail investors lack access to the sophisticated analysis tools available to in
 | **Historical Charts** | Lightweight Charts JS rendering with 5D, 1M, 3M, 6M, 1Y ranges and track record overlay |
 | **Custom Watchlist** | Personalised stock watchlist for quick access |
 | **Learning Module** | 16 gamified lessons across 3 modules (Market Basics, Data Whiz, Market Pro) with XP, streaks, and badges |
+| **Walk-Forward Backtester** | Expanding-window backtest, retrains every 30 trading days, reports Sharpe, alpha, drawdown, win rate |
+| **Portfolio Optimiser** | Markowitz mean-variance optimisation via SciPy SLSQP — max Sharpe, min variance, efficient frontier |
 | **Export to CSV** | Download portfolio holdings and trade history as CSV files |
 | **Keyboard Shortcuts** | Keys 1–8 for quick stock selection, ? for help, and other navigation shortcuts |
 | **Toast Notifications** | Real-time feedback on trade execution, errors, and system events |
@@ -222,12 +220,11 @@ Predictions run on a configurable schedule (default: every 60 minutes) with a de
 
 The prediction engine uses a **return-based ensemble** approach rather than direct price prediction:
 
-1. **Feature Engineering** — 29 features across 5 categories:
-   - **Trend (8):** SMA 20/50/200, SMA crossovers, distance from SMA 200
-   - **Momentum (8):** MACD, MACD histogram, RSI, momentum, rate of change, 1/5/10-day returns
-   - **Volatility (8):** Bollinger Band width/%, ATR ratio, volatility, volume ratio, OBV signal, ADX, Stochastic K
-   - **Macro (4):** VIX level, VIX 5-day change, SPY vs SMA 50, SPY 5-day return
-   - **Other (1):** 52-week high/low percentages
+1. **Feature Engineering** — 29 features across 4 categories:
+   - **Technical indicators (23):** SMA 20/50/200 with crossovers and distance-from-SMA-200, MACD and MACD histogram, RSI, momentum, rate of change, 1/5/10-day returns, Bollinger Band width and %, ATR ratio, volatility, volume ratio, OBV signal, ADX, Stochastic K, and 52-week high/low position
+   - **FinBERT sentiment (2):** polarity score and confidence, computed by FinBERT over combined news and Reddit text
+   - **Macro context (4):** VIX level, VIX 5-day change, SPY vs SMA 50, SPY 5-day return
+   - All features normalised with scikit-learn `StandardScaler`, fit only on the training partition to prevent leakage
 
 2. **Hyperparameter Optimized Models (GridSearchCV)** trained on 5 years of historical data:
    - Random Forest (300 estimators, max_depth=8)
@@ -246,14 +243,14 @@ The prediction engine uses a **return-based ensemble** approach rather than dire
 
 ## Sentiment Analysis
 
-Multi-source NLP-powered sentiment using **FinBERT** (ProsusAI/finbert):
+Multi-source NLP sentiment powered by **FinBERT** (ProsusAI/finbert). **The production code path uses FinBERT exclusively**; TextBlob is retained only as a safety net for environments where the FinBERT weights cannot be loaded.
 
-- **News** — last 7 days of articles from NewsAPI (up to 50 articles per symbol)
-- **Reddit** — last 7 days from 6 subreddits: r/wallstreetbets, r/stocks, r/investing, r/StockMarket, r/options, r/Daytrading
-- **Scoring** — per-article/post sentiment score [-1, +1] with positive/negative/neutral ratios
-- **Source Agreement** — strong, divergent, or mixed signals based on news vs Reddit alignment
-- **Fallback** — TextBlob polarity analysis if FinBERT model is unavailable
-- **Caching** — 30-minute TTL to avoid redundant API calls
+- **News** — last 7 days of articles from NewsAPI (up to 50 articles per symbol), batch-scored by FinBERT in batches of 16
+- **Reddit** — last 7 days from 6 finance-focused subreddits: r/wallstreetbets, r/stocks, r/investing, r/StockMarket, r/options, r/Daytrading. Posts are weighted by engagement (upvotes + 2× comments) so high-signal threads influence the aggregate more than throwaway posts
+- **Why FinBERT over general-purpose sentiment** — FinBERT is fine-tuned on financial text and correctly handles domain phrases like "cutting costs", "diluted shares", "beating expectations" and "headwinds" that TextBlob and similar libraries systematically misclassify
+- **Scoring** — per-article/post polarity in [-1, +1], computed as P(positive) − P(negative); surfaced to the UI alongside positive/negative/neutral ratios
+- **Source Agreement** — when news and Reddit agree on direction, combined confidence is boosted by 10 points; when they diverge, it is penalised by 10 points. Source weights are bounded 30–70% based on item counts
+- **Caching** — 30-minute TTL to avoid redundant API calls and keep inference latency manageable
 
 ---
 
@@ -265,19 +262,25 @@ Multi-source NLP-powered sentiment using **FinBERT** (ProsusAI/finbert):
 | Dashboard | `/dashboard` | Main trading interface with stock selection, charts, predictions, and trading panel |
 | Analytics | `/analytics` | Analytics hub with model comparison and global metrics |
 | Research | `/research` | Research dashboard for in-depth stock analysis |
-| **Results** | **`/results`** | **Live model performance: aggregate KPIs, per-symbol reliability grades, ensemble comparison, feature importance, track record** |
+| Results | `/results` | Model performance pinned to the committed snapshot: aggregate KPIs, per-symbol reliability grades, ensemble vs naive baselines, track record |
 | Screener | `/screener` | Stock screening and filtering tool |
 | Live Market | `/live` | Real-time market data view |
 | Portfolio | `/portfolio` | Portfolio page with holdings, equity curve, trade history, and performance |
+| Optimiser | `/optimizer` | Markowitz mean-variance portfolio optimiser (max Sharpe / min variance / efficient frontier) |
+| Backtester | `/backtester` | Walk-forward ML strategy simulation with Sharpe, alpha, drawdown and equity curve |
 | Learn | `/learn` | Gamified learning module with 16 lessons, XP, streaks, and badges |
 | Profile | `/profile` | User profile management and portfolio summary |
 | Settings | `/settings` | Theme, notifications, and personalisation preferences |
 | Security | `/security` | Security information |
 | About | `/about` | About MarketMind |
 
+Plus legal routes (`/terms`, `/privacy`, `/disclaimer`, `/acceptable-use`, `/cookie-policy`) and an admin route (`/admin`) restricted to users with the `ADMIN` role.
+
 ---
 
-## Prerequisites
+## Getting Started
+
+### Prerequisites
 
 - Node.js 18+
 - Java Development Kit 17
@@ -313,9 +316,11 @@ dev.bat         # Windows
 ```
 
 This starts all three services:
-- **Frontend** → `http://localhost:5173`
+- **Frontend** → `http://localhost:5173` (Vite dev server with hot reload)
 - **Backend** → `http://localhost:8080`
 - **ML Service** → `http://localhost:5001`
+
+> **Dev vs Docker ports.** Local development uses Vite's dev server on port **5173** for fast hot reload. The Docker deployment (below) uses Nginx on port **80** to serve the production React build. Both modes hit the same backend (`:8080`) and ML service (`:5001`).
 
 ---
 
@@ -327,12 +332,13 @@ This starts all three services:
 docker-compose up --build
 ```
 
-This starts:
-- **Frontend** (Nginx) → `http://localhost:80` — serves the React SPA, proxies `/api/` to the backend and `/ml/` to the ML service
-- **Backend** (Spring Boot) → `http://localhost:8080` — REST API with JWT auth and H2 database persisted in a Docker volume
-- **ML Service** (Flask) → `http://localhost:5001` — prediction engine with in-memory caching (30 min TTL)
+This starts four containers:
+- **Frontend** (Nginx) → `http://localhost:80` — serves the production React build, proxies `/api/` to the backend and `/ml/` to the ML service
+- **Backend** (Spring Boot) → `http://localhost:8080` — REST API with JWT auth, connected to the Postgres container over the internal Docker network
+- **Postgres 15** (alpine) → `localhost:5432` — relational database; data persists via the named `db-data` volume
+- **ML Service** (Flask) → `http://localhost:5001` — prediction engine with in-memory caching (30 min TTL) and background scheduler
 
-All services have `restart: unless-stopped` and the database persists via a Docker volume (`db-data`).
+All services have `restart: unless-stopped` and the Postgres volume survives `docker-compose down`.
 
 ---
 
@@ -396,17 +402,22 @@ npm run dev
 - `GET /api/ml/accuracy/{symbol}?days=30` — Accuracy metrics over time
 - `GET /api/ml/track-record/{symbol}?days=180` — Full prediction track record with data points
 - `GET /api/ml/metrics` — Global prediction metrics across all symbols
+- `GET /api/ml/results-snapshot` — Canonical results snapshot (proxied to ML service)
 - `GET /api/ml/health` — ML service health check
 
-### ML Service (Flask — direct access on port 5001)
+### ML Service (Flask — direct access on port 5001, 11 endpoints total)
+- `GET /health` — Health check
 - `GET /predict/<symbol>` — Get prediction with sentiment fusion
-- `GET /predict/<symbol>/detailed` — Detailed prediction with 60-day indicator timeseries
+- `GET /predict/<symbol>/detailed` — Detailed prediction with 60-day indicator timeseries, feature importance and per-model breakdown
+- `GET /predict/<symbol>/live-confidence` — Live intraday confidence updates as new data confirms or challenges the forecast
 - `POST /batch-predict` — Batch predict multiple symbols
-- `GET /sentiment/<symbol>` — Full sentiment breakdown
-- `GET /market-fear` — Fear & Greed index (0–100)
+- `GET /sentiment/<symbol>` — Full FinBERT sentiment breakdown (news + Reddit + fusion)
+- `POST /optimize-portfolio` — Markowitz mean-variance optimiser (max Sharpe / min variance / efficient frontier) via SciPy SLSQP
+- `POST /backtest` — Expanding-window walk-forward backtest with retraining every 30 trading days; returns Sharpe, alpha, drawdown, win rate, profit factor, equity curve
+- `GET /market-fear` — Fear & Greed index (0–100) derived from VIX and SPY
 - `GET /scheduler/status` — Background scheduler status
 - `POST /cache/clear` — Clear prediction and sentiment caches
-- `GET /health` — Health check
+- `GET /results/snapshot` — Canonical model results snapshot served to the Results page
 
 ### Trading (requires JWT auth)
 - `POST /api/trading/buy` — Execute buy order
@@ -449,6 +460,8 @@ MarketMind/
 │       ├── services/          # TradingService, StockService, NewsService, PredictionLogService
 │       └── ml/                # PredictionScheduler (hourly + daily close + evaluation)
 ├── frontend/
+│   ├── public/
+│   │   └── MarketMind.png     # Logo shown at the top of this README
 │   └── src/
 │       ├── components/
 │       │   ├── auth/          # AuthPanel, ProfilePage
@@ -457,16 +470,22 @@ MarketMind/
 │       │   ├── charts/        # HistoricalChart, CandleChart, PerformanceChart
 │       │   ├── trading/       # TradingPanel, Portfolio, EquityCurve, TradeHistory, TradeReceipt
 │       │   ├── predictions/   # EnhancedPredictionCard, PredictionHistory, MLInsightsTabs
-│       │   ├── research/      # ResearchHub, AnalyticsHub, NewsSentiment, FearGreedGauge
+│       │   ├── research/      # ResearchHub, AnalyticsHub, NewsSentiment, ResultsHub, FearGreedGauge
 │       │   └── pages/         # LearnPage, SettingsPage, AboutSection, SecuritySection
-│       ├── App.jsx            # Router with 12 pages
+│       ├── App.jsx            # Router with 15+ pages
 │       └── App.css            # Global styles
 ├── ml-service/
 │   ├── app.py                 # Flask API with caching, scheduling, and Fear & Greed
 │   ├── ml_model.py            # EnhancedStockPredictor (RF + GBR + XGB ensemble)
-│   ├── sentiment_analyzer.py  # FinBERT sentiment (NewsAPI + Reddit, TextBlob fallback)
+│   ├── sentiment_analyzer.py  # FinBERT (production) sentiment; TextBlob only as safety net
+│   ├── backtester.py          # Walk-forward backtest engine
+│   ├── portfolio_optimizer.py # Markowitz mean-variance optimiser
+│   ├── live_model_results.json# Canonical results snapshot
 │   └── requirements.txt       # Flask, scikit-learn, XGBoost, PyTorch, transformers, yfinance
-├── docker-compose.yml         # 3-service deployment with Nginx proxy
+├── docs/
+│   └── screenshots/           # README assets — dashboard, results, portfolio, sentiment, livemarkets, learn
+├── .github/workflows/ci.yml   # GitHub Actions CI — backend + ML tests on every push
+├── docker-compose.yml         # 4-service deployment: frontend, backend, postgres, ml-service
 ├── dev.sh                     # One-command dev launcher (Mac/Linux)
 ├── dev.bat                    # One-command dev launcher (Windows)
 └── README.md
@@ -476,16 +495,39 @@ MarketMind/
 
 ## Testing
 
+Automated tests run on every push to `main` via [GitHub Actions CI](./.github/workflows/ci.yml).
+
+### Backend — JUnit 5
+
+Unit and integration tests covering the security-critical and business-critical paths:
+
+- `AuthServiceTest` — registration, login, duplicate email detection, BCrypt verification
+- `JwtServiceTest` — token issuance, signature validation, expiry enforcement
+- `RateLimitInterceptorTest` — per-IP rate limiting on the auth endpoints
+- `TradingServiceTest` — buy/sell execution, cash balance checks, average-cost-basis maths, realised P&L
+
 ```bash
-# Backend
 cd backend && ./gradlew test
+```
 
-# Frontend
-cd frontend && npm test
+### ML Service — Pytest
 
-# ML Service
+- `test_ml_model.py` — feature engineering, ensemble training, prediction pipeline, insufficient-data fallback
+- `test_accuracy.py` — directional accuracy and MAPE assertions against the historical window
+
+```bash
 cd ml-service && python -m pytest
 ```
+
+### Frontend — Vitest + React Testing Library
+
+- `FearGreedGauge.test.jsx` — rendering and value-band logic
+
+```bash
+cd frontend && npm test
+```
+
+Frontend UI testing was otherwise carried out manually across Chrome, Firefox and Safari, and at desktop, tablet and mobile viewport widths.
 
 ---
 
@@ -497,13 +539,12 @@ Released under the [MIT License](./LICENSE) — free to use, modify, and redistr
 
 ## Author
 
-**Michael Ferry** — BSc (Hons) Software Development, Atlantic Technological University (ATU)
+**Michael Ferry** — B.Sc. (Hons) Software Development, Atlantic Technological University (ATU), Galway
 Final Year Project · 2025–2026
 
 - GitHub: [@MichaelFerry25](https://github.com/MichaelFerry25)
 - Live deployment: [marketmind.cfd](https://marketmind.cfd)
-
-Supervisor, institution, and academic context documented in the accompanying dissertation.
+- Screencast: [YouTube (unlisted)](https://youtu.be/j162aCTeiIY)
 
 ---
 
